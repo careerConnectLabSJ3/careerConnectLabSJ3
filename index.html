@@ -7,27 +7,78 @@
 </head>
 <body>
     <header>
-        <nav>
-            <ul>
-                <li><a href="#index.html">Home</a></li>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="profile.html">Profile</a></li>
-            </ul>
-        </nav>
+        <div class="nav-wrap">
+            <a href="index.html" class="brand">Career<span>Connect</span></a>
+            <nav aria-label="Main navigation">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="register.html" class="btn btn-primary">Register</a></li>
+                    <li><a href="index.html">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
     <main>
-        <h1>Manage Your Career Journey in One Place</h1>
-        <p>CareerConnect helps job seekers organize their job applications, build professional profiles, upload résumés, and track progress through the hiring process.</p>
-        <h2>Key Features</h2>
-        <h3>Create a Professional Profile</h3>
-        <p>Showcase your education, skills, and work experience.</p>
-        <h3>Search Opportunities</h3>
-        <p>Discover jobs that match your interests and qualifications.</p>
-        <h3>Track Applications</h3>
-        <p>Monitor application status from submission to offer.</p>
-        <h3>Save Jobs</h3>
-        <p>Bookmar intresting positions and revisit them later</p>
+        <section class="hero">
+            <div>
+                <h1>Manage your career journey in one place</h1>
+                <p>
+                CareerConnect helps job seekers build professional profiles, upload résumés,
+                search for opportunities, and track every application — from submission to offer.
+                </p>
+                <div class="hero-actions">
+                    <a href="register.html" class="btn btn-primary">Get started</a>
+                    <a href="login.html" class="btn btn-ghost">I already have an account</a>
+                </div>
+            </div>
+
+            <aside class="hero-card" aria-label="Application status preview">
+                <h3>Your applications</h3>
+                <ul class="status-list">
+                    <li>Frontend Developer <span class="pill">Applied</span></li>
+                    <li>Software Engineer Intern <span class="pill interview">Interview</span></li>
+                    <li>Junior Web Developer <span class="pill offer">Offered</span></li>
+                    <li>QA Analyst <span class="pill rejected">Rejected</span></li>
+                </ul>
+            </aside>
+        </section>
+        <!-- Features -->
+        <section class="features" id="features">
+            <h2>Key features</h2>
+            <p>Everything you need to stay organized throughout your job search.</p>
+            <div class="feature-grid">
+                <article class="feature">
+                    <h3>Professional Profile</h3>
+                    <p>Showcase your education, skills, and work experience in one place.</p>
+                </article>
+
+                <article class="feature">
+                    <h3>Résumé Upload</h3>
+                    <p>Store and manage multiple versions of your résumé securely.</p>
+                </article>
+
+                <article class="feature">
+                    <h3>Job Search</h3>
+                    <p>Discover jobs that match your interests, skills, and qualifications.</p>
+                </article>
+
+                <article class="feature">
+                    <h3>Track Applications</h3>
+                    <p>Monitor each application's status: Applied, Interview, Offered, or Rejected.</p>
+                </article>
+
+                <article class="feature">
+                    <h3>Deadline Reminders</h3>
+                    <p>Get notified about upcoming application deadlines so you never miss one.</p>
+                </article>
+
+                <article class="feature">
+                    <h3>Saved Jobs</h3>
+                    <p>Bookmark interesting positions and revisit them whenever you're ready.</p>
+                </article>
+            </div>
+        </section>
     </main>
     <footer>
         <p>&copy; 2026 CarreerConnect | SOEN341 Project</p>
