@@ -73,6 +73,14 @@ Recruiters can:
 ```bash
 git clone https://github.com/your-team/careerconnect.git
 ```
+### Install Dependencies
+```bash
+npm install express mysql2
+```
+### Run Application
+```bash
+npm start
+```
 ## GitHub Repository
 GitHub Repository Link:
 https://github.com/your-team/careerconnect
