@@ -22,7 +22,7 @@ Recruiters can:
 - Update candidate status
 
 ## Team Members
-- Freddy Mvemb
+- Freddy Mvemba
 - Member 2
 - Member 3
 - Member 4
@@ -76,6 +76,10 @@ git clone https://github.com/your-team/careerconnect.git
 ### Install Dependencies
 ```bash
 npm install express mysql2
+```
+### Install Bycrypt Generator for password
+```bash
+npm install bcrypt
 ```
 ### Run Application
 ```bash

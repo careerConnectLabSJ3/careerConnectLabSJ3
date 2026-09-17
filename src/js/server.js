@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt');
+
 const express = require("express");
 const mysql = require("mysql2");
 const path = require('path');
@@ -48,20 +50,32 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Pages', 'dashboard.html'));
 });
 
-app.post("/register",(request,response)=>{
+//Register route
+app.post('/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
 
-    const {name, email,password } = request.body;
-   
-    let sql = `INSERT INTO users(name,email,password) VALUES (?,?,?)`;
+        // 1. Hash the password (10 is the "salt rounds", standard for good security)
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.query(sql,[ name, email,password],(err,result)=>{
+        // 2. Insert into database using the 'hashedPassword' instead of plain text
+        const sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+        db.query(sql, [name, email, hashedPassword], (err, result) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send("Error saving user to database");
+            }
+            
+            // 3. Automatically redirect them to login page!
+            res.redirect('/login');
+        });
 
-        if(err)
-            response.send("Could not insert new record!");
-        else
-            response.send("Record inserted with success");
-    });    
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Server error during registration");
+    }
 });
+
 app.post("/login", (request, response) => {
     
     let sql = "SELECT * FROM users";
