@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CareerConnect</title>
+    <!-- Linked using your verified path -->
+    <link rel="stylesheet" href="src/CSS/styles.css">
+</head>
+<body>
+
+    <!-- Main Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">Career<span>Connect</span></a>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="login.html" class="active">Login</a>
+                <a href="register.html">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Context Window -->
+    <main class="auth-container">
+        <div class="auth-card">
+            <h2>Welcome Back</h2>
+            <p class="auth-subtitle">Log in to manage your job search activities</p>
+
+            <form action="#" method="POST" class="auth-form">
+                <!-- Email Input Field -->
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+
+                <!-- Password Input Field -->
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+
+                <!-- Action Button -->
+                <button type="submit" class="btn-primary">Log In</button>
+            </form>
+
+            <!-- Bottom Redirect Link -->
+            <p class="auth-redirect">Don't have an account? <a href="register.html">Register here</a></p>
+        </div>
+    </main>
+
+    <!-- Project Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 CareerConnect | SOEN341 Project</p>
+    </footer>
+
+</body>
+</html>
