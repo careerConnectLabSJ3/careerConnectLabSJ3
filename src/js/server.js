@@ -33,6 +33,16 @@ db.connect((err)=>{
 app.get('/',(req,res)=>{
     res.sendFile(path.join(__dirname,'..','Pages','index.html'));
 });
+// Route for Login page
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
+});
+
+// Route for Register page
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
+});
+
 
 
 //start the server and listen on the defined port
