@@ -1,0 +1,41 @@
+const express = require("express");
+const mysql = require("mysql2");
+const path = require('path');
+
+const app = express();
+
+const hostname = '127.0.0.1';
+const port = 3000;
+
+// Parse from data
+app.use(express.urlencoded({extended:true}));
+
+//static files
+app.use(express.static(path.join(__dirname,'..','css')));
+
+// Connect to DB
+const db = mysql.createConnection({
+    host:"127.0.0.1",
+    user:"root",
+    password:"",
+    database:"careerConnect_db"
+});
+
+db.connect((err)=>{
+    if(err){
+        console.log(err);
+    }
+    else{
+        console.log("Connected to careerConnect_db");
+    }
+});
+
+app.get('/',(req,res)=>{
+    res.sendFile(path.join(__dirname,'..','Pages','index.html'));
+});
+
+
+//start the server and listen on the defined port
+app.listen(port,hostname, ()=>{
+    console.log(`Server running at http://${hostname}:${port}/`);
+});
