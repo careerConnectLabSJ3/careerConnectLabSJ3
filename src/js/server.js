@@ -43,6 +43,20 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
 });
 
+app.post("/register",(request,response)=>{
+
+    const {name, email,password } = request.body;
+   
+    let sql = `INSERT INTO users(name,email,password) VALUES (?,?,?)`;
+
+    db.query(sql,[ name, email,password],(err,result)=>{
+
+        if(err)
+            response.send("Could not insert new record!");
+        else
+            response.send("Record inserted with success");
+    });    
+});
 
 
 //start the server and listen on the defined port
