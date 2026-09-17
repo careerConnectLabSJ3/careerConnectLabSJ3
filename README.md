@@ -69,12 +69,21 @@ Recruiters can:
 - Helps users stay organized
 
 ## Setup Instructions
+
+### install node.js. visit nodejs.org/en/download
+### verify that node.js is installed with command node -v at powershell
+### install XAMPP by visiting https://www.apachefriends.org/download.html
+### Start Apache and MySQL
+
 ### Clone Repository
+
 ```bash
 git clone https://github.com/your-team/careerconnect.git
 ```
 ### Install Dependencies
+
 ```bash
+npm install
 npm install express mysql2
 ```
 ### Install Bycrypt Generator for password
