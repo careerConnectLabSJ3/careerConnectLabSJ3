@@ -43,6 +43,11 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
 });
 
+// Route for Dashboard page
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'dashboard.html'));
+});
+
 app.post("/register",(request,response)=>{
 
     const {name, email,password } = request.body;
@@ -57,9 +62,22 @@ app.post("/register",(request,response)=>{
             response.send("Record inserted with success");
     });    
 });
+app.post("/login", (request, response) => {
+    
+    let sql = "SELECT * FROM users";
+
+    db.query(sql, (err, result) => {
+
+        if (err) {
+            response.send("Could not retrieve user!");
+        }
+        else {
+            response.redirect('/dashboard')
+        }
+});
 
 
 //start the server and listen on the defined port
 app.listen(port,hostname, ()=>{
     console.log(`Server running at http://${hostname}:${port}/`);
-});
+})
