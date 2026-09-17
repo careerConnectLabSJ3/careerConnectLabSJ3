@@ -47,7 +47,7 @@ app.get('/register', (req, res) => {
 
 // Route for Dashboard page
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'dashboard.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
 });
 
 //Register route
