@@ -74,10 +74,11 @@ app.post("/login", (request, response) => {
         else {
             response.redirect('/dashboard')
         }
+    });
 });
 
 
 //start the server and listen on the defined port
-app.listen(port,hostname, ()=>{
+app.listen(port, hostname, () => {
     console.log(`Server running at http://${hostname}:${port}/`);
-})
+});
