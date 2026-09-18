@@ -110,3 +110,67 @@ https://github.com/your-team/careerconnect
 4. Open Pull Request
 5. Peer Review
 6. Merge into develop
+
+# Dev_SOEN341 Backend Setup Guide
+
+This project uses a centralized database environment. Follow these steps to set up your local development environment and connect to the shared database.
+
+---
+
+## 🛠️ Prerequisites
+
+Before starting, ensure you have the following installed on your machine:
+* [Node.js](https://nodejs.org) (v16 or higher recommended)
+* [DBeaver Community Edition](https://dbeaver.io) *(Optional: Only if you want to visually browse database tables)*
+
+---
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
+Clone the repository, open your terminal in the project root directory (`Dev_SOEN341`), and install the required Node packages:
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables (`.env`)
+The `.env` file contains sensitive local connection configurations and is excluded from GitHub tracking via `.gitignore`. 
+
+1. Locate the `.env.example` file in the project root.
+2. Create a duplicate copy of `.env.example` in the same directory and rename it exactly to `.env`.
+3. Open your new `.env` file and fill it out using the custom credentials provided below.
+
+#### 👥 Teammate Configuration Template:
+If you are connecting remotely to the hosted database, update your `.env` file to match this structure:
+
+```env
+PORT=3000
+DB_HOST=4.tcp.ngrok.io
+DB_USER=project_tam
+DB_PASSWORD=YOUR_ASSIGNED_PASSWORD
+DB_NAME=careerConnect_db
+DB_PORT=24494
+```
+> ⚠️ **Note:** The `DB_PORT` and `DB_HOST` variables are tied to an active hosting session. Please double-check with the team host if these credentials expire or change.
+
+---
+
+## 🏃‍♂️ Running the Server
+
+Once your `.env` file is fully configured, start the backend server by running:
+```bash
+node src/js/server.js
+```
+The console should output:
+```text
+Connected to database: careerConnect_db
+Server running at http://localhost:3000/
+```
+
+---
+
+## 📊 Viewing the Database Visually (DBeaver)
+If you want to view or query tables without writing backend route logic:
+1. Open **DBeaver** and create a new **MySQL** connection.
+2. Use the exact `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD` parameters specified inside your private `.env` file.
+3. Test connection and save.

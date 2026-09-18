@@ -8,6 +8,7 @@
     "test": "tests"
   },
   "scripts": {
+    "start": "node src/js/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/fmvemba22/SOEN341#readme",
   "dependencies": {
+    "dotenv": "^18.0.0",
     "express": "^5.2.1",
     "mysql2": "^3.24.4"
   }
