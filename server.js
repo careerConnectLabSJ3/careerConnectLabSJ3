@@ -15,7 +15,7 @@ const port = process.env.PORT || 3000;
 app.use(express.urlencoded({extended:true}));
 
 // static files
-app.use(express.static(path.join(__dirname, 'src', 'css')));
+app.use(express.static(path.join(__dirname, 'src')));
 
 // CONFIGURE SESSION MIDDLEWARE
 app.use(session({
@@ -45,8 +45,18 @@ db.connect((err)=>{
         console.log(`Connected to database: ${process.env.DB_NAME}`);
     }
 });
+// API route to share teh session user's dta with the frontend
+app.get('/api/current-user', (req, res) => {
+    if (req.session.user) {
+        // send back the name and role of logged -in user
+        res.json({
+            name: req.session.user.name,
+            role:req.session.user.role
+        });
+    }
+});
 
-
+// Page Routing
 app.get('/',(req,res)=>{
     res.sendFile(path.join(__dirname,'src','Pages','index.html'));
 });
@@ -62,7 +72,7 @@ app.get('/register', (req, res) => {
 
 // Route for Dashboard page
 app.get('/dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job-seeker') {
+    if (req.session.user && req.session.user.role === 'job_seeker') {
         // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
     }
@@ -76,7 +86,7 @@ app.get('/dashboard', (req, res) => {
     }
 });
 
-//Register route
+//Register Route
 app.post('/register', async (req, res) => {
     try {
         const { name, email, password,role } = req.body;
@@ -107,9 +117,10 @@ app.post('/register', async (req, res) => {
     }
 });
 
-app.post("/login", (request, response) => {
+// Login Route
+app.post("/login", (req, res) => {
     
-    const { email, password } = request.body; 
+    const { email, password } = req.body; 
 
     // Query to find the specific user trying to log in
     let sql = "SELECT * FROM users WHERE email =?";
@@ -123,19 +134,24 @@ app.post("/login", (request, response) => {
             if (password === user.password || await bcrypt.compare(password, user.password)) {
                 
                 // SAVING TO SESSION: Store user details so the server remembers them
-                request.session.user = {
+                req.session.user = {
                     id: user.id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    role:user.role
                 };
-                return response.redirect('/dashboard');
+
+                if (req.session.user && req.session.user.role === 'job_seeker')
+                    return res.redirect('/jobSeeker_dashboard');
+                if (req.session.user && req.session.user.role === 'recruiter')
+                    return res.redirect('/recruiter_dashboard');
             }
             else {
-                return response.send("Incorrect password!");
+                return res.send("Incorrect password!");
             }
         }
         else {
-            return response.send("User not found!");
+            return res.send("User not found!");
         }
     });
 });
@@ -143,7 +159,7 @@ app.post("/login", (request, response) => {
 // Route for Dashboard page (PROTECTED BY SESSION)
 app.get('/jobSeeker_dashboard', (req, res) => {
    // Confirm the user session exists and matches the job seeker role structure
-    if (req.session.user && req.session.user.role === 'job-seeker') {
+    if (req.session.user && req.session.user.role === 'job_seeker') {
         // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
     }
@@ -154,7 +170,7 @@ app.get('/jobSeeker_dashboard', (req, res) => {
 });
 
 // Recruiter Dashboard Route
-app.get('/recruiter-dashboard', (req, res) => {
+app.get('/recruiter_dashboard', (req, res) => {
     // Confirm the user session exists and matches the recruiter role structure
     if (req.session.user && req.session.user.role === 'recruiter') {
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
@@ -174,9 +190,6 @@ app.get('/logout', (req, res) => {
         res.redirect('/login'); // Redirect to login after destroying session
     });
 });
-
-
-
 
 //start the server and listen on the defined port
 app.listen(port, hostname, () => {
