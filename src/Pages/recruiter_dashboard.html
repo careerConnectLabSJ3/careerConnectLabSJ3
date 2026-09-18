@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruiter Dashboard - CareerConnect</title>
+    <link rel="stylesheet" href="/style.css"> <!-- Reuses your main stylesheet -->
+</head>
+<body>
+    <header>
+        <nav>
+            <strong>CareerConnect</strong>
+            <ul>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- The user greeting will sit here -->
+        <h2 id="welcome-message">Welcome to your Recruiter Dashboard</h2>
+        <p>Manage your job postings and evaluate candidate submissions below.</p>
+
+        <hr>
+
+        <!-- Quick Action Section -->
+        <section class="dashboard-actions">
+            <h3>💼 Quick Actions</h3>
+            <!-- Placeholder form/button for your upcoming job posting feature -->
+            <button onclick="alert('Job Posting system coming soon!')">Post a New Job Opportunity</button>
+        </section>
+
+        <br>
+
+        <!-- Active Jobs Table Placeholder -->
+        <section class="active-postings">
+            <h3>🗒️ Your Active Job Postings</h3>
+            <table border="1" cellpadding="10" style="width:100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background-color: #f2f2f2;">
+                        <th>Job Title</th>
+                        <th>Department</th>
+                        <th>Applications Received</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td><strong>Junior Software Engineer</strong></td>
+                        <td>Engineering</td>
+                        <td>4 Candidates</td>
+                        <td style="color: green;"><strong>Active</strong></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>Product Manager</strong></td>
+                        <td>Product Team</td>
+                        <td>2 Candidates</td>
+                        <td style="color: green;"><strong>Active</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 CareerConnect | SOEN341 Project</p>
+    </footer>
+
+  
+    <script src="recruiter.js"></script>
+</body>
+</html>
