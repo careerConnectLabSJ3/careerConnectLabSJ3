@@ -84,11 +84,7 @@ git clone https://github.com/your-team/careerconnect.git
 
 ```bash
 npm install
-npm install express mysql2
-```
-### Install Bycrypt Generator for password
-```bash
-npm install bcrypt
+
 ```
 ### Run Application
 ```bash
