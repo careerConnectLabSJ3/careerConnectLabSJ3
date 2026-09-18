@@ -23,10 +23,10 @@ Recruiters can:
 
 ## Team Members
 - Freddy Mvemba
-- Member 2
-- Member 3
-- Member 4
-- Member 5
+- Yacine
+- EmmanuelleLin
+- bahaeddine Mahgoudh
+
 
 ## Technologies
 ### Frontend
@@ -85,6 +85,7 @@ git clone https://github.com/your-team/careerconnect.git
 ```bash
 npm install
 npm install express mysql2
+npm install user-sessions
 ```
 ### Install Bycrypt Generator for password
 ```bash

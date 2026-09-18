@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - CareerConnect</title>
-    <link rel="stylesheet" href="/register.css">
+    <link rel="stylesheet" href="/css/register.css">
 </head>
 <body>
     <header>
@@ -46,6 +46,14 @@
                     <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" required>
                 </div>
 
+                <div class="form-group">
+                    <label for="role">Account Type</label>
+                    <select id="role" name="role" required>
+                        <option value="" disabled selected>Select your role...</option>
+                        <option value="job_seeker">Job Seeker</option>
+                        <option value="recruiter">Recruiter</option>
+                    </select>
+                 </div>
                 <div class="form-group terms">
                     <input type="checkbox" id="terms" name="terms" required>
                     <label for="terms">I agree to the Terms of Service and Privacy Policy</label>

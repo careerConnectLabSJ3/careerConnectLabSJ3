@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - CareerConnect</title>
-    <link rel="stylesheet" href="/jobSeeker.css">
+    <link rel="stylesheet" href="/css/jobSeeker.css">
 </head>
 <body>
     <!-- Simple Top Navigation -->
     <header class="dashboard-header">
         <h2>CareerConnect</h2>
         <nav>
-            <span class="welcome-message">Welcome Back!</span>
+            <span class="welcome-message" id="welcome-message">Welcome Back!</span>
             <a href="/" class="logout-link">Log Out</a>
         </nav>
     </header>
@@ -62,5 +62,16 @@
             </table>
         </section>
     </main>
+    <script>
+        fetch('api/current-user')
+            .then(response => response.json())
+            .then(user => {
+                if (user.name) {
+                    const welcomeMessage = document.getElementById('welcome-message');
+                    welcomeMessage.innerText = `Welcome back, ${user.name}!`;
+                }
+            })
+        .catch(err => console.error("could not fetch user session:", err));
+    </script>
 </body>
 </html>
