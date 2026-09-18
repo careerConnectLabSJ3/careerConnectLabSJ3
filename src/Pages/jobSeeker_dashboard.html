@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CareerConnect</title>
+    <link rel="stylesheet" href="/jobSeeker.css">
+</head>
+<body>
+    <!-- Simple Top Navigation -->
+    <header class="dashboard-header">
+        <h2>CareerConnect</h2>
+        <nav>
+            <span class="welcome-message">Welcome Back!</span>
+            <a href="/" class="logout-link">Log Out</a>
+        </nav>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="dashboard-main">
+        <h1 class="dashboard-title">Job Seeker Dashboard</h1>
+
+        <!-- Stats Overview Cards -->
+        <section class="stats-section">
+            <div class="stat-card stat-applied">
+                <h3>Total Applied</h3>
+                <p class="stat-number">3</p>
+            </div>
+            <div class="stat-card stat-interviews">
+                <h3>Interviews</h3>
+                <p class="stat-number">1</p>
+            </div>
+            <div class="stat-card stat-offers">
+                <h3>Offers</h3>
+                <p class="stat-number">0</p>
+            </div>
+        </section>
+
+        <!-- Application List Table -->
+        <section class="applications-section">
+            <h2>Recent Applications</h2>
+            <table class="applications-table">
+                <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="company-name">Google</td>
+                        <td>Frontend Developer</td>
+                        <td><span class="status-badge status-interviewing">Interviewing</span></td>
+                    </tr>
+                    <tr>
+                        <td class="company-name">Amazon</td>
+                        <td>Software Engineer Intern</td>
+                        <td><span class="status-badge status-applied">Applied</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</body>
+</html>
