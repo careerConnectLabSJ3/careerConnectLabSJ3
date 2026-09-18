@@ -105,23 +105,33 @@ https://github.com/your-team/careerconnect
   
 ## Team Workflow
 1. Create GitHub Issue
-2. Create feature branch
-3. Implement feature
+2. Create feature branch to individually test your indivual work before merging to develop
+3. implement and test feature locally using `npm start`
 4. Open Pull Request
 5. Peer Review
 6. Merge into develop
+7.Final step:Merge the final product to main branch
 
 # Dev_SOEN341 Backend Setup Guide
 
 This project uses a centralized database environment. Follow these steps to set up your local development environment and connect to the shared database.
 
 ---
+# 🛠️ Backend Architecture & Setup Guide
 
-## 🛠️ Prerequisites
+This project uses a centralized database environment managed from a primary host. Follow these steps to set up your local development environment and connect your code to the shared infrastructure safely.
 
-Before starting, ensure you have the following installed on your machine:
-* [Node.js](https://nodejs.org) (v16 or higher recommended)
-* [DBeaver Community Edition](https://dbeaver.io) *(Optional: Only if you want to visually browse database tables)*
+## 📋 Prerequisites
+
+Before starting, ensure your machine has the proper tools installed depending on your team role:
+
+### 👥 For All Team Members (Host & Remote Teammates)
+* **[Node.js](https://nodejs.org)** (v16 or higher recommended)
+* **[DBeaver Community Edition](https://dbeaver.io)** *(Highly Recommended: Use this tool to visually explore database tables, user profiles, and record data from your desktop).*
+
+### 🏠 For the Database Host Only
+* **[XAMPP](https://apachefriends.org) / [WAMP](https://wampserver.com)** *(Required to run the underlying MySQL server instance. Apache and MySQL modules must be running).*
+* **[Ngrok Tunneling Client](https://ngrok.com)** *(Required to open an active internet gateway proxy for incoming database connections).*
 
 ---
 
@@ -157,20 +167,40 @@ DB_PORT=24494
 
 ## 🏃‍♂️ Running the Server
 
-Once your `.env` file is fully configured, start the backend server by running:
+Open your root repository command terminal and run one of the execution profiles declared inside your `package.json` file:
+
+### A. Development Mode (Recommended for Daily Work)
+Launches the backend application with live-reloading features actively running. The application watches file changes and reloads instantly when edits are saved.
 ```bash
-node src/js/server.js
+npm start
 ```
-The console should output:
+*Behind the scenes, this calls `nodemon server.js` to handle live monitoring.*
+
+### B. Production Testing Mode
+Launches a snapshot instance of the backend using regular node processing with no file-watching overhead.
+```bash
+npm run production
+```
+*Behind the scenes, this calls `node server.js` standard script runtime.*
+
+On a successful boot sequence, your terminal pane will return:
 ```text
+[nodemon] starting `node server.js`
 Connected to database: careerConnect_db
 Server running at http://localhost:3000/
 ```
-
 ---
 
-## 📊 Viewing the Database Visually (DBeaver)
-If you want to view or query tables without writing backend route logic:
-1. Open **DBeaver** and create a new **MySQL** connection.
-2. Use the exact `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD` parameters specified inside your private `.env` file.
-3. Test connection and save.
+
+## 📊 Viewing the Database Visually (DBeaver Setup)
+To safely browse, alter, or check user registry indexes manually without manually generating dummy route scripts:
+
+1. Run **DBeaver Community Edition** on your PC.
+2. Click the **Plug Icon** (New Connection Wizard) and pick **MySQL** from the prompt selection.
+3. Input the parameters matching your private local `.env` variables:
+   * **Host:** Use your `.env` value (`127.0.0.1` or the ngrok server host address)
+   * **Port:** Match your assigned environment database port
+   * **Username / Password:** Provide your configured profile values
+4. Select **Test Connection** (Accept any missing driver download requests) and click **Finish**.
+
+---

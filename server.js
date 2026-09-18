@@ -14,7 +14,7 @@ const port = process.env.PORT || 3000;
 app.use(express.urlencoded({extended:true}));
 
 // static files
-app.use(express.static(path.join(__dirname,'..','css')));
+app.use(express.static(path.join(__dirname,'src','css')));
 
 // Connect to DB (UPDATED TO USE ENVIRONMENT VARIABLES)
 const db = mysql.createConnection({
@@ -36,21 +36,21 @@ db.connect((err)=>{
 
 
 app.get('/',(req,res)=>{
-    res.sendFile(path.join(__dirname,'..','Pages','index.html'));
+    res.sendFile(path.join(__dirname,'src','Pages','index.html'));
 });
 // Route for Login page
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
+    res.sendFile(path.join(__dirname, 'src', 'Pages', 'login.html'));
 });
 
 // Route for Register page
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
+    res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
 });
 
 // Route for Dashboard page
 app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
+    res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
 });
 
 //Register route
@@ -97,5 +97,5 @@ app.post("/login", (request, response) => {
 
 //start the server and listen on the defined port
 app.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+    console.log(`Server running at http://localhsot:${port}/`);
 });
