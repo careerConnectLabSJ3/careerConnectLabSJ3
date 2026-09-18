@@ -23,7 +23,7 @@ Recruiters can:
 
 ## Team Members
 - Freddy Mvemba
-- Member 2
+- Emmanuelle Lin
 - Member 3
 - Member 4
 - Member 5
@@ -69,44 +69,39 @@ Recruiters can:
 - Helps users stay organized
 
 ## Setup Instructions
-
-### install node.js. visit nodejs.org/en/download
-### verify that node.js is installed with command node -v at powershell
-### install XAMPP by visiting https://www.apachefriends.org/download.html
-### Start Apache and MySQL
+- Install XAMPP by visiting https://www.apachefriends.org/download.html
+- Start Apache and MySQL ![XAMPP Setup](./src/img/XAMPP_setup.png)
 
 ### Clone Repository
-
 ```bash
-git clone https://github.com/your-team/careerconnect.git
+git clone https://github.com/fmvemba22/SOEN341.git
 ```
-### Install Dependencies
 
+### Install Dependencies
 ```bash
 npm install
-
 ```
+
 ### Run Application
 ```bash
 npm start
 ```
-## GitHub Repository
-GitHub Repository Link:
-https://github.com/your-team/careerconnect
+## CareerConnect Deployment Link
+*insert here*
 
 ## Branching Strategy
 - main: Stable production-ready code
 - develop: Integration branch
-- feature/*: Individual feature branches
+- develop/*: Individual feature branches
   
 ## Team Workflow
 1. Create GitHub Issue
-2. Create feature branch to individually test your indivual work before merging to develop
-3. implement and test feature locally using `npm start`
+2. Create child branch from develop
+3. Implement and test feature locally using `npm start`
 4. Open Pull Request
-5. Peer Review
-6. Merge into develop
-7.Final step:Merge the final product to main branch
+5. Peer Review with local testing
+6. Merge into develop after approval
+7. **Only done once per sprint**: Merge the final product to main branch
 
 # Dev_SOEN341 Backend Setup Guide
 
