@@ -86,6 +86,11 @@ app.get('/dashboard', (req, res) => {
     }
 });
 
+// Route for profile page
+app.get('/profile', (req,res) => {
+    res.sendFile(path.join(__dirname, 'src', 'Pages', 'profile.html'));
+});
+
 //Register route
 app.post('/register', async (req, res) => {
     try {
