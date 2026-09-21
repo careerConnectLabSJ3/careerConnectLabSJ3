@@ -70,7 +70,7 @@ Recruiters can:
 
 ## Setup Instructions
 - Install XAMPP by visiting https://www.apachefriends.org/download.html
-- Start Apache and MySQL ![XAMPP Setup](./assets/XAMPP_setup.png)
+- Start Apache and MySQL ![XAMPP Setup](./src/img/XAMPP_setup.png)
 
 ### Clone Repository
 ```bash
