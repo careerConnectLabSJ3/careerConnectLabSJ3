@@ -97,5 +97,5 @@ app.post("/login", (request, response) => {
 
 //start the server and listen on the defined port
 app.listen(port, hostname, () => {
-    console.log(`Server running at http://localhsot:${port}/`);
+    console.log(`Server running at http://localhost:${port}/`);
 });
