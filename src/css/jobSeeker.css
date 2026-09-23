@@ -169,11 +169,42 @@ body {
     align-items: center;
     justify-content: center;
     border: 1px solid black;
-    margin: 30px;
+    border-radius: 15px;
+    margin: 30px 150px;
+}
+
+#profile-img{
+    border: 1px solid black;
+    border-radius: 30px;
 }
 
 .profile-main-info{
     display: flex;
     flex-direction: column;
-    margin: 40px 0;
+    justify-content: left;
+    margin: 0 0 40px 0;
+    width: 50%;
 }
+
+.profile-main-info section{
+    margin: 20px 0;
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+
+.icon{
+    max-width: 50px;
+    border: 2px solid black;
+    padding: 5px;
+    border-radius: 20px;
+}
+
+.right-align{
+    display: flex;
+    justify-content: right;
+}
+
+/* .icon:hover{
+    background-color: #99d6ff;
+} */
