@@ -161,3 +161,19 @@ body {
     background: #e7f5ff;
     color: #1c7ed6;
 }
+
+/* Profile CSS */
+.profile-main{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+    margin: 30px;
+}
+
+.profile-main-info{
+    display: flex;
+    flex-direction: column;
+    margin: 40px 0;
+}
