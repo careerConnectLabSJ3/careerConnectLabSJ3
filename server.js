@@ -1,5 +1,4 @@
-// Load environment variables at the very top of your file
-require('dotenv').config();
+
 
 const bcrypt = require('bcrypt');
 const express = require("express");
@@ -9,7 +8,7 @@ const app = express();
 const session = require('express-session');
 
 const hostname = '0.0.0.0'; // Changed from '127.0.0.1' so your Node server accepts external team requests
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 // Parse form data
 app.use(express.urlencoded({extended:true}));
@@ -28,13 +27,14 @@ app.use(session({
     }
 }));
 
-// Connect to DB (UPDATED TO USE ENVIRONMENT VARIABLES)
+// Connect to DB directly using your phpMyAdmin XAMPP/WAMP defaults
+
 const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306 // Uses the .env port, defaults to 3306 if missing
+    host: 'localhost',              // Change to '127.0.0.1' if 'localhost' fails
+    user: 'root',                   // Default phpMyAdmin user is 'root'
+    password: '',                   // Default phpMyAdmin password is empty (leave as '')
+    database: 'careerConnect_db',   // Your specified target database
+    port: 3306                      // Default MySQL port
 });
 
 db.connect((err)=>{
@@ -45,7 +45,7 @@ db.connect((err)=>{
         console.log(`Connected to database: ${process.env.DB_NAME}`);
     }
 });
-// API route to share teh session user's dta with the frontend
+// API route to share the session user's dta with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
         // send back the name and role of logged -in user
