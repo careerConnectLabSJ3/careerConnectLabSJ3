@@ -37,13 +37,13 @@ Recruiters can:
  - Node.js
  - Express.js
 ### Database
- - MySQL
+ - MongoDB (Managed via MongoDB Atlas Cloud Cluster)
 
 ### Tools
  - GitHub
  - GitHub Projects
  - Visual Studio Code
- - LaTeX to create PDF files
+ 
 
 ## Planned Features
 ### Core Features
@@ -72,8 +72,7 @@ Recruiters can:
 
 ### install node.js. visit nodejs.org/en/download
 ### verify that node.js is installed with command node -v at powershell
-### install XAMPP by visiting https://www.apachefriends.org/download.html
-### Start Apache and MySQL
+
 
 ### Clone Repository
 
@@ -84,8 +83,7 @@ git clone https://github.com/your-team/careerconnect.git
 
 ```bash
 npm install
-npm install express mysql2
-npm install user-sessions
+npm install express mongoose express-session
 ```
 ### Install Bycrypt Generator for password
 ```bash
@@ -97,7 +95,7 @@ npm start
 ```
 ## GitHub Repository
 GitHub Repository Link:
-https://github.com/your-team/careerconnect
+https://github.com/careerConnect/careerConnect
 
 ## Branching Strategy
 - main: Stable production-ready code
@@ -126,13 +124,10 @@ This project uses a centralized database environment managed from a primary host
 
 Before starting, ensure your machine has the proper tools installed depending on your team role:
 
-### 👥 For All Team Members (Host & Remote Teammates)
+### 👥 For All Team Members
 * **[Node.js](https://nodejs.org)** (v16 or higher recommended)
-* **[DBeaver Community Edition](https://dbeaver.io)** *(Highly Recommended: Use this tool to visually explore database tables, user profiles, and record data from your desktop).*
+* **[MongoDB Compass](https://mongodb.com)** *(Highly Recommended: Use this tool to visually explore database collections, document fields, and user records from your desktop).*
 
-### 🏠 For the Database Host Only
-* **[XAMPP](https://apachefriends.org) / [WAMP](https://wampserver.com)** *(Required to run the underlying MySQL server instance. Apache and MySQL modules must be running).*
-* **[Ngrok Tunneling Client](https://ngrok.com)** *(Required to open an active internet gateway proxy for incoming database connections).*
 
 ---
 
@@ -156,13 +151,7 @@ If you are connecting remotely to the hosted database, update your `.env` file t
 
 ```env
 PORT=3000
-DB_HOST=4.tcp.ngrok.io
-DB_USER=project_tam
-DB_PASSWORD=YOUR_ASSIGNED_PASSWORD
-DB_NAME=careerConnect_db
-DB_PORT=24494
-```
-> ⚠️ **Note:** The `DB_PORT` and `DB_HOST` variables are tied to an active hosting session. Please double-check with the team host if these credentials expire or change.
+MONGO_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
 
 ---
 
@@ -192,16 +181,11 @@ Server running at http://localhost:3000/
 ```
 ---
 
-
 ## 📊 Viewing the Database Visually (DBeaver Setup)
-To safely browse, alter, or check user registry indexes manually without manually generating dummy route scripts:
+To safely browse, alter, or check user registry entries manually:
+1. Run **MongoDB Compass** on your PC.
+2. Login with your credentials
+3. Click **Connect**. You can now view collections and insert/delete documents directly.
 
-1. Run **DBeaver Community Edition** on your PC.
-2. Click the **Plug Icon** (New Connection Wizard) and pick **MySQL** from the prompt selection.
-3. Input the parameters matching your private local `.env` variables:
-   * **Host:** Use your `.env` value (`127.0.0.1` or the ngrok server host address)
-   * **Port:** Match your assigned environment database port
-   * **Username / Password:** Provide your configured profile values
-4. Select **Test Connection** (Accept any missing driver download requests) and click **Finish**.
 
 ---
