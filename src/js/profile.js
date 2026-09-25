@@ -10,7 +10,7 @@ async function loadProfileInfo(){
                     
                     function updateField(element, value){
                         if(!element){return}
-                        if(element.tagName === "p"){
+                        if(element.tagName === "P"){
                             return element.innerText = value;
                         }
                         else{

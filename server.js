@@ -99,6 +99,18 @@ app.get('/profile-edit', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'profile_edit.html'))
 })
 
+app.post('/profile-edit', async (req, res) => {
+    try{
+        console.log("haloooooo");
+        const { name, education, workExp, skills } = req.body;
+        console.log(req.body);
+    
+    }
+    catch(error){
+        console.error(error);
+    }
+})
+
 
 //Register route
 app.post('/register', async (req, res) => {

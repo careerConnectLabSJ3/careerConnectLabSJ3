@@ -16,31 +16,32 @@
           </a>
       </nav>
   </header>
-  <main class="profile-main">
-    <img src="/css/img/default-pfp.png" alt="Default Image Profile" id="profile-img"/>
-    <section class="profile-main-info">
-      <section>
-        <label for="profile-name">Name</label>
-        <input type="text" id="profile-name" value=""/>
-      </section>
-      <section>
-        <label for="profile-education">Education</label>
-        <input type="text" id="profile-education" value=""/>
-      </section>
-      <section>
-        <label for="profile-work-exp">Work Experience</label>
-        <input type="text" id="profile-work-exp" value=""/>
-      </section>
-      <section>
-        <label for="profile-skills">Skills</label>
-        <input type="text" id="profile-skills" value=""/>
-      </section>
+  <form action="/profile-edit" method="POST">
+    <main class="profile-main">
+      <img src="/css/img/default-pfp.png" alt="Default Image Profile" id="profile-img"/>
+      <section class="profile-main-info">
+        <section>
+          <label for="profile-name">Name</label>
+          <input type="text" id="profile-name" name="name" value=""/>
+        </section>
+        <section>
+          <label for="profile-education">Education</label>
+          <input type="text" id="profile-education" name="education" value=""/>
+        </section>
+        <section>
+          <label for="profile-work-exp">Work Experience</label>
+          <input type="text" id="profile-work-exp" name="workExp" value=""/>
+        </section>
+        <section>
+          <label for="profile-skills">Skills</label>
+          <input type="text" id="profile-skills" name="skills" value=""/>
+        </section>
     </section>
     <section class="buttons-profile-edit">
-      <button>Save</button>
+      <button type="submit">Save</button>
       <button><a href="/profile">Cancel</a></button>
     </section>
-
   </main>
+  </form>
 </body>
 </html>
