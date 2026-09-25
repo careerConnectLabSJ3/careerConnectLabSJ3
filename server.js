@@ -150,34 +150,44 @@ app.post('/register', async (req, res) => {
 
 // Login Route
 app.post("/login", async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-    const { email, password } = req.body;
-
-    // Query documents using findOne 
-    const user = await User.findOne({ email: email });
-    if (user) {
-        if (password === user.password || await bcrypt.compare(password, user.password)) {
-
-            req.session.user = {
-                id: user._id, // MongoDB creates auto id property as _id
-                name: user.name,
-                email: user.email,
-                role: user.role
-            };
-
-            if (user.role === 'job_seeker') {
-                return res.redirect('/jobSeeker_dashboard');
-            }
-            if (user.role === 'recruiter') {
-                return res.redirect('/recruiter_dashboard');
-            }
+        if (!normalizedEmail || typeof password !== 'string' || !password) {
+            return res.status(400).send("Email and password are required.");
         }
-        else {
-            return res.send("Incorrect password!");
+
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user) {
+            return res.status(401).send("Invalid email or password.");
         }
+
+        const passwordMatches = await bcrypt.compare(password, user.password);
+        if (!passwordMatches) {
+            return res.status(401).send("Invalid email or password.");
+        }
+
+        if (user.role !== 'job_seeker' && user.role !== 'recruiter') {
+            return res.status(403).send("This account does not have a valid role.");
+        }
+
+        req.session.user = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role
+        };
+
+        if (user.role === 'job_seeker') {
+            return res.redirect('/jobSeeker_dashboard');
+        }
+
+        return res.redirect('/recruiter_dashboard');
     }
-    else {
-        return res.send("User not found!");
+    catch (error) {
+        console.error("Login failed:", error);
+        return res.status(500).send("Server error during login.");
     }
 });
 
