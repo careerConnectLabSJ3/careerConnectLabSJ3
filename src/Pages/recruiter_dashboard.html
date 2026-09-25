@@ -5,14 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recruiter Dashboard - CareerConnect</title>
     <link rel="stylesheet" href="/css/style.css"> <!-- Reuses your main stylesheet -->
+    <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
-    <header>
-        <nav>
-            <strong>CareerConnect</strong>
-            <ul>
-                <li><a href="/logout">Logout</a></li>
-            </ul>
+    <header class="site-header">
+        <nav aria-label="Dashboard navigation">
+            <div class="site-nav-container">
+                <a href="/" class="site-logo">Career<span>Connect</span></a>
+
+                <div class="site-nav-links">
+                    <span class="site-welcome" id="welcome-message">Welcome to your Recruiter Dashboard</span>
+                    <a href="/logout">Log Out</a>
+                </div>
+            </div>
         </nav>
     </header>
 

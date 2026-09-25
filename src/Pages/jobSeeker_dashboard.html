@@ -5,16 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - CareerConnect</title>
     <link rel="stylesheet" href="/css/jobSeeker.css">
+    <link rel="stylesheet" href="/css/header.css">
 </head>
 <body>
     <!-- Simple Top Navigation -->
-    <header class="dashboard-header">
-        <a href="/dashboard" class="nav-logo">Career<span>Connect</span></a>
-        <nav class="dashboard-navbar">
-            <p class="welcome-message">Welcome Back!</p>
-            <a href="/profile" class="profile-link">
-                <img src="/css/img/default-pfp.png" alt="Default Image Profile" class="dashboard-profile"/>
-            </a>
+    <header class="site-header">
+        <nav aria-label="Dashboard navigation">
+            <div class="site-nav-container">
+                <a href="/" class="site-logo">Career<span>Connect</span></a>
+
+                <div class="site-nav-links">
+                    <span class="site-welcome" id="welcome-message">Welcome Back!</span>
+                    <a href="/logout">Log Out</a>
+                </div>
+            </div>
         </nav>
     </header>
 
