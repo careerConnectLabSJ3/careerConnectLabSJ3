@@ -71,7 +71,7 @@ app.get('/api/user-profile', async (req, res) => {
         res.json({
             name: currUser.name,
             education: currUser?.education,
-            work: currUser?.experience,
+            experience: currUser?.experience,
             skills: currUser?.skills
         });
     }

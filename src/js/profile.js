@@ -18,11 +18,9 @@ async function loadProfileInfo(){
                         }
                     }
 
-                    console.log(user)
-
                     updateField(profileName, user.name);
                     updateField(profileEducation, user?.education || "None");
-                    updateField(profileWorkExp, user?.work || "None");
+                    updateField(profileWorkExp, user?.experience || "None");
                     updateField(profileSkills, user?.skills || "None");
                     
                 }
