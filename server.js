@@ -1,45 +1,43 @@
+// 1. CONFIGURATION & ENVIRONMENT SETUP
+// Loads environment variables and forces Google DNS to fix MongoDB Atlas SRV connection issues on local networks
 require('dotenv').config();
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const mongoose = require('mongoose');
-
 const express = require("express");
 const app = express();
-
 const path = require('path');
-
 const bcrypt = require('bcrypt');
-
 const session = require('express-session');
 
 const hostname = '0.0.0.0'; // Changed from '127.0.0.1' so your Node server accepts external team requests
 const port = 3000;
 
-// Parse form data
+// 2. MIDDLEWARE SETUP
+// Parse incoming URL-encoded form data (from login/registration forms)
 app.use(express.urlencoded({ extended: true }));
 
-// static files
+// Serve static frontend assets (HTML, CSS, JS) from the 'src' directory
 app.use(express.static(path.join(__dirname, 'src')));
 
-// CONFIGURE SESSION MIDDLEWARE
+// Configure session middleware to track authenticated users across requests
 app.use(session({
-    secret: 'super_secret_key_for_soen341', // Used to sign the session ID cookie
-    resave: false,                           // Don't save session if unmodified
-    saveUninitialized: false,                // Don't create session until something is stored
+    secret: 'super_secret_key_for_soen341', // Key used to sign the session ID cookie
+    resave: false,                           // Prevents saving unchanged sessions back to the store
+    saveUninitialized: false,                // Don't generate cookies until login data is saved
     cookie: {
-        secure: false,                       // Set to true only if using HTTPS
-        maxAge: 1000 * 60 * 60 * 24          // Cookie expires in 24 hours
+        secure: false,                       // Set to true only if using HTTPS in production
+        maxAge: 1000 * 60 * 60 * 24          // Keep the login session alive for 24 hours
     }
 }));
 
-
-// CONNECT TO MONGO DB 
+// 3. DATABASE CONNECTION
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB: careerConnect_db'))
     .catch(err => console.error('MongoDB connection failed:', err));
 
-// 3. DEFINE THE USER SCHEMA AND MODEL
+// 4. DATABASE SCHEMA & MODEL
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -48,11 +46,10 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-
-// API route to share the session user's dta with the frontend
+// 5. API ROUTES
+// Exposes the logged-in user's profile details to the frontend JavaScript
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
-        // send back the name and role of logged -in user
         res.json({
             name: req.session.user.name,
             role: req.session.user.role
@@ -60,50 +57,66 @@ app.get('/api/current-user', (req, res) => {
     }
 });
 
-// Page Routing
+// 6. PAGE ROUTING (PUBLIC)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
 });
-// Route for Login page
+
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'login.html'));
 });
 
-// Route for Register page
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
 });
 
-// Route for Dashboard page
+// 7. PAGE ROUTING (PROTECTED BY ROLE)
+// Primary entry checkpoint that routes users to their specific dashboard role
 app.get('/dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
     }
     else if (req.session.user && req.session.user.role === 'recruiter') {
-        // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
     }
     else {
-        // User is NOT logged in. Redirect them back to the login screen
+        res.redirect('/login'); // Kick unauthorized guests out to the login page
+    }
+});
+
+// Direct access route for the job seeker dashboard (Guarded by session checks)
+app.get('/jobSeeker_dashboard', (req, res) => {
+    if (req.session.user && req.session.user.role === 'job_seeker') {
+        res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+    }
+    else {
         res.redirect('/login');
     }
 });
 
-//Register Route
+// Direct access route for the recruiter dashboard (Guarded by session checks)
+app.get('/recruiter_dashboard', (req, res) => {
+    if (req.session.user && req.session.user.role === 'recruiter') {
+        res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+    }
+    else {
+        res.redirect('/login');
+    }
+});
+
+// 8. AUTHENTICATION LOGIC (POST REQUESTS)
+// Registers a new user, hashes their password, and saves them to MongoDB
 app.post('/register', async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
-        // Simple validation check to ensure role is passed safely
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
             return res.status(400).send("Please select a valid account type.");
         }
 
-        //  Hash the password (10 is the "salt rounds", standard for good security)
+        // Encrypt the plain text password securely before saving
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create a new document using Mongoose Model
         const newUser = new User({
             name,
             email,
@@ -120,18 +133,18 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// Login Route
+// Validates credentials, creates a login session, and redirects by user role
 app.post("/login", async (req, res) => {
-
     const { email, password } = req.body;
-
-    // Query documents using findOne 
     const user = await User.findOne({ email: email });
+
     if (user) {
+        // Compare the plaintext login password against the stored database hash
         if (password === user.password || await bcrypt.compare(password, user.password)) {
 
+            // Persist the user profile data inside the active session
             req.session.user = {
-                id: user._id, // MongoDB creates auto id property as _id
+                id: user._id, 
                 name: user.name,
                 email: user.email,
                 role: user.role
@@ -153,42 +166,17 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Route for Dashboard page (PROTECTED BY SESSION)
-app.get('/jobSeeker_dashboard', (req, res) => {
-    // Confirm the user session exists and matches the job seeker role structure
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    else {
-        // User is NOT logged in. Redirect them back to the login screen
-        res.redirect('/login');
-    }
-});
-
-// Recruiter Dashboard Route
-app.get('/recruiter_dashboard', (req, res) => {
-    // Confirm the user session exists and matches the recruiter role structure
-    if (req.session.user && req.session.user.role === 'recruiter') {
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
-    }
-    else {
-        // Kick unauthenticated or improper user types back to login
-        res.redirect('/login');
-    }
-});
-
-// Route for Logging Out
+// Destroys the login session cookie and signs the user out completely
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             return console.log("Logout failed:", err);
         }
-        res.redirect('/login'); // Redirect to login after destroying session
+        res.redirect('/login');
     });
 });
 
-//start the server and listen on the defined port
+// 9. SERVER INITIALIZATION
 app.listen(port, hostname, () => {
     console.log(`Server running at http://localhost:${port}/`);
 });
