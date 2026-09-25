@@ -185,3 +185,104 @@ footer {
     color: var(--muted);
     font-size: 0.88rem;
 }
+/* ===== Shared Section Styling ===== */
+
+.user-types,
+.workflow,
+.roadmap,
+.about-project,
+.stats {
+    padding: 4rem 8%;
+}
+
+.user-types h2,
+.workflow h2,
+.roadmap h2,
+.about-project h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.user-types p,
+.about-project p {
+    line-height: 1.6;
+}
+
+/* ===== User Types ===== */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card h3 {
+    margin-bottom: 1rem;
+    color: #0077cc;
+}
+
+/* ===== Workflow ===== */
+
+.workflow ol {
+    max-width: 700px;
+    margin: 2rem auto 0;
+    padding-left: 1.5rem;
+}
+
+.workflow li {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* ===== Roadmap ===== */
+
+.roadmap ul {
+    max-width: 700px;
+    margin: 2rem auto 0;
+    list-style: none;
+    padding: 0;
+}
+
+.roadmap li {
+    background: #f5f7fa;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-left: 4px solid #0077cc;
+    border-radius: 6px;
+}
+
+/* ===== About Project ===== */
+
+.about-project {
+    text-align: center;
+    background: #f8f9fb;
+}
+
+.about-project p {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+
+
+
+
+
+
+
