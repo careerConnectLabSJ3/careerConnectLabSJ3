@@ -44,7 +44,10 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, required: true, enum: ['job_seeker', 'recruiter'] }
+    role: { type: String, required: true, enum: ['job_seeker', 'recruiter'], },
+    education : { type: String, default: "None"},
+    experience: { type: String, default: "None"}
+
 });
 const User = mongoose.model('User', userSchema);
 
@@ -59,6 +62,21 @@ app.get('/api/current-user', (req, res) => {
         });
     }
 });
+
+// API route for user profile information
+app.get('/api/user-profile', async (req, res) => {
+    const currUser=req.session.user;
+    if (currUser) {
+
+        res.json({
+            name: currUser.name,
+            education: currUser?.education,
+            work: currUser?.experience,
+            skills: currUser?.skills
+        });
+    }
+})
+
 
 // Page Routing
 app.get('/', (req, res) => {
@@ -101,9 +119,18 @@ app.get('/profile-edit', (req, res) => {
 
 app.post('/profile-edit', async (req, res) => {
     try{
-        console.log("haloooooo");
         const { name, education, workExp, skills } = req.body;
+        const currentUserInfo = req.session.user;
+
+        if(name != currentUserInfo.name){
+            // update name
+            console.log("updated name");
+        }
+
+        
+        
         console.log(req.body);
+        console.log(req.session.user);
     
     }
     catch(error){
@@ -156,7 +183,9 @@ app.post("/login", async (req, res) => {
                 id: user._id, // MongoDB creates auto id property as _id
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                education: user.education,
+                experience: user.experience
             };
 
             if (user.role === 'job_seeker') {
