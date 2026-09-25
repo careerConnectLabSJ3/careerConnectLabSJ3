@@ -8,20 +8,20 @@ async function loadProfileInfo(){
                     const profileWorkExp = document.getElementById("profile-work-exp");
                     const profileSkills = document.getElementById("profile-skills");
                     
-
-                    if(profileName.tagName == "p"){
-                        profileName.innerText = user.name;
-                        profileEducation.innerText = user?.education || "None";
-                        profileWorkExp.innerText = user?.work || "None";
-                        profileSkills.innerText = user?.skills || "None";
-                    }
-                    else{
-                        profileName.value = user.name;
-                        profileEducation.value = user?.education || "None";
-                        profileWorkExp.value = user?.work || "None";
-                        profileSkills.value = user?.skills || "None";
+                    function updateField(element, value){
+                        if(!element){return}
+                        if(element.tagName === "p"){
+                            return element.innerText = value;
+                        }
+                        else{
+                            element.value = value;
+                        }
                     }
 
+                    updateField(profileName, user.name);
+                    updateField(profileEducation, user?.education || "None");
+                    updateField(profileWorkExp, user?.work || "None");
+                    updateField(profileSkills, user?.skills || "None");
                     
                 }
             })
