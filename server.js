@@ -51,6 +51,15 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+function sendRegistrationError(res, statusCode, message) {
+    res.status(statusCode).type('html').send(`<!doctype html>
+        <html lang="en"><head><meta charset="UTF-8"><title>Registration error</title></head>
+        <body><script>
+            alert(${JSON.stringify(message)});
+            window.location.replace('/register');
+        </script><p>${message}</p></body></html>`);
+}
+
 
 // API route to share the session user's dta with the frontend
 app.get('/api/current-user', (req, res) => {
@@ -90,6 +99,23 @@ app.get('/login', (req, res) => {
 // Route for Register page
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
+});
+
+// Check email availability before the registration form is submitted.
+app.get('/api/check-email', async (req, res) => {
+    const email = String(req.query.email || '').trim().toLowerCase();
+
+    if (!email.includes('@')) {
+        return res.json({ available: false });
+    }
+
+    try {
+        const existingUser = await User.exists({ email });
+        return res.json({ available: !existingUser });
+    } catch (error) {
+        console.error('Email availability check failed:', error);
+        return res.status(500).json({ available: false });
+    }
 });
 
 // Route for Dashboard page
@@ -152,11 +178,53 @@ app.post('/profile-edit', async (req, res) => {
 //Register route
 app.post('/register', async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, ['confirm-password']: confirmPassword, terms } = req.body;
+        const normalizedName = String(name || '').trim();
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const namePattern = /^\p{L}+(?:\s+\p{L}+)*$/u;
+
+        if (!normalizedName) {
+            return sendRegistrationError(res, 400, 'Please enter your full name.');
+        }
+        if (!namePattern.test(normalizedName)) {
+            return sendRegistrationError(res, 400, 'Full name can contain letters and spaces only; symbols and numbers are not allowed.');
+        }
+        if (normalizedName.replace(/\s/g, '').length > 30) {
+            return sendRegistrationError(res, 400, 'Full name must contain no more than 30 letters, excluding spaces.');
+        }
+        if (!normalizedEmail.includes('@')) {
+            return sendRegistrationError(res, 400, 'Email address must contain an @ symbol.');
+        }
+        if (typeof password !== 'string' || password.length < 8) {
+            return sendRegistrationError(res, 400, 'Password must be at least 8 characters long.');
+        }
+        if (!/[A-Z]/.test(password)) {
+            return sendRegistrationError(res, 400, 'Password must contain at least one uppercase letter.');
+        }
+        if (!/[a-z]/.test(password)) {
+            return sendRegistrationError(res, 400, 'Password must contain at least one lowercase letter.');
+        }
+        if (!/[0-9]/.test(password)) {
+            return sendRegistrationError(res, 400, 'Password must contain at least one number.');
+        }
+        if (!/[^A-Za-z0-9]/.test(password)) {
+            return sendRegistrationError(res, 400, 'Password must contain at least one special character.');
+        }
+        if (password !== confirmPassword) {
+            return sendRegistrationError(res, 400, 'Password and confirmation password must be identical.');
+        }
+        if (terms !== 'on') {
+            return sendRegistrationError(res, 400, 'You must agree to the Terms of Service and Privacy Policy.');
+        }
 
         // Simple validation check to ensure role is passed safely
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
-            return res.status(400).send("Please select a valid account type.");
+            return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
+        }
+
+        const existingUser = await User.exists({ email: normalizedEmail });
+        if (existingUser) {
+            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
 
         //  Hash the password (10 is the "salt rounds", standard for good security)
@@ -164,8 +232,8 @@ app.post('/register', async (req, res) => {
 
         // Create a new document using Mongoose Model
         const newUser = new User({
-            name,
-            email,
+            name: normalizedName,
+            email: normalizedEmail,
             password: hashedPassword,
             role
         });
@@ -175,6 +243,9 @@ app.post('/register', async (req, res) => {
     }
     catch (error) {
         console.error(error);
+        if (error && error.code === 11000) {
+            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
+        }
         res.status(500).send("Server error during registration");
     }
 });
