@@ -1,5 +1,5 @@
 async function loadProfileInfo(){
-  fetch('api/current-user')
+  fetch('api/user-profile')
             .then(response => response.json())
             .then(user => {
                 if (user.name) {
@@ -17,6 +17,8 @@ async function loadProfileInfo(){
                             element.value = value;
                         }
                     }
+
+                    console.log(user)
 
                     updateField(profileName, user.name);
                     updateField(profileEducation, user?.education || "None");
