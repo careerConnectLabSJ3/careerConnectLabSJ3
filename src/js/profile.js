@@ -18,7 +18,7 @@ async function loadProfileInfo(){
                         }
                     }
 
-                    updateField(profileName, user.name);
+                    updateField(profileName, user?.name);
                     updateField(profileEducation, user?.education || "None");
                     updateField(profileWorkExp, user?.experience || "None");
                     updateField(profileSkills, user?.skills || "None");

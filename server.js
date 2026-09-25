@@ -46,7 +46,8 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, required: true, enum: ['job_seeker', 'recruiter'], },
     education : { type: String, default: "None"},
-    experience: { type: String, default: "None"}
+    experience: { type: String, default: "None"},
+    skills: { type: String, default: "None"}
 
 });
 const User = mongoose.model('User', userSchema);
@@ -145,32 +146,30 @@ app.get('/profile-edit', (req, res) => {
 
 app.post('/profile-edit', async (req, res) => {
     try{
-        const { name, education, workExp, skills } = req.body;
         const currUserInfo = req.session.user;
-        console.log("CURRENT: ", currUserInfo);
-        console.log(req.body)
+        const { name, education, workExp, skills } = req.body;
 
-        if(name != currUserInfo.name || education != currUserInfo.education || workExp != currUserInfo.experience || skills != currUserInfo.skills){
-            // update name
-            const updatedProfile = {
-                $set: {
-                    name: name,
-                    education: education,
-                    experience: workExp,
-                    skills: skills
+        if(currUserInfo){
+            if(name != currUserInfo.name || education != currUserInfo.education || workExp != currUserInfo.experience || skills != currUserInfo.skills){
+                const updatedProfile = {
+                    $set: {
+                        name: name,
+                        education: education,
+                        experience: workExp,
+                        skills: skills
+                    }
                 }
+                const result = await User.updateOne({ email : currUserInfo.email}, updatedProfile);
+                console.log(result);
             }
-
-            const id = await User.findOne({ email: email });
-            console.log(id);
-            // const result = await User.updateOne()
-
-            console.log("updated name");
+            else{
+                console.log("unable to update")
+            }
         }
-    
     }
     catch(error){
-        console.error(error);
+        console.log(error);
+        return res.status(500).json({error : error.message});
     }
 })
 
