@@ -7,11 +7,22 @@ async function loadProfileInfo(){
                     const profileEducation = document.getElementById("profile-education");
                     const profileWorkExp = document.getElementById("profile-work-exp");
                     const profileSkills = document.getElementById("profile-skills");
+                    
 
-                    profileName.innerText = user.name;
-                    profileEducation.innerText = user?.education || "None";
-                    profileWorkExp.innerText = user?.work || "None";
-                    profileSkills.innerText = user?.skills || "None";
+                    if(profileName.tagName == "p"){
+                        profileName.innerText = user.name;
+                        profileEducation.innerText = user?.education || "None";
+                        profileWorkExp.innerText = user?.work || "None";
+                        profileSkills.innerText = user?.skills || "None";
+                    }
+                    else{
+                        profileName.value = user.name;
+                        profileEducation.value = user?.education || "None";
+                        profileWorkExp.value = user?.work || "None";
+                        profileSkills.value = user?.skills || "None";
+                    }
+
+                    
                 }
             })
         .catch(err => console.error("could not fetch user session:", err));

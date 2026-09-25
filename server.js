@@ -95,6 +95,10 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'profile.html'));
 });
 
+app.get('/profile-edit', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'Pages', 'profile_edit.html'))
+})
+
 
 //Register route
 app.post('/register', async (req, res) => {
