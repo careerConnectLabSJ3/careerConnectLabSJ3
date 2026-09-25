@@ -1,17 +1,23 @@
+require('dotenv').config();
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
+const mongoose = require('mongoose');
+
+const express = require("express");
+const app = express();
+
+const path = require('path');
 
 const bcrypt = require('bcrypt');
-const express = require("express");
-const mysql = require("mysql2");
-const path = require('path');
-const app = express();
+
 const session = require('express-session');
 
 const hostname = '0.0.0.0'; // Changed from '127.0.0.1' so your Node server accepts external team requests
 const port = 3000;
 
 // Parse form data
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
 
 // static files
 app.use(express.static(path.join(__dirname, 'src')));
@@ -21,44 +27,42 @@ app.use(session({
     secret: 'super_secret_key_for_soen341', // Used to sign the session ID cookie
     resave: false,                           // Don't save session if unmodified
     saveUninitialized: false,                // Don't create session until something is stored
-    cookie: { 
+    cookie: {
         secure: false,                       // Set to true only if using HTTPS
         maxAge: 1000 * 60 * 60 * 24          // Cookie expires in 24 hours
     }
 }));
 
-// Connect to DB directly using your phpMyAdmin XAMPP/WAMP defaults
 
-const db = mysql.createConnection({
-    host: 'localhost',              // Change to '127.0.0.1' if 'localhost' fails
-    user: 'root',                   // Default phpMyAdmin user is 'root'
-    password: '',                   // Default phpMyAdmin password is empty (leave as '')
-    database: 'careerConnect_db',   // Your specified target database
-    port: 3306                      // Default MySQL port
-});
+// CONNECT TO MONGO DB 
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB: careerConnect_db'))
+    .catch(err => console.error('MongoDB connection failed:', err));
 
-db.connect((err)=>{
-    if(err){
-        console.error("Database connection failed:", err);
-    }
-    else{
-        console.log(`Connected to database: ${process.env.DB_NAME}`);
-    }
+// 3. DEFINE THE USER SCHEMA AND MODEL
+const userSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, required: true, enum: ['job_seeker', 'recruiter'] }
 });
+const User = mongoose.model('User', userSchema);
+
+
 // API route to share the session user's dta with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
         // send back the name and role of logged -in user
         res.json({
             name: req.session.user.name,
-            role:req.session.user.role
+            role: req.session.user.role
         });
     }
 });
 
 // Page Routing
-app.get('/',(req,res)=>{
-    res.sendFile(path.join(__dirname,'src','Pages','index.html'));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
 });
 // Route for Login page
 app.get('/login', (req, res) => {
@@ -89,76 +93,69 @@ app.get('/dashboard', (req, res) => {
 //Register Route
 app.post('/register', async (req, res) => {
     try {
-        const { name, email, password,role } = req.body;
+        const { name, email, password, role } = req.body;
 
         // Simple validation check to ensure role is passed safely
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
             return res.status(400).send("Please select a valid account type.");
         }
 
-        // 1. Hash the password (10 is the "salt rounds", standard for good security)
+        //  Hash the password (10 is the "salt rounds", standard for good security)
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 2. Insert into database using the 'hashedPassword' instead of plain text
-        const sql = "INSERT INTO users (name, email, password,role) VALUES (?, ?, ?,?)";
-        db.query(sql, [name, email, hashedPassword, role], (err, result) => {
-            if (err) {
-                console.error(err);
-                return res.status(500).send("Error saving user to database");
-            }
-            
-            // 3. Automatically redirect them to login page!
-            res.redirect('/login');
+        // Create a new document using Mongoose Model
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword,
+            role
         });
 
-    } catch (error) {
+        await newUser.save();
+        res.redirect('/login');
+    }
+    catch (error) {
         console.error(error);
         res.status(500).send("Server error during registration");
     }
 });
 
 // Login Route
-app.post("/login", (req, res) => {
-    
-    const { email, password } = req.body; 
+app.post("/login", async (req, res) => {
 
-    // Query to find the specific user trying to log in
-    let sql = "SELECT * FROM users WHERE email =?";
+    const { email, password } = req.body;
 
-    db.query(sql,[email], async (err, result) => {
-        // If a user was found with that email
-        if (result.length > 0) {
-            const user = result[0];
+    // Query documents using findOne 
+    const user = await User.findOne({ email: email });
+    if (user) {
+        if (password === user.password || await bcrypt.compare(password, user.password)) {
 
-            // TEMPORARY PASSWORD CHECK 
-            if (password === user.password || await bcrypt.compare(password, user.password)) {
-                
-                // SAVING TO SESSION: Store user details so the server remembers them
-                req.session.user = {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role:user.role
-                };
+            req.session.user = {
+                id: user._id, // MongoDB creates auto id property as _id
+                name: user.name,
+                email: user.email,
+                role: user.role
+            };
 
-                if (req.session.user && req.session.user.role === 'job_seeker')
-                    return res.redirect('/jobSeeker_dashboard');
-                if (req.session.user && req.session.user.role === 'recruiter')
-                    return res.redirect('/recruiter_dashboard');
+            if (user.role === 'job_seeker') {
+                return res.redirect('/jobSeeker_dashboard');
             }
-            else {
-                return res.send("Incorrect password!");
+            if (user.role === 'recruiter') {
+                return res.redirect('/recruiter_dashboard');
             }
         }
         else {
-            return res.send("User not found!");
+            return res.send("Incorrect password!");
         }
-    });
+    }
+    else {
+        return res.send("User not found!");
+    }
 });
 
 // Route for Dashboard page (PROTECTED BY SESSION)
 app.get('/jobSeeker_dashboard', (req, res) => {
-   // Confirm the user session exists and matches the job seeker role structure
+    // Confirm the user session exists and matches the job seeker role structure
     if (req.session.user && req.session.user.role === 'job_seeker') {
         // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
