@@ -120,17 +120,27 @@ app.get('/profile-edit', (req, res) => {
 app.post('/profile-edit', async (req, res) => {
     try{
         const { name, education, workExp, skills } = req.body;
-        const currentUserInfo = req.session.user;
+        const currUserInfo = req.session.user;
+        console.log("CURRENT: ", currUserInfo);
+        console.log(req.body)
 
-        if(name != currentUserInfo.name){
+        if(name != currUserInfo.name || education != currUserInfo.education || workExp != currUserInfo.experience || skills != currUserInfo.skills){
             // update name
+            const updatedProfile = {
+                $set: {
+                    name: name,
+                    education: education,
+                    experience: workExp,
+                    skills: skills
+                }
+            }
+
+            const id = await User.findOne({ email: email });
+            console.log(id);
+            // const result = await User.updateOne()
+
             console.log("updated name");
         }
-
-        
-        
-        console.log(req.body);
-        console.log(req.session.user);
     
     }
     catch(error){
