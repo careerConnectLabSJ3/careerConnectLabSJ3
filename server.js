@@ -41,8 +41,8 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // 3. DEFINE THE USER SCHEMA AND MODEL
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String, required: true },
     role: { type: String, required: true, enum: ['job_seeker', 'recruiter'] }
 });
@@ -93,11 +93,34 @@ app.get('/dashboard', (req, res) => {
 //Register Route
 app.post('/register', async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { name, email, password, confirmPassword, role, terms } = req.body;
+        const normalizedName = typeof name === 'string' ? name.trim() : '';
+        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-        // Simple validation check to ensure role is passed safely
+        if (!normalizedName || !normalizedEmail || !password || !confirmPassword) {
+            return res.status(400).send("Please complete all required fields.");
+        }
+
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailPattern.test(normalizedEmail)) {
+            return res.status(400).send("Please enter a valid email address.");
+        }
+
+        if (password !== confirmPassword) {
+            return res.status(400).send("Passwords do not match.");
+        }
+
+        if (!terms) {
+            return res.status(400).send("You must accept the terms to register.");
+        }
+
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
             return res.status(400).send("Please select a valid account type.");
+        }
+
+        const existingUser = await User.findOne({ email: normalizedEmail });
+        if (existingUser) {
+            return res.status(409).send("An account with this email already exists.");
         }
 
         //  Hash the password (10 is the "salt rounds", standard for good security)
@@ -105,8 +128,8 @@ app.post('/register', async (req, res) => {
 
         // Create a new document using Mongoose Model
         const newUser = new User({
-            name,
-            email,
+            name: normalizedName,
+            email: normalizedEmail,
             password: hashedPassword,
             role
         });
@@ -116,6 +139,11 @@ app.post('/register', async (req, res) => {
     }
     catch (error) {
         console.error(error);
+
+        if (error.code === 11000) {
+            return res.status(409).send("An account with this email already exists.");
+        }
+
         res.status(500).send("Server error during registration");
     }
 });

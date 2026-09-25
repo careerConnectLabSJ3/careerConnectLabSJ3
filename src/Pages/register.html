@@ -27,10 +27,10 @@
             <h2>Create Your Account</h2>
             <p class="subtitle">Join CareerConnect to centralize and track your job search journey.</p>
             
-            <form action="register" method="POST" class="auth-form">
+            <form action="/register" method="POST" class="auth-form" id="registration-form">
                 <div class="form-group">
                     <label for="name">Full Name</label>
-                    <input type="text" id="fullname" name="name" placeholder="John Doe" required>
+                    <input type="text" id="name" name="name" placeholder="John Doe" required>
                 </div>
 
                 <div class="form-group">
@@ -45,7 +45,7 @@
 
                 <div class="form-group">
                     <label for="confirm-password">Confirm Password</label>
-                    <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" required>
+                    <input type="password" id="confirm-password" name="confirmPassword" placeholder="••••••••" required>
                 </div>
 
                 <div class="form-group">
@@ -73,5 +73,6 @@
     <footer>
         <p>&copy; 2026 CareerConnect | SOEN341 Project</p>
     </footer>
+    <script src="/js/register.js"></script>
 </body>
 </html>
