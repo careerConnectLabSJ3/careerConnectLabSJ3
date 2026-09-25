@@ -51,6 +51,26 @@ registerForm.addEventListener('submit', async (event) => {
         return;
     }
 
+    if (!/[A-Z]/.test(password)) {
+        showValidationAlert('Password must contain at least one uppercase letter.', passwordInput);
+        return;
+    }
+
+    if (!/[a-z]/.test(password)) {
+        showValidationAlert('Password must contain at least one lowercase letter.', passwordInput);
+        return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+        showValidationAlert('Password must contain at least one number.', passwordInput);
+        return;
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        showValidationAlert('Password must contain at least one special character.', passwordInput);
+        return;
+    }
+
     if (password !== confirmPassword) {
         showValidationAlert('Password and confirmation password must be identical.', confirmPasswordInput);
         return;
