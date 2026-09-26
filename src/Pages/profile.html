@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profile - CareerConnect</title>
   <link rel="stylesheet" href="/css/jobSeeker.css">
-  <script src="/js/profile.js"></script>
+  <script src="/js/profile.js" defer></script>
 </head>
 <body>
   <header class="dashboard-header">
@@ -16,31 +16,35 @@
           </a>
       </nav>
   </header>
-  <main class="profile-main">
-    <button>
-      <a href="/" class="logout-link">Log Out</a>
-    </button>
-    <img src="/css/img/default-pfp.png" alt="Default Image Profile" id="profile-img"/>
-    <section class="profile-main-info">
-      <a href="/profile-edit" class="right-align"><img src="/css/img/edit-pen.svg" class="icon"/></a>
-      <section>
-        <p>Name</p>
-        <p id="profile-name"></p>
-      </section>
-      <section>
-        <p>Education</p>
-        <p id="profile-education"></p>
-      </section>
-      <section>
-        <p>Work Experience</p>
-        <p id="profile-work-exp"></p>
-      </section>
-      <section>
-        <p>Skills</p>
-        <p id="profile-skills"></p>
-      </section>
+  <form action="/profile" method="POST" id="profile-form">
+    <main class="profile-main">
+      <img src="/css/img/default-pfp.png" alt="Default Image Profile" id="profile-img"/>
+      <section class="profile-main-info">
+        <span class="right-align">
+          <button type="button" id="profile-edit-icon"><img src="/css/img/edit-pen.svg" class="icon"/></button>
+        </span>
+        <section>
+          <label for="profile-name">Name</label>
+          <input type="text" id="profile-name" name="name" value="" disabled/>
+        </section>
+        <section>
+          <label for="profile-education">Education</label>
+          <input type="text" id="profile-education" name="education" value="" disabled/>
+        </section>
+        <section>
+          <label for="profile-work-exp">Work Experience</label>
+          <input type="text" id="profile-work-exp" name="workExp" value="" disabled/>
+        </section>
+        <section>
+          <label for="profile-skills">Skills</label>
+          <input type="text" id="profile-skills" name="skills" value="" disabled/>
+        </section>
     </section>
-
+    <section id="buttons-profile-edit" class="hidden">
+      <button type="submit" id="profile-save-btn">Save</button>
+      <button type="button" id="profile-cancel-btn">Cancel</button>
+    </section>
   </main>
+  </form>
 </body>
 </html>

@@ -140,11 +140,7 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
 });
 
-app.get('/profile-edit', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile_edit.html'))
-})
-
-app.post('/profile-edit', async (req, res) => {
+app.post('/profile', async (req, res) => {
     try{
         const currUserInfo = req.session.user;
         const { name, education, workExp, skills } = req.body;
