@@ -154,19 +154,19 @@ app.get('/profile/avatar', async (req, res) => {
             return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
         }
 
-        res.setHeader('ContentType', files[0].contentType);
+        const contentType = files[0].contentType || 'image/jpeg';
+        res.setHeader('ContentType', contentType);
         const downloadStream = gfsBucket.openDownloadStream(fileId);
         downloadStream.pipe(res);
 
     } catch (err) {
+        console.error("Avatar route catch error:", err)
         res.status(500).send('Error retrieving image');
     }
 });
 
 app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
     try{
-        console.log("FILES:", req.file); // Should show the uploaded image object
-        console.log("BODY:", req.body);
         const currUserInfo = req.session.user;
         if(!currUserInfo){
             return res.status(401).redirect('/login');
@@ -193,10 +193,10 @@ app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
                 const uploadStream = gfsBucket.openUploadStream(req.file.originalname, {
                     contentType: req.file.mimetype
                 });
-
+                const generatedId = uploadStream.id;
                 readableStream.pipe(uploadStream);
 
-                uploadStream.on('finish', () => resolve(uploadStream.id));
+                uploadStream.on('finish', () => resolve(generatedId));
                 uploadStream.on('error', (err) => reject(err));
             });
 
