@@ -140,12 +140,13 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
 });
 
-app.post('/profile', async (req, res) => {
+app.post('/profile', upload.single('pfpUpload'), async (req, res) => {
     try{
         const currUserInfo = req.session.user;
-        const { name, education, workExp, skills, pfpUpload } = req.body;
+        const { name, education, workExp, skills } = req.body;
+        const pfpID = req.file.id;
 
-        console.log(pfpUpload);
+        console.log(pfpID);
         if(currUserInfo){
             if(name != currUserInfo.name || education != currUserInfo.education || workExp != currUserInfo.experience || skills != currUserInfo.skills){
                 const updatedProfile = {
