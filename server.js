@@ -1,45 +1,42 @@
+// server.js
+// 1. CONFIGURATION & ENVIRONMENT SETUP
 require('dotenv').config();
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const mongoose = require('mongoose');
-
 const express = require("express");
 const app = express();
-
 const path = require('path');
-
 const bcrypt = require('bcrypt');
-
 const session = require('express-session');
 
-const hostname = '0.0.0.0'; // Changed from '127.0.0.1' so your Node server accepts external team requests
+const hostname = '0.0.0.0';
 const port = 3000;
 
-// Parse form data
-app.use(express.urlencoded({ extended: true }));
+// Import Modules from validation.js to handle input validation
+const { validateRegistration, sendRegistrationError } = require('./src/js/validation');
 
-// static files
+// 2. MIDDLEWARE SETUP
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src')));
 
-// CONFIGURE SESSION MIDDLEWARE
 app.use(session({
-    secret: 'super_secret_key_for_soen341', // Used to sign the session ID cookie
-    resave: false,                           // Don't save session if unmodified
-    saveUninitialized: false,                // Don't create session until something is stored
+    secret: 'super_secret_key_for_soen341',
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-        secure: false,                       // Set to true only if using HTTPS
-        maxAge: 1000 * 60 * 60 * 24          // Cookie expires in 24 hours
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
-
-// CONNECT TO MONGO DB 
+// 3. DATABASE CONNECTION
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB: careerConnect_db'))
     .catch(err => console.error('MongoDB connection failed:', err));
 
-// 3. DEFINE THE USER SCHEMA AND MODEL
+// 4. DATABASE SCHEMA & MODEL
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
@@ -48,11 +45,10 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-
-// API route to share the session user's dta with the frontend
+// 5. API ROUTES
+// API route to share the session user's data with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
-        // send back the name and role of logged -in user
         res.json({
             name: req.session.user.name,
             role: req.session.user.role
@@ -60,73 +56,75 @@ app.get('/api/current-user', (req, res) => {
     }
 });
 
-// Page Routing
+// Check email availability before the registration form is submitted.
+app.get('/api/check-email', async (req, res) => {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    if (!email.includes('@')) return res.json({ available: false });
+    try {
+        const existingUser = await User.exists({ email });
+        return res.json({ available: !existingUser });
+    } catch (error) {
+        console.error('Email availability check failed:', error);
+        return res.status(500).json({ available: false });
+    }
+});
+
+// 6. PAGE ROUTING (PUBLIC)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
 });
-// Route for Login page
+
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'login.html'));
 });
 
-// Route for Register page
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
 });
 
-// Route for Dashboard page
+// 7. PAGE ROUTING (PROTECTED BY ROLE)
 app.get('/dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
     }
     else if (req.session.user && req.session.user.role === 'recruiter') {
-        // User is logged in! Serve the dashboard page
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
     }
     else {
-        // User is NOT logged in. Redirect them back to the login screen
         res.redirect('/login');
     }
 });
 
-//Register Route
-app.post('/register', async (req, res) => {
+app.get('/jobSeeker_dashboard', (req, res) => {
+    if (req.session.user && req.session.user.role === 'job_seeker') {
+        return res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+    }
+    res.redirect('/login');
+});
+
+app.get('/recruiter_dashboard', (req, res) => {
+    if (req.session.user && req.session.user.role === 'recruiter') {
+        return res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+    }
+    res.redirect('/login');
+});
+
+// 8. AUTHENTICATION LOGIC (POST REQUESTS)
+app.post('/register', validateRegistration, async (req, res) => {
     try {
-        const { name, email, password, confirmPassword, role, terms } = req.body;
-        const normalizedName = typeof name === 'string' ? name.trim() : '';
-        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
-
-        if (!normalizedName || !normalizedEmail || !password || !confirmPassword) {
-            return res.status(400).send("Please complete all required fields.");
-        }
-
-        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailPattern.test(normalizedEmail)) {
-            return res.status(400).send("Please enter a valid email address.");
-        }
-
-        if (password !== confirmPassword) {
-            return res.status(400).send("Passwords do not match.");
-        }
-
-        if (!terms) {
-            return res.status(400).send("You must accept the terms to register.");
-        }
+        const { normalizedName, normalizedEmail, password, role } = req.body;
 
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
-            return res.status(400).send("Please select a valid account type.");
+            return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
         }
 
-        const existingUser = await User.findOne({ email: normalizedEmail });
+        const existingUser = await User.exists({ email: normalizedEmail });
         if (existingUser) {
-            return res.status(409).send("An account with this email already exists.");
+            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
 
-        //  Hash the password (10 is the "salt rounds", standard for good security)
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create a new document using Mongoose Model
         const newUser = new User({
             name: normalizedName,
             email: normalizedEmail,
@@ -139,16 +137,13 @@ app.post('/register', async (req, res) => {
     }
     catch (error) {
         console.error(error);
-
-        if (error.code === 11000) {
-            return res.status(409).send("An account with this email already exists.");
+        if (error && error.code === 11000) {
+            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
-
         res.status(500).send("Server error during registration");
     }
 });
 
-// Login Route
 app.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -191,42 +186,16 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Route for Dashboard page (PROTECTED BY SESSION)
-app.get('/jobSeeker_dashboard', (req, res) => {
-    // Confirm the user session exists and matches the job seeker role structure
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    else {
-        // User is NOT logged in. Redirect them back to the login screen
-        res.redirect('/login');
-    }
-});
-
-// Recruiter Dashboard Route
-app.get('/recruiter_dashboard', (req, res) => {
-    // Confirm the user session exists and matches the recruiter role structure
-    if (req.session.user && req.session.user.role === 'recruiter') {
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
-    }
-    else {
-        // Kick unauthenticated or improper user types back to login
-        res.redirect('/login');
-    }
-});
-
-// Route for Logging Out
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             return console.log("Logout failed:", err);
         }
-        res.redirect('/login'); // Redirect to login after destroying session
+        res.redirect('/login');
     });
 });
 
-//start the server and listen on the defined port
+// 9. SERVER INITIALIZATION
 app.listen(port, hostname, () => {
     console.log(`Server running at http://localhost:${port}/`);
 });
