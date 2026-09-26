@@ -161,10 +161,9 @@ app.post('/profile-edit', async (req, res) => {
                 }
                 const result = await User.updateOne({ email : currUserInfo.email}, updatedProfile);
                 console.log(result);
-                res.redirect('/profile');
             }
             else{
-                console.log("unable to update")
+                console.log("No update necessary")
             }
         }
     }

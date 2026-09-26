@@ -1,12 +1,13 @@
+const profileName = document.getElementById("profile-name");
+const profileEducation = document.getElementById("profile-education");
+const profileWorkExp = document.getElementById("profile-work-exp");
+const profileSkills = document.getElementById("profile-skills");
+
 async function loadProfileInfo(){
   fetch('api/user-profile')
             .then(response => response.json())
             .then(user => {
                 if (user.name) {
-                    const profileName = document.getElementById("profile-name");
-                    const profileEducation = document.getElementById("profile-education");
-                    const profileWorkExp = document.getElementById("profile-work-exp");
-                    const profileSkills = document.getElementById("profile-skills");
                     
                     function updateField(element, value){
                         if(!element){return}
@@ -28,8 +29,26 @@ async function loadProfileInfo(){
         .catch(err => console.error("could not fetch user session:", err));
 }
 
-function editProfile(){
+const formElement = document.getElementById("profile-form");
+const editIconProfile = document.getElementById("profile-edit-icon");
+const cancelBtn = document.getElementById("profile-cancel-btn");
+const saveBtn = document.getElementById("profile-save-btn");
+const inputs = [profileName, profileEducation, profileWorkExp, profileSkills];
 
-}
+editIconProfile.addEventListener("click", async () => {
+    inputs.forEach(e => e.disabled = false);
+    formElement.classList.add("is-editing");
+});
+
+cancelBtn.addEventListener("click", async () => {
+    inputs.forEach(e => e.disabled = true);
+    formElement.classList.remove("is-editing");
+    loadProfileInfo();
+});
+
+saveBtn.addEventListener("click", async () => {
+    inputs.forEach(e => e.disabled = true);
+    formElement.classList.remove("is-editing");
+});
 
 loadProfileInfo();

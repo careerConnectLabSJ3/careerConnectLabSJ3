@@ -197,7 +197,6 @@ body {
 
 .icon{
     max-width: 50px;
-    border: 2px solid black;
     padding: 5px;
     border-radius: 20px;
 }
@@ -207,6 +206,26 @@ body {
     justify-content: right;
 }
 
-/* .icon:hover{
-    background-color: #99d6ff;
-} */
+#profile-edit-icon{
+    border-radius: 10px;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+#buttons-profile-edit button{
+    padding: 5px 10px;
+    margin: 20px;
+}
+
+#buttons-profile-edit.hidden{
+    display: none;
+}
+
+#profile-form.is-editing #buttons-profile-edit{
+    display: block;
+}
+
+#profile-form.is-editing #profile-edit-icon{
+    display: none;
+}
