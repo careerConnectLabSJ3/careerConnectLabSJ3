@@ -11,6 +11,15 @@ function sendRegistrationError(res, statusCode, message) {
         </script><p>${message}</p></body></html>`);
 }
 
+function sendLoginError(res, message) {
+    res.status(401).type('html').send(`<!doctype html>
+        <html lang="en"><head><meta charset="UTF-8"><title>Login Error</title></head>
+        <body><script>
+            alert(${JSON.stringify(message)});
+            window.location.replace('/login');
+        </script><p>${message}</p></body></html>`);
+}
+
 async function validateRegistration(req, res, next) {
     try {
         const { name, email, password, role, ['confirm-password']: confirmPassword, terms } = req.body;
@@ -78,11 +87,13 @@ async function validateRegistration(req, res, next) {
     }
     catch (error) {
         console.error("Middleware validation failure:", error);
-         if (error && error.code === 11000) {
+        if (error && error.code === 11000) {
             return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
         res.status(500).send("Server error during validation registration.");
     }
 }
 
-module.exports = { validateRegistration, sendRegistrationError };
+
+module.exports = { validateRegistration, sendRegistrationError, sendLoginError };
+
