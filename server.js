@@ -17,7 +17,6 @@ const port = 3000;
 // Import Modules from validation.js to handle input validation
 const { validateRegistration, sendRegistrationError, sendLoginError } = require('./src/js/validation');
 
-
 // 2. MIDDLEWARE SETUP
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src')));
@@ -154,13 +153,10 @@ app.post("/login", async (req, res) => {
             return res.status(400).send("Email and password are required.");
         }
 
-        // Better formating similar to register route
-       const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return sendLoginError(res, "Invalid email or password. Please try again.");
         }
-
-
 
         if (user.role !== 'job_seeker' && user.role !== 'recruiter') {
             return res.status(403).send("This account does not have a valid role.");

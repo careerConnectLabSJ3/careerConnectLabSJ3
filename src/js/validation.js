@@ -94,6 +94,4 @@ async function validateRegistration(req, res, next) {
     }
 }
 
-
 module.exports = { validateRegistration, sendRegistrationError, sendLoginError };
-
