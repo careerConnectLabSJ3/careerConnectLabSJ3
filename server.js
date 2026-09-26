@@ -51,6 +51,17 @@ const User = mongoose.model('User', userSchema);
 
 // 5. API ROUTES
 // Exposes the logged-in user's profile details to the frontend JavaScript
+function sendRegistrationError(res, statusCode, message) {
+    res.status(statusCode).type('html').send(`<!doctype html>
+        <html lang="en"><head><meta charset="UTF-8"><title>Registration error</title></head>
+        <body><script>
+            alert(${JSON.stringify(message)});
+            window.location.replace('/register');
+        </script><p>${message}</p></body></html>`);
+}
+
+
+// API route to share the session user's dta with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
         res.json({
@@ -90,6 +101,24 @@ app.get('/register', (req, res) => {
 
 // 7. PAGE ROUTING (PROTECTED BY ROLE)
 // Primary entry checkpoint that routes users to their specific dashboard role
+// Check email availability before the registration form is submitted.
+app.get('/api/check-email', async (req, res) => {
+    const email = String(req.query.email || '').trim().toLowerCase();
+
+    if (!email.includes('@')) {
+        return res.json({ available: false });
+    }
+
+    try {
+        const existingUser = await User.exists({ email });
+        return res.json({ available: !existingUser });
+    } catch (error) {
+        console.error('Email availability check failed:', error);
+        return res.status(500).json({ available: false });
+    }
+});
+
+// Route for Dashboard page
 app.get('/dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
         res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
@@ -129,7 +158,12 @@ app.post('/register', validateRegistration, async (req, res) => {
         const { normalizedName, normalizedEmail, password, role } = req.body;
 
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
-            return res.status(400).send("Please select a valid account type.");
+            return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
+        }
+
+        const existingUser = await User.exists({ email: normalizedEmail });
+        if (existingUser) {
+            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
 
         // Encrypt the plain text password securely before saving
