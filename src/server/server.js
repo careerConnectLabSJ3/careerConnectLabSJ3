@@ -20,7 +20,7 @@ const port = 3000;
 app.use(express.urlencoded({ extended: true }));
 
 // static files
-app.use(express.static(path.join(__dirname, 'src')));
+app.use(express.static(path.join(__dirname, '../..', 'src')));
 
 // CONFIGURE SESSION MIDDLEWARE
 app.use(session({
@@ -90,16 +90,16 @@ app.get('/api/user-profile', async (req, res) => {
 
 // Page Routing
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'index.html'));
 });
 // Route for Login page
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'login.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
 });
 
 // Route for Register page
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
 });
 
 // Check email availability before the registration form is submitted.
@@ -123,11 +123,11 @@ app.get('/api/check-email', async (req, res) => {
 app.get('/dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
         // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+        res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
     }
     else if (req.session.user && req.session.user.role === 'recruiter') {
         // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+        res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
     }
     else {
         // User is NOT logged in. Redirect them back to the login screen
@@ -137,11 +137,11 @@ app.get('/dashboard', (req, res) => {
 
 // Route for profile page
 app.get('/profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'profile.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
 });
 
 app.get('/profile-edit', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'profile_edit.html'))
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile_edit.html'))
 })
 
 app.post('/profile-edit', async (req, res) => {
@@ -291,7 +291,7 @@ app.get('/jobSeeker_dashboard', (req, res) => {
     // Confirm the user session exists and matches the job seeker role structure
     if (req.session.user && req.session.user.role === 'job_seeker') {
         // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+        res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
     }
     else {
         // User is NOT logged in. Redirect them back to the login screen
@@ -303,7 +303,7 @@ app.get('/jobSeeker_dashboard', (req, res) => {
 app.get('/recruiter_dashboard', (req, res) => {
     // Confirm the user session exists and matches the recruiter role structure
     if (req.session.user && req.session.user.role === 'recruiter') {
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+        res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
     }
     else {
         // Kick unauthenticated or improper user types back to login
