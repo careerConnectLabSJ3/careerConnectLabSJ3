@@ -46,9 +46,5 @@ cancelBtn.addEventListener("click", async () => {
     loadProfileInfo();
 });
 
-saveBtn.addEventListener("click", async () => {
-    inputs.forEach(e => e.disabled = true);
-    formElement.classList.remove("is-editing");
-});
 
 loadProfileInfo();
