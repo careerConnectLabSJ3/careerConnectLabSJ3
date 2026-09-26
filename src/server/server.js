@@ -15,7 +15,7 @@ const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-const { validateRegistration, sendRegistrationError } = require('./src/js/validation');
+const { validateRegistration, sendRegistrationError } = require('../js/validation');
 
 // 2. MIDDLEWARE SETUP
 app.use(express.urlencoded({ extended: true }));
@@ -89,15 +89,15 @@ app.get('/api/check-email', async (req, res) => {
 
 // 6. PAGE ROUTING (PUBLIC)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'index.html'));
 });
 
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'login.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
 });
 
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
 });
 
 // 7. PAGE ROUTING (PROTECTED BY ROLE)
@@ -120,7 +120,7 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
 });
 
-app.post('/profile', upload.single('pfpUpload'), async (req, res) => {
+app.post('/profile', async (req, res) => {
     try{
         const currUserInfo = req.session.user;
         const { name, education, workExp, skills } = req.body;
@@ -154,14 +154,14 @@ app.post('/profile', upload.single('pfpUpload'), async (req, res) => {
 
 app.get('/jobSeeker_dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
-        return res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+        return res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
     }
     res.redirect('/login');
 });
 
 app.get('/recruiter_dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'recruiter') {
-        return res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+        return res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
     }
     res.redirect('/login');
 });
