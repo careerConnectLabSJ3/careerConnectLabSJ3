@@ -266,7 +266,8 @@ app.post("/login", async (req, res) => {
                 email: user.email,
                 role: user.role,
                 education: user.education,
-                experience: user.experience
+                experience: user.experience,
+                skills: user.skills
             };
 
             if (user.role === 'job_seeker') {
