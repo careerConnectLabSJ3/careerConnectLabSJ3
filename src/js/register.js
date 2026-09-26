@@ -104,8 +104,4 @@ registerForm.addEventListener('submit', async (event) => {
     } catch (error) {
         showValidationAlert('We could not verify the email address right now. Please try again.', emailInput);
     }
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> origin/develop
