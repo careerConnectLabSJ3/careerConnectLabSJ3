@@ -14,6 +14,9 @@ const session = require('express-session');
 const hostname = '0.0.0.0'; // Changed from '127.0.0.1' so your Node server accepts external team requests
 const port = 3000;
 
+// Import Modules from validation.js to handle input validation
+const { validateRegistration, sendRegistrationError } = require('./src/js/validation');
+
 // 2. MIDDLEWARE SETUP
 // Parse incoming URL-encoded form data (from login/registration forms)
 app.use(express.urlencoded({ extended: true }));
@@ -57,6 +60,19 @@ app.get('/api/current-user', (req, res) => {
     }
 });
 
+app.get('/api/check-email', async (req, res) => {
+    const email = String(req.query.email || '').trim().toLowerCase();
+    if (!email.includes('@')) return res.json({ available: false });
+    try {
+        const existingUser = await User.exists({ email });
+        return res.json({ available: !existingUser });
+    } catch (error) {
+        console.error('Email availability check failed:', error);
+        return res.status(500).json({ available: false });
+    }
+});
+
+
 // 6. PAGE ROUTING (PUBLIC)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
@@ -69,6 +85,8 @@ app.get('/login', (req, res) => {
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
 });
+
+
 
 // 7. PAGE ROUTING (PROTECTED BY ROLE)
 // Primary entry checkpoint that routes users to their specific dashboard role
@@ -106,9 +124,9 @@ app.get('/recruiter_dashboard', (req, res) => {
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
 // Registers a new user, hashes their password, and saves them to MongoDB
-app.post('/register', async (req, res) => {
+app.post('/register', validateRegistration, async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        const { normalizedName, normalizedEmail, password, role } = req.body;
 
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
             return res.status(400).send("Please select a valid account type.");
@@ -118,8 +136,8 @@ app.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
-            name,
-            email,
+            name: normalizedName,
+            email: normalizedEmail,
             password: hashedPassword,
             role
         });
@@ -129,6 +147,10 @@ app.post('/register', async (req, res) => {
     }
     catch (error) {
         console.error(error);
+        // FIXED: Catch database level unique constraints safely using your shared helper
+        if (error && error.code === 11000) {
+            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
+        }
         res.status(500).send("Server error during registration");
     }
 });
