@@ -11,12 +11,7 @@ async function loadProfileInfo(){
                     
                     function updateField(element, value){
                         if(!element){return}
-                        if(element.tagName === "P"){
-                            return element.innerText = value;
-                        }
-                        else{
                             element.value = value;
-                        }
                     }
 
                     updateField(profileName, user?.name);
@@ -45,6 +40,23 @@ cancelBtn.addEventListener("click", async () => {
     formElement.classList.remove("is-editing");
     loadProfileInfo();
 });
+
+// Validation for profile inputs and file
+const profileForm = document.getElementById("profile-form");
+const pfpInput = document.getElementById("pfp-upload");
+
+profileForm.addEventListener("submit", (e) => {
+    if (pfpInput.files && pfpInput.files[0]) {
+        const file = pfpInput.files[0];
+        const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+
+        if (file.size > maxSizeInBytes) {
+            e.preventDefault();
+            alert('File size exceeds 2MB limit. Please choose a smaller image.');
+            return;
+        }
+    }
+})
 
 
 loadProfileInfo();
