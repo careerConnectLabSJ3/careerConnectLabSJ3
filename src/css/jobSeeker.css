@@ -168,21 +168,23 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border: 1px solid black;
+    background-color: white;
+    padding: 40px;
     border-radius: 15px;
-    margin: 30px 150px;
+    margin: 30px 300px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 #profile-img{
     border: 1px solid black;
     border-radius: 30px;
+    max-height: 150px;
 }
 
 .profile-main-info{
     display: flex;
     flex-direction: column;
     justify-content: left;
-    margin: 0 0 40px 0;
     width: 50%;
 }
 
@@ -190,14 +192,21 @@ body {
     display: flex;
     flex-direction: column;
     margin: 20px 0;
-    padding: 10px;
+    padding: 15px;
     border: 1px solid black;
     border-radius: 10px;
 }
 
-.icon{
-    max-width: 50px;
+.profile-main-info input{
+    border-radius: 5px;
+    border: 1px solid gray;
     padding: 5px;
+    margin: 3px 0;
+}
+
+.icon{
+    max-width: 35px;
+    padding: 3px 0 0 0;
     border-radius: 20px;
 }
 
@@ -214,18 +223,29 @@ body {
 }
 
 #buttons-profile-edit button{
+    background-color: #3498db;
+    color: white;
+    border: none;
+    font-weight: 200;
+    border-radius: 4px;
+    cursor: pointer;
     padding: 5px 10px;
-    margin: 20px;
+    margin: 5px;
+    width: 120px;
+}
+
+#buttons-profile-edit button:hover{
+    background-color: #145b89
 }
 
 #buttons-profile-edit.hidden{
-    display: none;
+    visibility: hidden;
 }
 
 #profile-form.is-editing #buttons-profile-edit{
-    display: block;
+    visibility: visible;
 }
 
 #profile-form.is-editing #profile-edit-icon{
-    display: none;
+    visibility: hidden;
 }
