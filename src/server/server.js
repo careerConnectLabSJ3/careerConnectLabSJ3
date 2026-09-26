@@ -143,8 +143,9 @@ app.get('/profile', (req, res) => {
 app.post('/profile', async (req, res) => {
     try{
         const currUserInfo = req.session.user;
-        const { name, education, workExp, skills } = req.body;
+        const { name, education, workExp, skills, pfpUpload } = req.body;
 
+        console.log(pfpUpload);
         if(currUserInfo){
             if(name != currUserInfo.name || education != currUserInfo.education || workExp != currUserInfo.experience || skills != currUserInfo.skills){
                 const updatedProfile = {

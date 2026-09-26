@@ -212,7 +212,6 @@ body {
 .icon{
     max-width: 35px;
     padding: 3px 0 0 0;
-    border-radius: 20px;
 }
 
 .right-align{
@@ -225,6 +224,7 @@ body {
     border: none;
     color: white;
     cursor: pointer;
+
 }
 
 #buttons-profile-edit button{
@@ -243,14 +243,13 @@ body {
     background-color: #145b89
 }
 
-#buttons-profile-edit.hidden{
-    visibility: hidden;
-}
-
-#profile-form.is-editing #buttons-profile-edit{
-    visibility: visible;
-}
-
+#buttons-profile-edit.hidden, 
+#pfp-upload.hidden, 
 #profile-form.is-editing #profile-edit-icon{
     visibility: hidden;
+}
+
+#profile-form.is-editing #buttons-profile-edit, 
+#profile-form.is-editing #pfp-upload{
+    visibility: visible;
 }
