@@ -11,13 +11,14 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const multer = require('multer');
-const { Readable } = require('stream');
 
 const hostname = '0.0.0.0'; 
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
 const { validateRegistration, sendRegistrationError } = require('../js/validation');
+const { getProfilePic, updateProfile } = require('./profileController.js');
+const { User } = require('./models/user');
 
 // 2. MIDDLEWARE SETUP
 app.use(express.urlencoded({ extended: true }));
@@ -57,19 +58,7 @@ mongoose.connect(process.env.MONGODB_URI)
     })
     .catch(err => console.error('MongoDB connection failed:', err));
 
-// 4. DATABASE SCHEMA & MODEL
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    role: { type: String, required: true, enum: ['job_seeker', 'recruiter'], },
-    education : { type: String, default: "None"},
-    experience: { type: String, default: "None"},
-    skills: { type: String, default: "None"},
-    profileImageId: { type: mongoose.Schema.Types.ObjectId, default: null }
 
-});
-const User = mongoose.model('User', userSchema);
 
 // Multer setup for temp file uploads in memory
 const upload = multer({
@@ -149,113 +138,10 @@ app.get('/profile', (req, res) => {
 });
 
 // Profile pic fetch
-app.get('/profile/avatar', async (req, res) => {
-    try {
-        if (!req.session.user) {
-            return res.status(401).send('Unauthorized');
-        }
+app.get('/profile/avatar', getProfilePic);
 
-        const user = await User.findOne({ email: req.session.user.email });
-
-        // If user has no custom profile picture, serve the default static image
-        if (!user || !user.profileImageId) {
-            return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
-        }
-
-        const fileId = new mongoose.Types.ObjectId(user.profileImageId);
-        const files = await gfsBucket.find({ _id: fileId }).toArray();
-
-        if (!files || files.length === 0) {
-            return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
-        }
-
-        const contentType = files[0].contentType || 'image/jpeg';
-        res.setHeader('ContentType', contentType);
-        const downloadStream = gfsBucket.openDownloadStream(fileId);
-        downloadStream.pipe(res);
-
-    } catch (err) {
-        console.error("Avatar route catch error:", err)
-        res.status(500).send('Error retrieving image');
-    }
-});
-
-app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
-    try{
-        const currUserInfo = req.session.user;
-        if(!currUserInfo){
-            return res.status(401).redirect('/login');
-        }
-
-        const { name, education, workExp, skills } = req.body;
-        const symbolPattern = /[^a-zA-Z0-9\s'\-\u2019]/;
-        const fieldsToValidate = [name, education, workExp, skills];
-
-        for (let value of fieldsToValidate) {
-            const normalized = String(value || '').trim();
-            if (symbolPattern.test(normalized)) {
-                return res.status(400).json({ 
-                    error: "Validation failed: Only letters, numbers, spaces, apostrophes, and dashes are allowed." 
-                });
-            }
-        }
-
-        const user = await User.findOne({ email: currUserInfo.email });
-        if(!user) return res.status(404).json({error: "User not found"});
-        let newPfpId = user.profileImageId;
-
-        if (req.file) {
-            if (user.profileImageId) {
-                try {
-                    await gfsBucket.delete(new mongoose.Types.ObjectId(user.profileImageId));
-                } catch (err) {
-                    console.log("Old image not found or already deleted");
-                }
-            }
-            // Stream buffer to GridFS
-            const uploadPromise = new Promise((resolve, reject) => {
-                const readableStream = new Readable();
-                readableStream.push(req.file.buffer);
-                readableStream.push(null);
-
-                const uploadStream = gfsBucket.openUploadStream(req.file.originalname, {
-                    contentType: req.file.mimetype
-                });
-                const generatedId = uploadStream.id;
-                readableStream.pipe(uploadStream);
-
-                uploadStream.on("finish", () => resolve(generatedId));
-                uploadStream.on("error", (err) => reject(err));
-            });
-
-            newPfpId = await uploadPromise;
-        }
-        
-        user.name = name || user.name;
-        user.education = education || user.education;
-        user.experience = workExp || user.experience;
-        user.skills = skills || user.skills;
-        user.profileImageId = newPfpId;
-
-        await user.save();
-
-        // Update session data so it reflects immediately
-        req.session.user = {
-            ...currUserInfo,
-            name: user.name,
-            education: user.education,
-            experience: user.experience,
-            skills: user.skills
-        };
-
-        res.redirect("/profile");
-        
-    }
-    catch(error){
-        console.log(error);
-        return res.status(500).json({error : error.message});
-    }
-})
+// Profile update
+app.post('/profile', upload.single("pfpUpload"), updateProfile)
 
 
 app.get('/jobSeeker_dashboard', (req, res) => {
