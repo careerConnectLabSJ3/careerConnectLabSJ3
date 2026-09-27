@@ -17,13 +17,16 @@ async function getProfilePic(req, res){
             return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
         }
 
+        // Creates an id for the picture in Mongo
         const fileId = new Types.ObjectId(user.profileImageId);
         const files = await gfsBucket.find({ _id: fileId }).toArray();
 
+        // If no new img is found from form POST, display default pfp
         if (!files || files.length === 0) {
             return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
         }
 
+        // image is downloaded
         const contentType = files[0].contentType || 'image/jpeg';
         res.setHeader('ContentType', contentType);
         const downloadStream = gfsBucket.openDownloadStream(fileId);
@@ -44,6 +47,8 @@ async function updateProfile(req, res){
         }
 
         const { name, education, workExp, skills } = req.body;
+
+        // pattern allows [a-z] [A-Z] [0-9] space apostrophe hyphen and curly apostrophe
         const symbolPattern = /[^a-zA-Z0-9\s'\-\u2019]/;
         const fieldsToValidate = [name, education, workExp, skills];
 
@@ -63,6 +68,7 @@ async function updateProfile(req, res){
         if (req.file) {
             if (user.profileImageId) {
                 try {
+                    // deleted old pfp
                     await gfsBucket.delete(new mongoose.Types.ObjectId(user.profileImageId));
                 } catch (err) {
                     console.log("Old image not found or already deleted");
@@ -87,6 +93,7 @@ async function updateProfile(req, res){
             newPfpId = await uploadPromise;
         }
         
+        // updates with new data if new data found, otherwise same data 
         user.name = name || user.name;
         user.education = education || user.education;
         user.experience = workExp || user.experience;
