@@ -39,12 +39,6 @@ body {
     align-items: center;
 }
 
-.dashboard-profile{
-    border: 1px solid black;
-    max-height: 35px;
-    border-radius: 30px;
-}
-
 /* ===== Main Content Container ===== */
 .dashboard-main {
     max-width: 1000px;
@@ -178,7 +172,10 @@ body {
 #profile-img{
     border: 1px solid black;
     border-radius: 30px;
-    max-height: 150px;
+    object-fit: cover;
+    height: 150px;
+    width: 150px;
+    overflow: hidden;
 }
 
 .profile-main-info{
@@ -210,7 +207,8 @@ body {
 }
 
 .icon{
-    max-width: 35px;
+    width: 35px;
+    height: 35px;
     padding: 3px 0 0 0;
 }
 
