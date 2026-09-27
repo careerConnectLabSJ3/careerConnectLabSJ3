@@ -76,7 +76,7 @@ Recruiters can:
 
 ### Clone Repository
 ```bash
-git clone https://github.com/fmvemba22/SOEN341.git
+git clone https://github.com/careerConnectLabSJ3/careerConnectLabSJ3.git
 ```
 
 ### Install Dependencies
