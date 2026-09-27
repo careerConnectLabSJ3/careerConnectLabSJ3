@@ -69,7 +69,7 @@ async function updateProfile(req, res){
             if (user.profileImageId) {
                 try {
                     // deleted old pfp
-                    await gfsBucket.delete(Types.ObjectId(user.profileImageId));
+                    await gfsBucket.delete(new Types.ObjectId(user.profileImageId));
                 } catch (err) {
                     console.log("Old image not found or already deleted");
                 }
