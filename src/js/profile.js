@@ -45,10 +45,25 @@ cancelBtn.addEventListener("click", async () => {
 const profileForm = document.getElementById("profile-form");
 const pfpInput = document.getElementById("pfp-upload");
 
+function validateProfileForm(event){
+    const fieldsToValidate = [profileName.value, profileEducation.value, profileWorkExp.value, profileSkills.value]
+    const symbolPattern = /[^a-zA-Z0-9\s'\-]/;
+
+    for(let value of fieldsToValidate) {
+        let normalizedInput = String(value || '').trim();
+        if (symbolPattern.test(normalizedInput)) {
+            event.preventDefault();
+            alert('Symbols are not allowed in profile fields.');
+            return false;
+        }
+    }
+}
+
+
 profileForm.addEventListener("submit", (e) => {
     if (pfpInput.files && pfpInput.files[0]) {
         const file = pfpInput.files[0];
-        const maxSizeInBytes = 2 * 1024 * 1024; // 2MB
+        const maxSizeInBytes = 2 * 1024 * 1024;
 
         if (file.size > maxSizeInBytes) {
             e.preventDefault();
@@ -56,6 +71,7 @@ profileForm.addEventListener("submit", (e) => {
             return;
         }
     }
+    validateProfileForm(e);
 })
 
 
