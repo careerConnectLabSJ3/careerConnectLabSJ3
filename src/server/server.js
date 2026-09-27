@@ -33,6 +33,18 @@ app.use(session({
     }
 }));
 
+// Error handling using middleware
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).send('File size is too large. Maximum allowed size is 2MB.');
+        }
+    }
+    // Handle other general errors
+    console.error("Server error:", err);
+    res.status(500).send('An unexpected error occurred.');
+});
+
 // 3. DATABASE CONNECTION
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
@@ -60,7 +72,10 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Multer setup for temp file uploads in memory
-const upload = multer({storage: multer.memoryStorage()});
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 }
+});
 
 // 5. API ROUTES
 // API route to share the session user's data with the frontend
