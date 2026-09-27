@@ -12,11 +12,11 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const multer = require('multer');
 
-const hostname = '0.0.0.0'; 
+const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-const { validateRegistration, sendRegistrationError } = require('../js/validation');
+const { validateRegistration, sendRegistrationError, sendLoginError } = require('../js/validation');
 const { getProfilePic, updateProfile } = require('./profileController.js');
 const { User } = require('./models/user');
 
@@ -25,12 +25,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../..', 'src')));
 
 app.use(session({
-    secret: 'super_secret_key_for_soen341', 
-    resave: false,                           
-    saveUninitialized: false,                
+    secret: 'super_secret_key_for_soen341',
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-        secure: false,                       
-        maxAge: 1000 * 60 * 60 * 24          
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
@@ -128,7 +128,7 @@ app.get('/dashboard', (req, res) => {
         res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
     }
     else {
-        res.redirect('/login'); 
+        res.redirect('/login');
     }
 });
 
@@ -194,34 +194,42 @@ app.post('/register', validateRegistration, async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email: email });
+    try {
+        const { email, password } = req.body;
+        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
-    if (user) {
-        if (password === user.password || await bcrypt.compare(password, user.password)) {
-            req.session.user = {
-                id: user._id, 
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                education: user.education,
-                experience: user.experience,
-                skills: user.skills
-            };
+        if (!normalizedEmail || typeof password !== 'string' || !password) {
+            return res.status(400).send("Email and password are required.");
+        }
 
-            if (user.role === 'job_seeker') {
-                return res.redirect('/jobSeeker_dashboard');
-            }
-            if (user.role === 'recruiter') {
-                return res.redirect('/recruiter_dashboard');
-            }
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return sendLoginError(res, "Invalid email or password. Please try again.");
         }
-        else {
-            return res.send("Incorrect password!");
+
+        if (user.role !== 'job_seeker' && user.role !== 'recruiter') {
+            return res.status(403).send("This account does not have a valid role.");
         }
+
+        req.session.user = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            education: user.education,
+            experience: user.experience,
+            skills: user.skills
+        };
+
+        if (user.role === 'job_seeker') {
+            return res.redirect('/jobSeeker_dashboard');
+        }
+
+        return res.redirect('/recruiter_dashboard');
     }
-    else {
-        return res.send("User not found!");
+    catch (error) {
+        console.error("Login failed:", error);
+        return res.status(500).send("Server error during login.");
     }
 });
 
