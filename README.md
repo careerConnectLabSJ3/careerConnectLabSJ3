@@ -23,9 +23,9 @@ Recruiters can:
 
 ## Team Members
 - Freddy Mvemba
-- Yacine
-- EmmanuelleLin
-- bahaeddine Mahgoudh
+- Yacine Zribi
+- Emmanuelle Lin
+- Bahaeddine Mahgoudh
 
 
 ## Technologies
@@ -75,24 +75,21 @@ Recruiters can:
 
 
 ### Clone Repository
-
 ```bash
-git clone https://github.com/your-team/careerconnect.git
+git clone https://github.com/careerConnectLabSJ3/careerConnectLabSJ3.git
 ```
-### Install Dependencies
 
+### Install Dependencies
 ```bash
 npm install
-npm install express mongoose express-session
 ```
-### Install Bycrypt Generator for password
-```bash
-npm install bcrypt
-```
+
 ### Run Application
 ```bash
 npm start
 ```
+## CareerConnect Deployment Link
+*insert here*
 ## GitHub Repository
 GitHub Repository Link:
 https://github.com/careerConnect/careerConnect
@@ -100,16 +97,16 @@ https://github.com/careerConnect/careerConnect
 ## Branching Strategy
 - main: Stable production-ready code
 - develop: Integration branch
-- feature/*: Individual feature branches
+- develop/*: Individual feature branches
   
 ## Team Workflow
 1. Create GitHub Issue
-2. Create feature branch to individually test your indivual work before merging to develop
-3. implement and test feature locally using `npm start`
+2. Create child branch from develop
+3. Implement and test feature locally using `npm start`
 4. Open Pull Request
-5. Peer Review
-6. Merge into develop
-7.Final step:Merge the final product to main branch
+5. Peer Review with local testing
+6. Merge into develop after approval
+7. **Only done once per sprint**: Merge the final product to main branch
 
 # Dev_SOEN341 Backend Setup Guide
 

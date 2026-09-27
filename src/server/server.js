@@ -10,16 +10,19 @@ const app = express();
 const path = require('path');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
+const multer = require('multer');
 
 const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-const { validateRegistration, sendRegistrationError, sendLoginError } = require('./src/js/validation');
+const { validateRegistration, sendRegistrationError, sendLoginError } = require('../js/validation');
+const { getProfilePic, updateProfile } = require('./profileController.js');
+const { User } = require('./models/user');
 
 // 2. MIDDLEWARE SETUP
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'src')));
+app.use(express.static(path.join(__dirname, '../..', 'src')));
 
 app.use(session({
     secret: 'super_secret_key_for_soen341',
@@ -31,19 +34,37 @@ app.use(session({
     }
 }));
 
+// Error handling using middleware
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).send('File size is too large. Maximum allowed size is 2MB.');
+        }
+    }
+    // Handle other general errors
+    console.error("Server error:", err);
+    res.status(500).send('An unexpected error occurred.');
+});
+
 // 3. DATABASE CONNECTION
 mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB: careerConnect_db'))
+    .then(() => {
+        console.log('Connected to MongoDB: careerConnect_db');
+        // Initialize GridFS bucket
+        gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: 'profileImages'
+        });
+        console.log('GridFS Bucket Initialized');
+    })
     .catch(err => console.error('MongoDB connection failed:', err));
 
-// 4. DATABASE SCHEMA & MODEL
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    password: { type: String, required: true },
-    role: { type: String, required: true, enum: ['job_seeker', 'recruiter'] }
+
+
+// Multer setup for temp file uploads in memory
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 }
 });
-const User = mongoose.model('User', userSchema);
 
 // 5. API ROUTES
 // API route to share the session user's data with the frontend
@@ -55,6 +76,20 @@ app.get('/api/current-user', (req, res) => {
         });
     }
 });
+
+// API route for user profile information
+app.get('/api/user-profile', async (req, res) => {
+    const currUser=req.session.user;
+    if (currUser) {
+
+        res.json({
+            name: currUser.name,
+            education: currUser?.education,
+            experience: currUser?.experience,
+            skills: currUser?.skills
+        });
+    }
+})
 
 // Check email availability before the registration form is submitted.
 app.get('/api/check-email', async (req, res) => {
@@ -71,40 +106,55 @@ app.get('/api/check-email', async (req, res) => {
 
 // 6. PAGE ROUTING (PUBLIC)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'index.html'));
 });
 
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'login.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
 });
 
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'src', 'Pages', 'register.html'));
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
 });
 
 // 7. PAGE ROUTING (PROTECTED BY ROLE)
 app.get('/dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+        // User is logged in! Serve the dashboard page
+        res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
     }
     else if (req.session.user && req.session.user.role === 'recruiter') {
-        res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+        // User is logged in! Serve the dashboard page
+        res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
     }
     else {
         res.redirect('/login');
     }
 });
 
+// Route for profile page
+app.get('/profile', (req, res) => {
+    if(!req.session.user) return res.redirect('/login');
+    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
+});
+
+// Profile pic fetch
+app.get('/profile/avatar', getProfilePic);
+
+// Profile update
+app.post('/profile', upload.single("pfpUpload"), updateProfile)
+
+
 app.get('/jobSeeker_dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'job_seeker') {
-        return res.sendFile(path.join(__dirname, 'src', 'Pages', 'jobSeeker_dashboard.html'));
+        return res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
     }
     res.redirect('/login');
 });
 
 app.get('/recruiter_dashboard', (req, res) => {
     if (req.session.user && req.session.user.role === 'recruiter') {
-        return res.sendFile(path.join(__dirname, 'src', 'Pages', 'recruiter_dashboard.html'));
+        return res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
     }
     res.redirect('/login');
 });
@@ -166,7 +216,10 @@ app.post("/login", async (req, res) => {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.role,
+            education: user.education,
+            experience: user.experience,
+            skills: user.skills
         };
 
         if (user.role === 'job_seeker') {

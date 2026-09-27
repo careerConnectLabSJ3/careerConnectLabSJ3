@@ -7,8 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "nodemon server.js",
-    "production": "node server.js",
+    "start": "nodemon src/server/server.js",
+    "production": "node src/server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -30,6 +30,7 @@
     "express-session": "^1.19.0",
     "mongodb": "4.1",
     "mongoose": "^9.10.2",
+    "multer": "^2.4.0",
     "mysql2": "^3.24.4"
   },
   "devDependencies": {}
