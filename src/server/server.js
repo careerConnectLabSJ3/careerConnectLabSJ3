@@ -188,7 +188,20 @@ app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
         }
 
         const { name, education, workExp, skills } = req.body;
+        const symbolPattern = /[^a-zA-Z0-9\s'\-\u2019]/;
+        const fieldsToValidate = [name, education, workExp, skills];
+
+        for (let value of fieldsToValidate) {
+            const normalized = String(value || '').trim();
+            if (symbolPattern.test(normalized)) {
+                return res.status(400).json({ 
+                    error: "Validation failed: Only letters, numbers, spaces, apostrophes, and dashes are allowed." 
+                });
+            }
+        }
+
         const user = await User.findOne({ email: currUserInfo.email });
+        if(!user) return res.status(404).json({error: "User not found"});
         let newPfpId = user.profileImageId;
 
         if (req.file) {
@@ -196,7 +209,7 @@ app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
                 try {
                     await gfsBucket.delete(new mongoose.Types.ObjectId(user.profileImageId));
                 } catch (err) {
-                    console.log('Old image not found or already deleted');
+                    console.log("Old image not found or already deleted");
                 }
             }
             // Stream buffer to GridFS
@@ -211,8 +224,8 @@ app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
                 const generatedId = uploadStream.id;
                 readableStream.pipe(uploadStream);
 
-                uploadStream.on('finish', () => resolve(generatedId));
-                uploadStream.on('error', (err) => reject(err));
+                uploadStream.on("finish", () => resolve(generatedId));
+                uploadStream.on("error", (err) => reject(err));
             });
 
             newPfpId = await uploadPromise;
@@ -235,7 +248,7 @@ app.post('/profile', upload.single("pfpUpload"), async (req, res) => {
             skills: user.skills
         };
 
-        res.redirect('/profile');
+        res.redirect("/profile");
         
     }
     catch(error){
