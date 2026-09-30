@@ -5,28 +5,38 @@
 }
 body {
     font-family: sans-serif;
-    background-color: #f9f9f9;
+    background-color: #f4f7f6;
     color: #333;
 }
 
 /* ===== Dashboard Header ===== */
 .dashboard-header {
     background: #333;
-    color: #fff;
+    background-color: #fff;
     padding: 15px 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.nav-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+    text-decoration: none;
+}
+
+.nav-logo span {
+    color: #3498db;
+}
+
 .welcome-message {
     margin-right: 20px;
 }
 
-.logout-link {
-    color: #fff;
-    text-decoration: none;
-    font-weight: bold;
+.dashboard-navbar{
+    display: flex;
+    align-items: center;
 }
 
 /* ===== Main Content Container ===== */
@@ -144,4 +154,100 @@ body {
 .status-applied {
     background: #e7f5ff;
     color: #1c7ed6;
+}
+
+/* Profile CSS */
+.profile-main{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    margin: 30px 300px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#profile-img{
+    border: 1px solid black;
+    border-radius: 30px;
+    object-fit: cover;
+    height: 150px;
+    width: 150px;
+    overflow: hidden;
+}
+
+.profile-main-info{
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    width: 50%;
+}
+
+.profile-main-info section{
+    display: flex;
+    flex-direction: column;
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.05);
+    background-color: #f4f7f6;
+    font-family: sans-serif;
+    font-size: 12pt;
+    font-weight: bold;
+}
+
+.profile-main-info input{
+    border-radius: 5px;
+    border: 1px solid gray;
+    padding: 5px;
+    margin: 3px 0;
+    font-size: 12pt;
+}
+
+.icon{
+    width: 35px;
+    height: 35px;
+    padding: 3px 0 0 0;
+}
+
+.right-align{
+    display: flex;
+    justify-content: right;
+}
+
+#profile-edit-icon{
+    border-radius: 10px;
+    border: none;
+    color: white;
+    cursor: pointer;
+
+}
+
+#buttons-profile-edit button{
+    background-color: #3498db;
+    color: white;
+    border: none;
+    font-weight: 200;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin: 5px;
+    width: 120px;
+}
+
+#buttons-profile-edit button:hover{
+    background-color: #145b89
+}
+
+#buttons-profile-edit.hidden, 
+#pfp-upload.hidden, 
+#profile-form.is-editing #profile-edit-icon{
+    visibility: hidden;
+}
+
+#profile-form.is-editing #buttons-profile-edit, 
+#profile-form.is-editing #pfp-upload{
+    visibility: visible;
 }

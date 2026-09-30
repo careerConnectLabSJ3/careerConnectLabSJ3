@@ -4,12 +4,11 @@
   "description": "CareerConnect is a web-based platform designed to help job seekers manage their job search activities. The system allows users to create profiles, upload and manage resumes, search for job opportunities, track submitted applications, and follow the progress of their application process. The platform aims to centralize job-search activities and help users stay organized throughout their career development journey.",
   "main": "index.js",
   "directories": {
-    "doc": "docs",
-    "test": "tests"
+    "doc": "docs"
   },
   "scripts": {
-    "start": "nodemon server.js",
-    "production": "node server.js",
+    "start": "nodemon src/server/server.js",
+    "production": "node src/server/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,7 +28,10 @@
     "dotenv": "^18.0.0",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "mysql2": "^3.24.4",
-    "react": "^19.3.0"
-  }
+    "mongodb": "4.1",
+    "mongoose": "^9.10.2",
+    "multer": "^2.4.0",
+    "mysql2": "^3.24.4"
+  },
+  "devDependencies": {}
 }
