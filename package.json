@@ -31,7 +31,7 @@
     "mongodb": "4.1",
     "mongoose": "^9.10.2",
     "multer": "^2.4.0",
-    "mysql2": "^3.24.4"
-  },
-  "devDependencies": {}
+    "mysql2": "^3.24.4",
+    "react": "^19.3.0"
+  }
 }
