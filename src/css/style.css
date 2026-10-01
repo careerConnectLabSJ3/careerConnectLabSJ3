@@ -82,11 +82,11 @@ nav a:hover
 .btn-primary {
     background: var(--primary);
     color:var(--surface);
-    padding: 5px;
+    padding: 10px;
     border-radius: 5px;
 }
 .btn-primary:hover { 
-    background: var(--surface); 
+    background: var(--accent); 
     text-decoration: none;
 }
 .hero {
