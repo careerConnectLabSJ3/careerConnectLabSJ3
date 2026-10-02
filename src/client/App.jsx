@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import './css/style.css';
 import Header from './components/Header'
@@ -13,9 +13,9 @@ function App() {
       <Header/>
       <main>
         <Routes>
-          <Route path="/" element={<Welcome/>}/>
-          <Route path="/login" element={<Login/>}/>
-          <Route path="/register" element={<Register/>} />
+          <Route path="/" element={<Welcome />}/>
+          <Route path="/login" element={<Login />}/>
+          <Route path="/register" element={<Register />} />
         </Routes>
       </main>
       <footer>

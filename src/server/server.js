@@ -104,18 +104,6 @@ app.get('/api/check-email', async (req, res) => {
     }
 });
 
-// 6. PAGE ROUTING (PUBLIC)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'index.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
-});
-
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
-});
 
 // 7. PAGE ROUTING (PROTECTED BY ROLE)
 app.get('/dashboard', (req, res) => {
