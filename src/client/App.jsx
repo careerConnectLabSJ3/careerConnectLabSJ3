@@ -1,4 +1,5 @@
-import './styles.css';
+import './css/style.css';
+import './css/header.css';
 
 const applications = [
   { title: 'Frontend Developer', status: 'Applied', className: '' },
