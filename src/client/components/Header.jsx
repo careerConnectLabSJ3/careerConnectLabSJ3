@@ -15,7 +15,7 @@ export default function Header() {
           <div className="site-nav-links">
             <Link to="/">Home</Link>
             <Link to="/login">Login</Link>
-            <a href="/register">Register</a>
+            <Link to="/register">Register</Link>
           </div>
         </div>
       </nav>
