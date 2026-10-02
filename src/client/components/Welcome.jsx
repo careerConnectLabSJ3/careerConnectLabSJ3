@@ -1,4 +1,3 @@
-import '../css/style.css';
 
 const applications = [
   { title: 'Frontend Developer', status: 'Applied', className: '' },

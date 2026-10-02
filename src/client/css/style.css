@@ -15,6 +15,19 @@
     --radius: 12px;
     --shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
 }
+
+#root{
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main{
+    flex-direction: column;
+    display: flex;
+    flex: 1;
+}
+
 body {
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg);
@@ -26,49 +39,9 @@ a {
     color: var(--primary); 
     text-decoration: none;
 }
-a:hover
-{
-    text-decoration: underline; 
-}
- /* ---------- Header / Nav ---------- */
-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    padding: 10px;
-}
-.nav-wrap {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0.9rem 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-.brand{
-    font-weight: bold;
-    font-size: 1.15rem;
-    color: var(--text);
-}
-nav ul{
-    list-style: none;
-    display: flex;
-    gap: 1.25rem;
-    align-items: center;
-}
-nav a {
-    color: var(--muted);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-nav a:hover 
-{ 
-    color: var(--primary); 
-    text-decoration: none; 
-}
+
+
+
 .btn {
     display: inline-block;
     padding: 0.55rem 1rem;
@@ -145,6 +118,7 @@ nav a:hover
     max-width: 1100px;
     margin: 0 auto;
     padding: 2rem 1.25rem 4rem;
+    width: 100%;
 }
 .features h2 {
     font-size: 1.6rem;
@@ -178,12 +152,12 @@ nav a:hover
 }
 /* ---------- Footer ---------- */
 footer {
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-    padding: 1.5rem 1.25rem;
+    background-color: #2c3e50;
+    color: #ecf0f1;
     text-align: center;
-    color: var(--muted);
-    font-size: 0.88rem;
+    padding: 1rem;
+    font-size: 0.85rem;
+    margin-top: auto;
 }
 /* ===== Shared Section Styling ===== */
 

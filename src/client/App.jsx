@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import './css/style.css';
 import Header from './components/Header'
 import Welcome from './components/Welcome'
 import Login from "./components/Login";

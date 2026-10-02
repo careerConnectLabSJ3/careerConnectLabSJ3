@@ -13,7 +13,7 @@ export default function Header() {
             Career<span>Connect</span>
           </Link>
           <div className="site-nav-links">
-            <Link to="/" className="active">Home</Link>
+            <Link to="/">Home</Link>
             <Link to="/login">Login</Link>
             <a href="/register">Register</a>
           </div>
