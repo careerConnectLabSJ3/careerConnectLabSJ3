@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 
 const applications = [
   { title: 'Frontend Developer', status: 'Applied', className: '' },
@@ -41,8 +43,8 @@ function Hero() {
           opportunities, and track every application — from submission to offer.
         </p>
         <div className="hero-actions">
-          <a href="/register" className="btn btn-primary">Get started</a>
-          <a href="/login" className="btn btn-ghost">I already have an account</a>
+          <Link to="/register" className="btn btn-primary">Get started</Link>
+          <Link to="/login" className="btn btn-ghost">I already have an account</Link>
         </div>
       </div>
 
