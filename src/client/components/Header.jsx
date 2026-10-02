@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import '../css/header.css';
+import { Link } from "react-router-dom";
 
 
 export default function Header() {
@@ -8,12 +9,12 @@ export default function Header() {
     <header className="site-header">
       <nav aria-label="Main navigation">
         <div className="site-nav-container">
-          <a href="/" className="site-logo">
+          <Link to="/" className="site-logo">
             Career<span>Connect</span>
-          </a>
+          </Link>
           <div className="site-nav-links">
-            <a href="/" className="active">Home</a>
-            <a href="/login">Login</a>
+            <Link to="/" className="active">Home</Link>
+            <Link to="/login">Login</Link>
             <a href="/register">Register</a>
           </div>
         </div>
