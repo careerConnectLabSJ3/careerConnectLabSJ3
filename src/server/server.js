@@ -67,6 +67,19 @@ const upload = multer({
 });
 
 // 5. API ROUTES
+// checks if user is already logged in, also handles refreshes
+app.get('/api/check-session', (req, res) => {
+    if(req.session.user){
+        return res.json({
+            loggedIn: true,
+            user: req.session.user
+        });
+    }
+    return res.json({
+        loggedIn: false
+    });
+});
+
 // API route to share the session user's data with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
@@ -182,7 +195,7 @@ app.post('/register', validateRegistration, async (req, res) => {
     }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
     try {
         const { email, password } = req.body;
         const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';

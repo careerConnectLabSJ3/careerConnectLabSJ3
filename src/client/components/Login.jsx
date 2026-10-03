@@ -16,7 +16,7 @@ export default function Login(){
     const password = e.target.password.value;
 
     try{
-      const res = await fetch('/login',{
+      const res = await fetch('/api/login',{
         method: 'POST',
         headers: {
          'Content-Type': 'application/json',
@@ -35,7 +35,6 @@ export default function Login(){
 
       const data = await res.json();
       if(data.role == "job_seeker"){
-        console.log("HALLOOOO");
         <Navigate to={<JobSeekerDashboard />}/>
       }
       // else if(data.role == "recruiter"){
