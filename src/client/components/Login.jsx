@@ -1,18 +1,63 @@
+import { useState } from 'react';
 import '../css/login.css';
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 
 
 export default function Login(){
 
-  // const handleSubmit = async(e) => {
-  //   e.preventDefault();
-  // };
+  const [error, setError] = useState('');
+
+
+  async function handleLogin(e){
+    e.preventDefault();
+
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try{
+      const res = await fetch('/login',{
+        method: 'POST',
+        headers: {
+         'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email, password
+        }),
+      });
+
+      if(!res.ok){
+        const errMsg = await res.text();
+        setError(errMsg);
+        return
+      }
+
+      const data = await res.json();
+      if(data.role == "job_seeker"){
+        Navigate()
+      }
+      else if(data.role == "recruiter"){
+        Navigate()
+      }
+
+    }
+    catch(e){
+      console.error("Login error:", e);
+      setError("Unable to connect to server.");
+    }
+  }
 
   return(
     <section className="auth-container">
       <div className="auth-card">
         <h2>Welcome Back</h2>
         <p className="auth-subtitle">Log in to manage your job search activities</p>
+        
+        {error && (
+          <p className="auth-error">
+            {error}
+          </p>
+        )}
 
         <form className="auth-form">
           <div className="form-group">
@@ -25,7 +70,7 @@ export default function Login(){
             <input type="password" id="password" name="password" placeholder="Enter your password" required/>
           </div>
 
-          <button type="submit" className="btn-primary" >Log In</button>
+          <button className="btn-primary" onSubmit={handleLogin}>Log In</button>
         </form>
 
         <p className="auth-redirect">

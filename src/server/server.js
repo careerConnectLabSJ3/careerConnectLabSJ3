@@ -210,11 +210,10 @@ app.post("/login", async (req, res) => {
             skills: user.skills
         };
 
-        if (user.role === 'job_seeker') {
-            return res.redirect('/jobSeeker_dashboard');
-        }
-
-        return res.redirect('/recruiter_dashboard');
+        return res.status(200).json({
+            message: "Login successful",
+            role: user.role
+        });
     }
     catch (error) {
         console.error("Login failed:", error);
