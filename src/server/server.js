@@ -23,6 +23,7 @@ const { User } = require('./models/user');
 // 2. MIDDLEWARE SETUP
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../..', 'src')));
+app.use(express.json());
 
 app.use(session({
     secret: 'super_secret_key_for_soen341',

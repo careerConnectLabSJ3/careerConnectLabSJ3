@@ -11,14 +11,17 @@ import JobSeekerDashboard from "./components/JobSeekerDashboard";
 
 function App() {
 
-  const [session, setSession] = useState({});
+  const [session, setSession] = useState({loggedIn: false});
 
   // checks if there's a session attributed to a user logged in
   const checkUserSession = async() => {
     try{
-      const res = await fetch('/api/check-session');
+      const res = await fetch('/api/check-session',{
+          credentials: 'include'
+      });
       const data = await res.json();
       setSession(data);
+      console.log(data);
     }
     catch(e){
       console.error('Unable to fetch logged in user', e.message)
@@ -35,9 +38,9 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<Welcome />}/>
-          <Route path="/login" element={<Login />}/>
+          <Route path="/login" element={<Login onLogin={checkUserSession}/>}/>
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={session.loggedIn ? <JobSeekerDashboard/> : <Navigate to="/"/>}/>
+          <Route path="/job-seeker-dashboard" element={session.loggedIn ? <JobSeekerDashboard/> : <Navigate to="/"/>}/>
         </Routes>
       </main>
       <footer>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import '../css/login.css';
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import JobSeekerDashboard from './JobSeekerDashboard';
 
 
-export default function Login(){
+export default function Login({onLogin}){
 
+  const navigate = useNavigate();
   const [error, setError] = useState('');
-
 
   async function handleLogin(e){
     e.preventDefault();
@@ -23,7 +23,8 @@ export default function Login(){
         },
         credentials: 'include',
         body: JSON.stringify({
-          email, password
+          email: email, 
+          password: password
         }),
       });
 
@@ -34,8 +35,9 @@ export default function Login(){
       }
 
       const data = await res.json();
+      await onLogin();
       if(data.role == "job_seeker"){
-        <Navigate to={<JobSeekerDashboard />}/>
+        navigate("/job-seeker-dashboard");
       }
       // else if(data.role == "recruiter"){
       //   Navigate()
@@ -60,7 +62,7 @@ export default function Login(){
           </p>
         )}
 
-        <form className="auth-form">
+        <form className="auth-form" onSubmit={handleLogin}>
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <input type="email" id="email" name="email" placeholder="Enter your email" required/>
@@ -71,7 +73,7 @@ export default function Login(){
             <input type="password" id="password" name="password" placeholder="Enter your password" required/>
           </div>
 
-          <button className="btn-primary" onSubmit={handleLogin}>Log In</button>
+          <button type="submit" className="btn-primary">Log In</button>
         </form>
 
         <p className="auth-redirect">
