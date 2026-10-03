@@ -2,7 +2,7 @@ import '../css/header.css';
 import { Link } from "react-router-dom";
 
 
-export default function Header() {
+export default function Header({loggedIn, username}) {
 
 
   return (
@@ -14,8 +14,21 @@ export default function Header() {
           </Link>
           <div className="site-nav-links">
             <Link to="/">Home</Link>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
+            {!loggedIn ? (
+              <>
+                <Link to="/login">Login</Link>
+                <Link to="/register">Register</Link>
+              </>
+            ) : (
+              <>
+                <span class="site-welcome" id="welcome-message">Welcome Back, {username}!</span>
+                <a href="/profile" class="profile-link">
+                    <img src="/profile/avatar" alt="Profile Picture" class="dashboard-profile"/>
+                </a>
+                <a href="/logout">Log Out</a>
+              </>
+            )}
+            
           </div>
         </div>
       </nav>

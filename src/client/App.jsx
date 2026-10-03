@@ -34,10 +34,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Header/>
+      <Header loggedIn={session.loggedIn} username={session?.user?.name}/>
       <main>
         <Routes>
-          <Route path="/" element={<Welcome />}/>
+          <Route path="/" element={session.loggedIn ? <JobSeekerDashboard/> : <Welcome />}/>
           <Route path="/login" element={<Login onLogin={checkUserSession}/>}/>
           <Route path="/register" element={<Register />} />
           <Route path="/job-seeker-dashboard" element={session.loggedIn ? <JobSeekerDashboard/> : <Navigate to="/"/>}/>
