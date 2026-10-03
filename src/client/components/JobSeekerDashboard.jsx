@@ -1,4 +1,4 @@
-
+import '../css/jobSeeker.css';
 
 export default function JobSeekerDashboard(){
   return(
