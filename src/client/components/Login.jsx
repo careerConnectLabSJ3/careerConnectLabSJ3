@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import '../css/login.css';
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import JobSeekerDashboard from './JobSeekerDashboard';
 
 
 export default function Login(){
@@ -34,11 +35,12 @@ export default function Login(){
 
       const data = await res.json();
       if(data.role == "job_seeker"){
-        Navigate()
+        console.log("HALLOOOO");
+        <Navigate to={<JobSeekerDashboard />}/>
       }
-      else if(data.role == "recruiter"){
-        Navigate()
-      }
+      // else if(data.role == "recruiter"){
+      //   Navigate()
+      // }
 
     }
     catch(e){
