@@ -235,12 +235,20 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
-app.get('/logout', (req, res) => {
+app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            return console.log("Logout failed:", err);
+            console.log("Logout failed:", err);
+            return res.status(500).json({
+                loggedIn: true,
+                message: "Logout failed"
+            });
         }
-        res.redirect('/login');
+        res.clearCookie('connect.sid');
+        return res.status(200).json({
+            loggedIn: true,
+            message: "Logout successful"
+        })
     });
 });
 

@@ -21,12 +21,30 @@ function App() {
       });
       const data = await res.json();
       setSession(data);
-      console.log(data);
     }
     catch(e){
       console.error('Unable to fetch logged in user', e.message)
     }
   };
+
+  // logout api fetch
+  const logout = async() => {
+    try{
+      const res = await fetch('/api/logout',{
+        method: 'POST',
+        credentials: 'include'
+      });
+      if(!res.ok){
+        throw new Error('Logout failed')
+      }
+      await checkUserSession();
+    }
+    catch(e){
+      console.error("Unable to logout:", e)
+    }
+  };
+
+
 
   useEffect(() => {
     checkUserSession();
@@ -34,7 +52,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Header loggedIn={session.loggedIn} username={session?.user?.name}/>
+      <Header onLogout={logout} loggedIn={session.loggedIn} username={session?.user?.name}/>
       <main>
         <Routes>
           <Route path="/" element={session.loggedIn ? <JobSeekerDashboard/> : <Welcome />}/>

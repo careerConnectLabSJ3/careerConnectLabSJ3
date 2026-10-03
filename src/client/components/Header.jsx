@@ -2,7 +2,7 @@ import '../css/header.css';
 import { Link } from "react-router-dom";
 
 
-export default function Header({loggedIn, username}) {
+export default function Header({loggedIn, username, onLogout}) {
 
 
   return (
@@ -21,11 +21,11 @@ export default function Header({loggedIn, username}) {
               </>
             ) : (
               <>
-                <span class="site-welcome" id="welcome-message">Welcome Back, {username}!</span>
-                <a href="/profile" class="profile-link">
+                <span className="site-welcome" id="welcome-message">Welcome Back, {username}!</span>
+                <a href="/profile" className="profile-link">
                     <img src="/profile/avatar" alt="Profile Picture" class="dashboard-profile"/>
                 </a>
-                <a href="/logout">Log Out</a>
+                <button onClick={onLogout}>Log Out</button>
               </>
             )}
             
