@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 
 export default function Header({loggedIn, username, onLogout}) {
 
-
   return (
     <header className="site-header">
       <nav aria-label="Main navigation">
@@ -23,7 +22,7 @@ export default function Header({loggedIn, username, onLogout}) {
               <>
                 <span className="site-welcome" id="welcome-message">Welcome Back, {username}!</span>
                 <a href="/profile" className="profile-link">
-                    <img src="/profile/avatar" alt="Profile Picture" class="dashboard-profile"/>
+                    <img src="/api/profile/avatar" alt="Profile Picture" className="dashboard-profile"/>
                 </a>
                 <button onClick={onLogout}>Log Out</button>
               </>

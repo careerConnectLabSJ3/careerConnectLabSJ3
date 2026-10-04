@@ -141,7 +141,7 @@ app.get('/profile', (req, res) => {
 });
 
 // Profile pic fetch
-app.get('/profile/avatar', getProfilePic);
+app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
 app.post('/profile', upload.single("pfpUpload"), updateProfile)
