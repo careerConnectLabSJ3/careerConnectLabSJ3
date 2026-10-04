@@ -10,7 +10,9 @@ export default function Register(){
         name: "",
         email: "",
         password: "",
-        role: ""
+        confirmPassword: "",
+        role: "",
+        terms: false
     });
 
     async function handleRegister(e){
@@ -80,7 +82,11 @@ export default function Register(){
 
                     <div className="form-group">
                         <label htmlFor="confirm-password">Confirm Password</label>
-                        <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" autoComplete="new-password"/>
+                        <input type="password" id="confirm-password" name="confirm-password" placeholder="••••••••" autoComplete="new-password"
+                        onChange={(e) => setFormData({
+                            ...formData,
+                            confirmPassword: e.target.value
+                        })}/>
                     </div>
 
                     <div className="form-group">
@@ -99,7 +105,12 @@ export default function Register(){
                         </select>
                     </div>
                     <div className="form-group terms">
-                        <input type="checkbox" id="terms" name="terms"/>
+                        <input type="checkbox" id="terms" name="terms"
+                        checked={formData.terms}
+                        onChange={(e) => setFormData({
+                            ...formData,
+                            terms: e.target.checked
+                        })}/>
                         <label htmlFor="terms">I agree to the Terms of Service and Privacy Policy</label>
                     </div>
 

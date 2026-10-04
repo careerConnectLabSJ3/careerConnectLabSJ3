@@ -22,7 +22,7 @@ function sendLoginError(res, message) {
 
 async function validateRegistration(req, res, next) {
     try {
-        const { name, email, password, role, ['confirm-password']: confirmPassword, terms } = req.body;
+        const { name, email, password, role, confirmPassword, terms } = req.body;
 
         // Grab your existing Mongoose model dynamically from your active connection
         const User = mongoose.model('User');
@@ -66,7 +66,7 @@ async function validateRegistration(req, res, next) {
         }
 
         // 3. Terms and Role Sanity Validations
-        if (terms !== 'on') {
+        if (terms !== true) {
             return sendRegistrationError(res, 400, 'You must agree to the Terms of Service and Privacy Policy.');
         }
         if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
