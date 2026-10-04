@@ -12,7 +12,7 @@ export default function Profile(){
   return(
     <form action="/profile" method="POST" id="profile-form" enctype="multipart/form-data">
       <section className="profile-main">
-        <img src="/profile/avatar" alt="Profile Picture" id="profile-img"/>
+        <img src="/api/profile/avatar" alt="Profile Picture" id="profile-img"/>
         <input type="file" id="pfp-upload" name="pfpUpload" className="hidden" accept="image/png, image/jpeg"/>
         <section className="profile-main-info">
           <span className="right-align">
