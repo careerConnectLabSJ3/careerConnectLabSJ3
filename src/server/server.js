@@ -134,17 +134,11 @@ app.get('/dashboard', (req, res) => {
     }
 });
 
-// Route for profile page
-app.get('/profile', (req, res) => {
-    if(!req.session.user) return res.redirect('/login');
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
-});
-
 // Profile pic fetch
 app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
-app.post('/profile', upload.single("pfpUpload"), updateProfile)
+app.post('/api/profile', upload.single("pfpUpload"), updateProfile)
 
 
 app.get('/jobSeeker_dashboard', (req, res) => {
