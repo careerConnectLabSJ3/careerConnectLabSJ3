@@ -3,21 +3,11 @@ const mongoose = require('mongoose');
 
 // Helper function to send the specialized HTML alert window back on error
 function sendRegistrationError(res, statusCode, message) {
-    res.status(statusCode).type('html').send(`<!doctype html>
-        <html lang="en"><head><meta charset="UTF-8"><title>Registration error</title></head>
-        <body><script>
-            alert(${JSON.stringify(message)});
-            window.location.replace('/register');
-        </script><p>${message}</p></body></html>`);
+    res.status(statusCode).type('html').send(message);
 }
 
 function sendLoginError(res, message) {
-    res.status(401).type('html').send(`<!doctype html>
-        <html lang="en"><head><meta charset="UTF-8"><title>Login Error</title></head>
-        <body><script>
-            alert(${JSON.stringify(message)});
-            window.location.replace('/login');
-        </script><p>${message}</p></body></html>`);
+    res.status(401).type('html').send(message);
 }
 
 async function validateRegistration(req, res, next) {
