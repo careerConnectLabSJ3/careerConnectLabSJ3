@@ -160,15 +160,6 @@ app.post('/api/register', validateRegistration, async (req, res) => {
     try {
         const { normalizedName, normalizedEmail, password, role } = req.body;
 
-        if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
-            return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
-        }
-
-        const existingUser = await User.exists({ email: normalizedEmail });
-        if (existingUser) {
-            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
-        }
-
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
