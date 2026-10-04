@@ -16,17 +16,18 @@ export default function Login({onLogin}){
     const password = e.target.password.value;
 
     try{
-      const res = await fetch('/api/login',{
-        method: 'POST',
-        headers: {
-         'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: email, 
-          password: password
-        }),
-      });
+      const res = await fetch('/api/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: email, 
+            password: password
+          }),
+        });
 
       if(!res.ok){
         const errMsg = await res.text();

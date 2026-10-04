@@ -156,7 +156,7 @@ app.get('/recruiter_dashboard', (req, res) => {
 });
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
-app.post('/register', validateRegistration, async (req, res) => {
+app.post('/api/register', validateRegistration, async (req, res) => {
     try {
         const { normalizedName, normalizedEmail, password, role } = req.body;
 
@@ -179,14 +179,16 @@ app.post('/register', validateRegistration, async (req, res) => {
         });
 
         await newUser.save();
-        res.redirect('/login');
+        return res.status(200).json({
+            message: "Registration successful"
+        })
     }
     catch (error) {
         console.error(error);
         if (error && error.code === 11000) {
             return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
-        res.status(500).send("Server error during registration");
+        return res.status(500).send("Server error during registration");
     }
 });
 
