@@ -32,13 +32,14 @@ export default function Register(){
             if(!res.ok){
                 const errMsg = await res.text();
                 setError(errMsg);
-                return
+                return;
             }
             await res.json();
             navigate("/login");
         }
         catch(e){
             console.error("Register error:", e.message);
+            setError(e.message);
         }
     }
     

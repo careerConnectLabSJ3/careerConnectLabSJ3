@@ -32,7 +32,7 @@ export default function Login({onLogin}){
       if(!res.ok){
         const errMsg = await res.text();
         setError(errMsg);
-        return
+        return;
       }
 
       const data = await res.json();
@@ -47,7 +47,7 @@ export default function Login({onLogin}){
     }
     catch(e){
       console.error("Login error:", e);
-      setError("Unable to connect to server.");
+      setError(e.message);
     }
   }
 

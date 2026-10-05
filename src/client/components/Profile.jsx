@@ -12,18 +12,52 @@ export default function Profile(){
     experience: "",
     skills: ""
   });
+  const [originalFormData, setOriginalFormData] = useState(null);
 
-  async function handleProfileUpdate(){
+
+  async function handleProfileInit(){
     try{
       const res = await fetch('/api/user-profile');
       const data = await res.json();
+      
       setFormData(data);
+      setOriginalFormData(data);
     }
     catch(e){
       console.error(e.message);
       setError(e.message);
     }
   }
+
+
+  async function handleSave(e){
+    e.preventDefault();
+    if(JSON.stringify(formData) === JSON.stringify(originalFormData)){
+      return;
+    }
+    try{
+      const res = await fetch('/api/profile', 
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if(!res.ok){
+        throw new Error("Failed to update profile");
+      }
+
+      setOriginalFormData(formData);
+    }
+    catch(e){
+      console.error("Profile update error: ", e.message);
+      setError(e.message);
+    }
+  } 
+
 
   function handleProfileEdit(){
     try{
@@ -37,11 +71,11 @@ export default function Profile(){
   }
 
   useEffect(() => {
-    handleProfileUpdate();
+    handleProfileInit();
   }, [])
   
   return(
-    <form id="profile-form" encType="multipart/form-data" onSubmit={handleProfileUpdate}>
+    <form id="profile-form" encType="multipart/form-data" onSubmit={handleSave}>
       <section className="profile-main">
         <img src="/api/profile/avatar" alt="Profile Picture" id="profile-img"/>
         <input type="file" id="pfp-upload" name="pfpUpload" accept="image/png, image/jpeg"
