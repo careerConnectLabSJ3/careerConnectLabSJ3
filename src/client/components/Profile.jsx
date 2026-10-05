@@ -44,11 +44,16 @@ export default function Profile(){
     <form id="profile-form" encType="multipart/form-data" onSubmit={handleProfileUpdate}>
       <section className="profile-main">
         <img src="/api/profile/avatar" alt="Profile Picture" id="profile-img"/>
-        <input type="file" id="pfp-upload" name="pfpUpload" className="hidden" accept="image/png, image/jpeg"/>
+        <input type="file" id="pfp-upload" name="pfpUpload" accept="image/png, image/jpeg"
+          style={{
+            visibility: !isHidden ? 'hidden' : 'visible'
+          }}/>
         <section className="profile-main-info">
-          <span className="right-align">
-            <button type="button" id="profile-edit-icon" onClick={handleProfileEdit}><img src="/css/img/edit-pen.svg" className="icon"
-            hidden={isHidden}/></button>
+          <span className="right-align"  
+            style={{
+              visibility: isHidden ? 'hidden' : 'visible'
+            }}>
+            <button type="button" id="profile-edit-icon" onClick={handleProfileEdit}><img src="/css/img/edit-pen.svg" className="icon"/></button>
           </span>
           <section>
             <label htmlFor="profile-name">Name</label>
@@ -91,9 +96,12 @@ export default function Profile(){
             })}/>
           </section>
       </section>
-      <section id="buttons-profile-edit" className="hidden">
+      <section id="buttons-profile-edit" 
+      style={{
+        visibility: !isHidden ? 'hidden' : 'visible'
+      }}>
         <button type="submit" id="profile-save-btn">Save</button>
-        <button type="button" id="profile-cancel-btn">Cancel</button>
+        <button type="button" id="profile-cancel-btn" onClick={handleProfileEdit}>Cancel</button>
       </section>
     </section>
   </form>
