@@ -41,7 +41,7 @@ export default function Profile(){
     try{
       const maxSizeInBytes = 2 * 1024 * 1024;
       if(formData.pfpUpload && formData.pfpUpload.size > maxSizeInBytes){
-        throw new Error("File size exceeds 2MB limit. Please choose a smaller image.")
+        throw new Error("File size exceeds 2MB limit. Please choose a smaller image.");
       }
 
       const data = new FormData();
@@ -60,7 +60,7 @@ export default function Profile(){
         }
       );
 
-      const result = res.json();
+      const result = await res.json();
 
       if(!res.ok){
         throw new Error(result.error);
