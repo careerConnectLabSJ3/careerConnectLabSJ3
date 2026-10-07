@@ -8,6 +8,7 @@ import Register from "./components/Register";
 import { useEffect, useState } from "react";
 import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
+import RecruiterDashboard from "./components/RecruiterDashboard";
 
 
 function App() {
@@ -65,10 +66,22 @@ function App() {
       <Header onLogout={logout} loggedIn={session.loggedIn} username={session?.user?.name}/>
       <main>
         <Routes>
-          <Route path="/" element={session.loggedIn ? <JobSeekerDashboard/> : <Welcome />}/>
+          <Route path="/" element={session.loggedIn ? <Navigate to="/dashboard"/> : <Welcome />}/>
           <Route path="/login" element={<Login onLogin={checkUserSession}/>}/>
           <Route path="/register" element={<Register />} />
-          <Route path="/job-seeker-dashboard" element={session.loggedIn ? <JobSeekerDashboard/> : <Navigate to="/login"/>}/>
+          <Route path="/dashboard" 
+            element={
+              !session.loggedIn ? (
+                  <Navigate to="/login" />
+              ) : session.user.role === 'job_seeker' ? (
+                  <JobSeekerDashboard />
+              ) : session.user.role === 'recruiter' ? (
+                  <RecruiterDashboard />
+              ) : (
+                  <Navigate to="/" />
+              )
+            } 
+          />
           <Route path="/profile" element={session.loggedIn ? <Profile/> : <Navigate to="/login"/>}/>
         </Routes>
       </main>

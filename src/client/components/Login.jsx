@@ -37,12 +37,9 @@ export default function Login({onLogin}){
 
       const data = await res.json();
       await onLogin();
-      if(data.role == "job_seeker"){
-        navigate("/job-seeker-dashboard");
+      if(data.role){
+        navigate("/dashboard");
       }
-      // else if(data.role == "recruiter"){
-      //   Navigate()
-      // }
 
     }
     catch(e){
