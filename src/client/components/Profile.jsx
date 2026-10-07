@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import editSvgIcon from "/img/edit-pen.svg";
 
 export default function Profile(){
 
@@ -134,7 +134,7 @@ export default function Profile(){
             style={{
               visibility: isHidden ? 'hidden' : 'visible'
             }}>
-            <button type="button" id="profile-edit-icon" onClick={handleProfileEdit}><img src="/css/img/edit-pen.svg" className="icon"/></button>
+            <button type="button" id="profile-edit-icon" onClick={handleProfileEdit}><img src={editSvgIcon} className="icon"/></button>
           </span>
           <section>
             <label htmlFor="profile-name">Name</label>
