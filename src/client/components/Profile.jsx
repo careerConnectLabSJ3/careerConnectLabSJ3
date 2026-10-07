@@ -142,7 +142,7 @@ export default function Profile(){
           </section>
           <section>
             <label htmlFor="profile-work-exp">Work Experience</label>
-            <input type="text" id="profile-work-exp" name="workExp" 
+            <input type="text" id="profile-work-exp" name="experience" 
             disabled={isDisabled}
             value={formData.experience}
             onChange={(e) => setFormData({
