@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "npm install && npm --prefix client install && npm --prefix client build",
+    "build": "npm install && cd src/client && npm install && npm run build",
     "start": "npm --prefix src/server start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
