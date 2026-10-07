@@ -5,7 +5,6 @@ dotenv.config();
 import dns from 'dns';
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
-import mongoose from 'mongoose';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -52,19 +51,6 @@ app.use((err, req, res, next) => {
     console.error("Server error:", err);
     res.status(500).send({error: 'An unexpected error occurred.'});
 });
-
-// 3. DATABASE CONNECTION
-// mongoose.connect(process.env.MONGODB_URI)
-//     .then(() => {
-//         console.log('Connected to MongoDB: careerConnect_db');
-//         // Initialize GridFS bucket
-//         gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-//             bucketName: 'profileImages'
-//         });
-//         console.log('GridFS Bucket Initialized');
-//     })
-//     .catch(err => console.error('MongoDB connection failed:', err));
-
 
 
 // Multer setup for temp file uploads in memory
@@ -124,42 +110,12 @@ app.get('/api/check-email', async (req, res) => {
     }
 });
 
-
-// 7. PAGE ROUTING (PROTECTED BY ROLE)
-app.get('/dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    else if (req.session.user && req.session.user.role === 'recruiter') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
-    }
-    else {
-        res.redirect('/login');
-    }
-});
-
 // Profile pic fetch
 app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
 app.post('/api/profile', upload.single("pfpUpload"), updateProfile)
 
-
-app.get('/jobSeeker_dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        return res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    res.redirect('/login');
-});
-
-app.get('/recruiter_dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'recruiter') {
-        return res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
-    }
-    res.redirect('/login');
-});
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
 app.post('/api/register', validateRegistration, async (req, res) => {
