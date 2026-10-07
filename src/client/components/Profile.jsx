@@ -10,7 +10,8 @@ export default function Profile(){
     name: "",
     education: "",
     experience: "",
-    skills: ""
+    skills: "",
+    pfpUpload: null
   });
   const [originalFormData, setOriginalFormData] = useState(null);
 
@@ -33,24 +34,40 @@ export default function Profile(){
   async function handleSave(e){
     e.preventDefault();
     if(JSON.stringify(formData) === JSON.stringify(originalFormData)){
+      handleProfileEdit();
       return;
     }
+
     try{
+      const maxSizeInBytes = 2 * 1024 * 1024;
+      if(formData.pfpUpload && formData.pfpUpload.size > maxSizeInBytes){
+        throw new Error("File size exceeds 2MB limit. Please choose a smaller image.")
+      }
+
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null){
+          data.append(key, value);
+        }
+      })
+
+    
       const res = await fetch('/api/profile', 
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
+          credentials: 'include',
+          body: data,
         }
       );
 
+      const result = res.json();
+
       if(!res.ok){
-        throw new Error("Failed to update profile");
+        throw new Error(result.error);
       }
 
-      setOriginalFormData(formData);
+      setOriginalFormData({...formData});
+      handleProfileEdit();
     }
     catch(e){
       console.error("Profile update error: ", e.message);
@@ -62,7 +79,8 @@ export default function Profile(){
   function handleProfileEdit(){
     try{
       isDisabled ? setIsDisabled(false) : setIsDisabled(true);
-      isHidden ? setIsHidden(false) : setIsHidden(true)
+      isHidden ? setIsHidden(false) : setIsHidden(true);
+      setError("");
     }
     catch(e){
       console.error(e.message);
@@ -81,7 +99,20 @@ export default function Profile(){
         <input type="file" id="pfp-upload" name="pfpUpload" accept="image/png, image/jpeg"
           style={{
             visibility: !isHidden ? 'hidden' : 'visible'
-          }}/>
+          }}
+          onChange={(e) => {
+            setFormData(prev => (
+              {
+                ...prev,
+                pfpUpload: e.target.files[0]
+              }));
+          }}
+          />
+        {error && (
+        <p className="auth-error">
+            {error}
+        </p>
+        )}
         <section className="profile-main-info">
           <span className="right-align"  
             style={{

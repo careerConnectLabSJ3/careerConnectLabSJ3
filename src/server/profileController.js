@@ -66,7 +66,16 @@ async function updateProfile(req, res){
         let newPfpId = user.profileImageId;
 
         if (req.file) {
-            if (user.profileImageId) {
+
+            const file = req.file;
+            const maxSizeInBytes = 2 * 1024 * 1024;
+
+            if (file.size > maxSizeInBytes) {
+                return res.status(413).json({error: 'File size exceeds 2MB limit. Please choose a smaller image.'});
+            }
+        
+            
+            if (newPfpId) {
                 try {
                     // deleted old pfp
                     await gfsBucket.delete(new Types.ObjectId(user.profileImageId));
@@ -111,7 +120,7 @@ async function updateProfile(req, res){
             skills: user.skills
         };
 
-        res.redirect("/profile");
+        return res.status(200).redirect('/profile');
         
     }
     catch(error){
