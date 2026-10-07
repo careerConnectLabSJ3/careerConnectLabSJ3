@@ -6,6 +6,7 @@ export default function Profile(){
   const [error, setError] = useState('');
   const [isDisabled, setIsDisabled] = useState(true);
   const [isHidden, setIsHidden] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [formData, setFormData] = useState({
     name: "",
     education: "",
@@ -68,6 +69,7 @@ export default function Profile(){
 
       setOriginalFormData({...formData});
       handleProfileEdit();
+      setAvatarVersion(Date.now());
     }
     catch(e){
       console.error("Profile update error: ", e.message);
@@ -95,7 +97,7 @@ export default function Profile(){
   return(
     <form id="profile-form" encType="multipart/form-data" onSubmit={handleSave}>
       <section className="profile-main">
-        <img src="/api/profile/avatar" alt="Profile Picture" id="profile-img"/>
+        <img src={`/api/profile/avatar?v=${avatarVersion}` || "/api/profile/avatar"} alt="Profile Picture" id="profile-img"/>
         <input type="file" id="pfp-upload" name="pfpUpload" accept="image/png, image/jpeg"
           style={{
             visibility: !isHidden ? 'hidden' : 'visible'
