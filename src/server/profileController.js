@@ -19,7 +19,7 @@ export async function getProfilePic(req, res){
         
         // If user has no custom profile picture, serve the default static image
         if (!user || !user.profileImageId) {
-            return res.sendFile(path.join(__dirname, '../client/css/img/default-pfp.png'));
+            return res.sendFile(path.join(__dirname, '../client/public/img/default-pfp.png'));
         }
 
         // Creates an id for the picture in Mongo
@@ -28,7 +28,7 @@ export async function getProfilePic(req, res){
 
         // If no new img is found from form POST, display default pfp
         if (!files || files.length === 0) {
-            return res.sendFile(path.join(__dirname, '..', 'client', 'css', 'img', 'default-pfp.png'));
+            return res.sendFile(path.join(__dirname,  '../client/public/img/default-pfp.png'));
         }
 
         // image is downloaded
