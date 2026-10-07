@@ -1,21 +1,20 @@
 // validation.js
-const mongoose = require('mongoose');
+import User from '../server/models/user.js';
 
 // Helper function to send the specialized HTML alert window back on error
-function sendRegistrationError(res, statusCode, message) {
+export function sendRegistrationError(res, statusCode, message) {
     res.status(statusCode).type('html').send(message);
 }
 
-function sendLoginError(res, message) {
+export function sendLoginError(res, message) {
     res.status(401).type('html').send(message);
 }
 
-async function validateRegistration(req, res, next) {
+export async function validateRegistration(req, res, next) {
     try {
         const { name, email, password, role, confirmPassword, terms } = req.body;
 
         // Grab your existing Mongoose model dynamically from your active connection
-        const User = mongoose.model('User');
 
         const normalizedName = String(name || '').trim();
         const normalizedEmail = String(email || '').trim().toLowerCase();
@@ -83,5 +82,3 @@ async function validateRegistration(req, res, next) {
         res.status(500).send("Server error during validation registration.");
     }
 }
-
-module.exports = { validateRegistration, sendRegistrationError, sendLoginError };

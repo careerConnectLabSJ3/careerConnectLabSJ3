@@ -1,28 +1,34 @@
 // server.js
 // 1. CONFIGURATION & ENVIRONMENT SETUP
-require('dotenv').config();
-const dns = require('dns');
+import dotenv from 'dotenv';
+dotenv.config();
+import dns from 'dns';
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
-const mongoose = require('mongoose');
-const express = require("express");
+import mongoose from 'mongoose';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
+import session from 'express-session';
+import multer from 'multer';
+
 const app = express();
-const path = require('path');
-const bcrypt = require('bcrypt');
-const session = require('express-session');
-const multer = require('multer');
 
 const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-const { validateRegistration, sendRegistrationError, sendLoginError } = require('../js/validation');
-const { getProfilePic, updateProfile } = require('./profileController.js');
-const { User } = require('./models/user');
+import {validateRegistration, sendRegistrationError, sendLoginError} from '../js/validation.js';
+import { getProfilePic, updateProfile } from './profileController.js';
+import User from './models/user.js';
 
 // 2. MIDDLEWARE SETUP
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../..', 'src')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
 app.use(express.json());
 
 app.use(session({
@@ -48,16 +54,16 @@ app.use((err, req, res, next) => {
 });
 
 // 3. DATABASE CONNECTION
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('Connected to MongoDB: careerConnect_db');
-        // Initialize GridFS bucket
-        gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-            bucketName: 'profileImages'
-        });
-        console.log('GridFS Bucket Initialized');
-    })
-    .catch(err => console.error('MongoDB connection failed:', err));
+// mongoose.connect(process.env.MONGODB_URI)
+//     .then(() => {
+//         console.log('Connected to MongoDB: careerConnect_db');
+//         // Initialize GridFS bucket
+//         gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+//             bucketName: 'profileImages'
+//         });
+//         console.log('GridFS Bucket Initialized');
+//     })
+//     .catch(err => console.error('MongoDB connection failed:', err));
 
 
 
@@ -239,7 +245,4 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
-// 9. SERVER INITIALIZATION
-app.listen(port, hostname, () => {
-    console.log(`Server running at http://localhost:${port}/`);
-});
+export default app;
