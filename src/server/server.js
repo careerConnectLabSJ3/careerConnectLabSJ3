@@ -39,12 +39,12 @@ app.use(session({
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).send('File size is too large. Maximum allowed size is 2MB.');
+            return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});
         }
     }
     // Handle other general errors
     console.error("Server error:", err);
-    res.status(500).send('An unexpected error occurred.');
+    res.status(500).send({error: 'An unexpected error occurred.'});
 });
 
 // 3. DATABASE CONNECTION

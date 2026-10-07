@@ -24,7 +24,7 @@ export default function Header({loggedIn, username, onLogout}) {
                 <a href="/profile" className="profile-link">
                     <img src="/api/profile/avatar" alt="Profile Picture" className="dashboard-profile"/>
                 </a>
-                <button onClick={onLogout}>Log Out</button>
+                <Link onClick={onLogout}>Log Out</Link>
               </>
             )}
             
