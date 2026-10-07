@@ -1,7 +1,13 @@
 
 
 export default function RecruiterDashboard(){
-  
+
+  function handleAlert(){
+    return(
+      alert('Job Posting system coming soon!')
+    );
+  }
+
   return(
      <section>
         <h2 id="welcome-message">Welcome to your Recruiter Dashboard</h2>
@@ -9,18 +15,18 @@ export default function RecruiterDashboard(){
 
         <hr/>
 
-        <section class="dashboard-actions">
+        <section className="dashboard-actions">
             <h3>💼 Quick Actions</h3>
-            <button onclick="alert('Job Posting system coming soon!')">Post a New Job Opportunity</button>
+            <button onClick={handleAlert}>Post a New Job Opportunity</button>
         </section>
 
         <br/>
 
-        <section class="active-postings">
+        <section className="active-postings">
             <h3>🗒️ Your Active Job Postings</h3>
-            <table border="1" cellpadding="10" style="width:100%; border-collapse: collapse; text-align: left;">
+            <table border="1" cellPadding="10">
                 <thead>
-                    <tr style="background-color: #f2f2f2;">
+                    <tr style={{backgroundColor: '#f2f2f2'}}>
                         <th>Job Title</th>
                         <th>Department</th>
                         <th>Applications Received</th>
@@ -33,14 +39,14 @@ export default function RecruiterDashboard(){
                         <td><strong>Junior Software Engineer</strong></td>
                         <td>Engineering</td>
                         <td>4 Candidates</td>
-                        <td style="color: green;"><strong>Active</strong></td>
+                        <td style={{color: 'green'}}><strong>Active</strong></td>
                     </tr>
                     
                     <tr>
                         <td><strong>Product Manager</strong></td>
                         <td>Product Team</td>
                         <td>2 Candidates</td>
-                        <td style="color: green;"><strong>Active</strong></td>
+                        <td style={{color: 'green'}}><strong>Active</strong></td>
                     </tr>
                 </tbody>
             </table>
