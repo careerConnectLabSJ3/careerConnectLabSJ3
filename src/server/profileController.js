@@ -1,6 +1,6 @@
 import User from './models/user.js';
-import Types from 'mongoose';
-import Readable from 'stream';
+import {Types} from 'mongoose';
+import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
