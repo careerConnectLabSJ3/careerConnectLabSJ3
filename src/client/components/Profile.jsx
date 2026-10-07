@@ -34,7 +34,16 @@ export default function Profile(){
 
   async function handleSave(e){
     e.preventDefault();
-    if(JSON.stringify(formData) === JSON.stringify(originalFormData)){
+    
+    const hasTextChanged =
+    formData.name !== originalFormData?.name ||
+    formData.education !== originalFormData?.education ||
+    formData.experience !== originalFormData?.experience ||
+    formData.skills !== originalFormData?.skills;
+
+    const hasNewFile = formData.pfpUpload !== null;
+
+    if(!hasTextChanged && !hasNewFile){
       handleProfileEdit();
       return;
     }
@@ -67,7 +76,7 @@ export default function Profile(){
         throw new Error(result.error);
       }
 
-      setOriginalFormData({...formData});
+      setOriginalFormData({...formData, pfpUpload: null});
       handleProfileEdit();
       setAvatarVersion(Date.now());
     }
@@ -88,6 +97,11 @@ export default function Profile(){
       console.error(e.message);
       setError(e.message);
     }
+  }
+
+  function handleCancel(){
+    setFormData(originalFormData);
+    handleProfileEdit();
   }
 
   useEffect(() => {
@@ -168,7 +182,7 @@ export default function Profile(){
         visibility: !isHidden ? 'hidden' : 'visible'
       }}>
         <button type="submit" id="profile-save-btn">Save</button>
-        <button type="button" id="profile-cancel-btn" onClick={handleProfileEdit}>Cancel</button>
+        <button type="button" id="profile-cancel-btn" onClick={handleCancel}>Cancel</button>
       </section>
     </section>
   </form>
