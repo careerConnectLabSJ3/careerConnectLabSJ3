@@ -59,7 +59,7 @@ app.get('/api/check-session', (req, res) => {
     return res.json({
         loggedIn: false
     });
-});r
+});
 
 // API route to share the session user's data with the frontend
 app.get('/api/current-user', (req, res) => {
