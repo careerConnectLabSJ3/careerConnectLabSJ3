@@ -25,7 +25,7 @@ Recruiters can:
 - Freddy Mvemba
 - Yacine Zribi
 - Emmanuelle Lin
-- Bahaeddine Mahgoudh
+- Bahaeddine Mahfoudh
 
 
 ## Tech Stack Used
@@ -82,7 +82,7 @@ If you are connecting remotely to the hosted database, update your `.env` file t
 
 ```env
 PORT=3000
-MONGO_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
+MONGODB_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
 ```
 
 ## Run Application for **Production**
