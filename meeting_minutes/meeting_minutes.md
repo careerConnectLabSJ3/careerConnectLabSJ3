@@ -39,8 +39,8 @@
 ---
 
 
-##  Meeting 4: Database Infrastructure Overhaul & Sprint Close
-* **Date:** September 23, 2026 (Today)
+##  Meeting 3: Database Infrastructure Overhaul & Sprint Close
+* **Date:** September 23, 2026
 * **Attendance:** Freddy, Yacine, Emmanuelle, Bahaeddine
 * **Purpose:** Migrate architecture from local MySQL instances to a centralized cloud system and finalize final review packaging.
 * **Discussion Points:**
