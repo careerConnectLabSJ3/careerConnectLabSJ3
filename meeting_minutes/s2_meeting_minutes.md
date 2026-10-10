@@ -34,3 +34,19 @@
   - **Bahaeddine:** will work on *fixing the CSS*.
   - **Yacine:** will work on the *job posting* feature.
 * **Note-taker**: Emmanuelle
+
+## Meeting 6: 
+* **Date:** October 8, 2026
+* **Attendance:** Freddy, Yacine, Emmanuelle, Bahaeddine
+* **Purpose:** Coordinate on the next steps of Sprint 2.
+* **Discussion Points:**
+  - Issue separation
+* **Decisions Made:**
+  - Re-allocated User story #4 (Resume Upload) to Bahaeddine
+  - Re-allocated CSS refactoring to Yacine
+* **Action Items:**
+  - **Bahaeddine:** will work on *Resume Upload*
+  - **Yacine:** will work on the *job posting* feature.
+  - **Emmanuelle:** will work on *Github Actions*
+  - **Freddy:** will work on the *job searching* feature.
+* **Note-taker**: Emmanuelle
