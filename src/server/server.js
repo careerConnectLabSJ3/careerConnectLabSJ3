@@ -1,28 +1,34 @@
 // server.js
 // 1. CONFIGURATION & ENVIRONMENT SETUP
-require('dotenv').config();
-const dns = require('dns');
+import dotenv from 'dotenv';
+dotenv.config();
+import dns from 'dns';
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
-const mongoose = require('mongoose');
-const express = require("express");
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
+import session from 'express-session';
+import multer from 'multer';
+
 const app = express();
-const path = require('path');
-const bcrypt = require('bcrypt');
-const session = require('express-session');
-const multer = require('multer');
 
 const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-const { validateRegistration, sendRegistrationError, sendLoginError } = require('../js/validation');
-const { getProfilePic, updateProfile } = require('./profileController.js');
-const { User } = require('./models/user');
+import {validateRegistration, sendRegistrationError, sendLoginError} from '../js/validation.js';
+import { getProfilePic, updateProfile } from './profileController.js';
+import User from './models/user.js';
 
 // 2. MIDDLEWARE SETUP
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../..', 'src')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.json());
 
 app.use(session({
     secret: 'super_secret_key_for_soen341',
@@ -34,31 +40,6 @@ app.use(session({
     }
 }));
 
-// Error handling using middleware
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).send('File size is too large. Maximum allowed size is 2MB.');
-        }
-    }
-    // Handle other general errors
-    console.error("Server error:", err);
-    res.status(500).send('An unexpected error occurred.');
-});
-
-// 3. DATABASE CONNECTION
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('Connected to MongoDB: careerConnect_db');
-        // Initialize GridFS bucket
-        gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-            bucketName: 'profileImages'
-        });
-        console.log('GridFS Bucket Initialized');
-    })
-    .catch(err => console.error('MongoDB connection failed:', err));
-
-
 
 // Multer setup for temp file uploads in memory
 const upload = multer({
@@ -67,6 +48,19 @@ const upload = multer({
 });
 
 // 5. API ROUTES
+// checks if user is already logged in, also handles refreshes
+app.get('/api/check-session', (req, res) => {
+    if(req.session.user){
+        return res.json({
+            loggedIn: true,
+            user: req.session.user
+        });
+    }
+    return res.json({
+        loggedIn: false
+    });
+});
+
 // API route to share the session user's data with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
@@ -104,74 +98,17 @@ app.get('/api/check-email', async (req, res) => {
     }
 });
 
-// 6. PAGE ROUTING (PUBLIC)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'index.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
-});
-
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
-});
-
-// 7. PAGE ROUTING (PROTECTED BY ROLE)
-app.get('/dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    else if (req.session.user && req.session.user.role === 'recruiter') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
-    }
-    else {
-        res.redirect('/login');
-    }
-});
-
-// Route for profile page
-app.get('/profile', (req, res) => {
-    if(!req.session.user) return res.redirect('/login');
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
-});
-
 // Profile pic fetch
-app.get('/profile/avatar', getProfilePic);
+app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
-app.post('/profile', upload.single("pfpUpload"), updateProfile)
+app.post('/api/profile', upload.single("pfpUpload"), updateProfile)
 
-
-app.get('/jobSeeker_dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        return res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    res.redirect('/login');
-});
-
-app.get('/recruiter_dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'recruiter') {
-        return res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
-    }
-    res.redirect('/login');
-});
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
-app.post('/register', validateRegistration, async (req, res) => {
+app.post('/api/register', validateRegistration, async (req, res) => {
     try {
         const { normalizedName, normalizedEmail, password, role } = req.body;
-
-        if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
-            return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
-        }
-
-        const existingUser = await User.exists({ email: normalizedEmail });
-        if (existingUser) {
-            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
-        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -183,18 +120,20 @@ app.post('/register', validateRegistration, async (req, res) => {
         });
 
         await newUser.save();
-        res.redirect('/login');
+        return res.status(200).json({
+            message: "Registration successful"
+        })
     }
     catch (error) {
         console.error(error);
         if (error && error.code === 11000) {
             return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
-        res.status(500).send("Server error during registration");
+        return res.status(500).send("Server error during registration");
     }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
     try {
         const { email, password } = req.body;
         const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -222,11 +161,10 @@ app.post("/login", async (req, res) => {
             skills: user.skills
         };
 
-        if (user.role === 'job_seeker') {
-            return res.redirect('/jobSeeker_dashboard');
-        }
-
-        return res.redirect('/recruiter_dashboard');
+        return res.status(200).json({
+            message: "Login successful",
+            role: user.role
+        });
     }
     catch (error) {
         console.error("Login failed:", error);
@@ -234,16 +172,37 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.get('/logout', (req, res) => {
+app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            return console.log("Logout failed:", err);
+            console.log("Logout failed:", err);
+            return res.status(500).json({
+                loggedIn: true,
+                message: "Logout failed"
+            });
         }
-        res.redirect('/login');
+        res.clearCookie('connect.sid');
+        return res.status(200).json({
+            loggedIn: true,
+            message: "Logout successful"
+        })
     });
 });
 
-// 9. SERVER INITIALIZATION
-app.listen(port, hostname, () => {
-    console.log(`Server running at http://localhost:${port}/`);
+// Error handling using middleware
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});
+        }
+    }
+    // Handle other general errors
+    console.error("Server error:", err);
+    res.status(500).send({error: 'An unexpected error occurred.'});
 });
+
+app.get('/*splat', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
+export default app;

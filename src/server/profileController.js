@@ -1,20 +1,25 @@
-const { User } = require('./models/user');
-const { Types } = require('mongoose');
-const { Readable } = require('stream');
-const path = require('path');
+import User from './models/user.js';
+import {Types} from 'mongoose';
+import {Readable} from 'stream';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+import { gfsBucket } from './bin/www.js';
 
 
-async function getProfilePic(req, res){
+export async function getProfilePic(req, res){
     try {
         if (!req.session.user) {
             return res.status(401).send('Unauthorized');
         }
 
         const user = await User.findOne({ email: req.session.user.email });
-
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename)
+        
         // If user has no custom profile picture, serve the default static image
         if (!user || !user.profileImageId) {
-            return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
+            return res.sendFile(path.join(__dirname, '../client/public/img/default-pfp.png'));
         }
 
         // Creates an id for the picture in Mongo
@@ -23,7 +28,7 @@ async function getProfilePic(req, res){
 
         // If no new img is found from form POST, display default pfp
         if (!files || files.length === 0) {
-            return res.sendFile(path.join(__dirname, '..', 'css', 'img', 'default-pfp.png'));
+            return res.sendFile(path.join(__dirname,  '../client/public/img/default-pfp.png'));
         }
 
         // image is downloaded
@@ -34,23 +39,23 @@ async function getProfilePic(req, res){
 
     } catch (err) {
         console.error("Avatar route catch error:", err)
-        res.status(500).send('Error retrieving image');
+        res.status(500).send({error: 'Error retrieving image'});
     }
 };
 
 
-async function updateProfile(req, res){
+export async function updateProfile(req, res){
     try{
         const currUserInfo = req.session.user;
         if(!currUserInfo){
             return res.status(401).redirect('/login');
         }
 
-        const { name, education, workExp, skills } = req.body;
+        const { name, education, experience, skills } = req.body;
 
         // pattern allows [a-z] [A-Z] [0-9] space apostrophe hyphen and curly apostrophe
         const symbolPattern = /[^a-zA-Z0-9\s'\-\u2019]/;
-        const fieldsToValidate = [name, education, workExp, skills];
+        const fieldsToValidate = [name, education, experience, skills];
 
         for (let value of fieldsToValidate) {
             const normalized = String(value || '').trim();
@@ -66,7 +71,16 @@ async function updateProfile(req, res){
         let newPfpId = user.profileImageId;
 
         if (req.file) {
-            if (user.profileImageId) {
+
+            const file = req.file;
+            const maxSizeInBytes = 2 * 1024 * 1024;
+
+            if (file.size > maxSizeInBytes) {
+                return res.status(413).json({error: 'File size exceeds 2MB limit. Please choose a smaller image.'});
+            }
+        
+            
+            if (newPfpId) {
                 try {
                     // deleted old pfp
                     await gfsBucket.delete(new Types.ObjectId(user.profileImageId));
@@ -96,7 +110,7 @@ async function updateProfile(req, res){
         // updates with new data if new data found, otherwise same data 
         user.name = name || user.name;
         user.education = education || user.education;
-        user.experience = workExp || user.experience;
+        user.experience = experience || user.experience;
         user.skills = skills || user.skills;
         user.profileImageId = newPfpId;
 
@@ -111,7 +125,9 @@ async function updateProfile(req, res){
             skills: user.skills
         };
 
-        res.redirect("/profile");
+        return res.status(200).json({
+            message: "Profile update success"
+        });
         
     }
     catch(error){
@@ -119,5 +135,3 @@ async function updateProfile(req, res){
         return res.status(500).json({error : error.message});
     }
 }
-
-module.exports = {getProfilePic, updateProfile}

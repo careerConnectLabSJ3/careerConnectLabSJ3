@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+import {Schema, model} from 'mongoose';
 
 // 4. DATABASE SCHEMA & MODEL
 const userSchema = new Schema({
@@ -14,4 +14,4 @@ const userSchema = new Schema({
 });
 
 const User = model('User', userSchema);
-module.exports = {User};
+export default User;

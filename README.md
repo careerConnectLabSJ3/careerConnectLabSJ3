@@ -25,19 +25,14 @@ Recruiters can:
 - Freddy Mvemba
 - Yacine Zribi
 - Emmanuelle Lin
-- Bahaeddine Mahgoudh
+- Bahaeddine Mahfoudh
 
 
-## Technologies
-### Frontend
- - React.js
- - HTML AND CSS
- - JavaScript
-### Backend
- - Node.js
- - Express.js
-### Database
- - MongoDB (Managed via MongoDB Atlas Cloud Cluster)
+## Tech Stack Used
+- **React.js**: Frontend framework for building the interactive UI and managing application state.
+- **Node.js**: Server runtime for executing JavaScript on the backend.
+- **Express.js**: Backend framework for handling API requests and managing user authentication.
+- **MongoDB**: NoSQL database to store user data and job information.
 
 ### Tools
  - GitHub
@@ -67,27 +62,46 @@ Recruiters can:
 - Application Deadline Reminder System
 - Reminds users of upcoming deadlines
 - Helps users stay organized
+---
 
-## Setup Instructions
-
-### install node.js. visit nodejs.org/en/download
-### verify that node.js is installed with command node -v at powershell
-
-
+# General Setup Instructions
 ### Clone Repository
 ```bash
 git clone https://github.com/careerConnectLabSJ3/careerConnectLabSJ3.git
 ```
 
 ### Install Dependencies
+Ensure you have all the necessary packages by installing all the dependencies: 
 ```bash
-npm install
+npm run build
 ```
 
-### Run Application
+### Environment Variables (`.env`)
+The `.env` file contains sensitive local connection configurations and is excluded from GitHub tracking via `.gitignore`. 
+If you are connecting remotely to the hosted database, update your `.env` file to match this structure:
+
+```env
+PORT=3000
+MONGODB_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
+```
+
+## Run Application for **Production**
+Make sure you are in the project **root directory**
 ```bash
 npm start
 ```
+
+## Run Application for **Development**
+Open two terminals: one in **/client** and the other in **/server**
+### Client
+```
+npm run dev
+```
+### Server
+```
+npm run start
+```
+
 ## CareerConnect Deployment Link
 *insert here*
 ## GitHub Repository
@@ -124,65 +138,6 @@ Before starting, ensure your machine has the proper tools installed depending on
 ### 👥 For All Team Members
 * **[Node.js](https://nodejs.org)** (v16 or higher recommended)
 * **[MongoDB Compass](https://mongodb.com)** *(Highly Recommended: Use this tool to visually explore database collections, document fields, and user records from your desktop).*
-
-
----
-
-## 🚀 Getting Started
-
-### 1. Install Dependencies
-Clone the repository, open your terminal in the project root directory (`Dev_SOEN341`), and install the required Node packages:
-```bash
-npm install
-```
-
-### 2. Configure Environment Variables (`.env`)
-The `.env` file contains sensitive local connection configurations and is excluded from GitHub tracking via `.gitignore`. 
-
-1. Locate the `.env.example` file in the project root.
-2. Create a duplicate copy of `.env.example` in the same directory and rename it exactly to `.env`.
-3. Open your new `.env` file and fill it out using the custom credentials provided below.
-
-#### 👥 Teammate Configuration Template:
-If you are connecting remotely to the hosted database, update your `.env` file to match this structure:
-
-```env
-PORT=3000
-MONGO_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
-
----
-
-## 🏃‍♂️ Running the Server
-
-Open your root repository command terminal and run one of the execution profiles declared inside your `package.json` file:
-
-### A. Development Mode (Recommended for Daily Work)
-Launches the backend application with live-reloading features actively running. The application watches file changes and reloads instantly when edits are saved.
-```bash
-npm start
-```
-*Behind the scenes, this calls `nodemon server.js` to handle live monitoring.*
-
-### B. Production Testing Mode
-Launches a snapshot instance of the backend using regular node processing with no file-watching overhead.
-```bash
-npm run production
-```
-*Behind the scenes, this calls `node server.js` standard script runtime.*
-
-On a successful boot sequence, your terminal pane will return:
-```text
-[nodemon] starting `node server.js`
-Connected to database: careerConnect_db
-Server running at http://localhost:3000/
-```
----
-
-## 📊 Viewing the Database Visually (DBeaver Setup)
-To safely browse, alter, or check user registry entries manually:
-1. Run **MongoDB Compass** on your PC.
-2. Login with your credentials
-3. Click **Connect**. You can now view collections and insert/delete documents directly.
 
 
 ---

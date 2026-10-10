@@ -1,5 +1,6 @@
 AI Prompt.docx
 .env
-/node_modules
+node_modules
+dist
 GIT_CHEATSHEET.md
 team_.env.txt
