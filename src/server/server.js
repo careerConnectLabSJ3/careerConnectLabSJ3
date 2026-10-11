@@ -22,6 +22,10 @@ import {validateRegistration, sendRegistrationError, sendLoginError} from '../js
 import { getProfilePic, updateProfile } from './profileController.js';
 import User from './models/user.js';
 
+// import schema for a job postings database
+import Job from './models/job.js';
+
+
 // 2. MIDDLEWARE SETUP
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -189,6 +193,61 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
+// Route to Add Data for job postings
+app.get('/api/post-jobs', async (req, res) => {
+    try {
+        // Create database for recruiter jobs
+        const Job1 = new Job({
+            title: "Junior Software Engineer",
+            department: "Engineering",
+            applicationsCount: 4
+        })
+        const Job2 = new Job({
+            title: "Product Manager",
+            department: "Product Team",
+            applicationsCount: 2
+        });
+
+        // Save jobs to MongoDB
+        await Job1.save();
+        await Job2.save();
+
+        res.send("Successfully inserted jobs into MongoDB!");
+        
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).send("Error inserting jobs to database: " + error.message);
+    }
+});
+
+// API route for Job Seekers to search and filter jobs
+app.get('/api/jobs/search', async (req, res) => {
+    try {
+        // Extract the search query parameters sent by the frontend
+        const { title, department } = req.query;
+
+        // Filter active jobs
+        let activeJobs = { status: 'Active' };
+
+        if (title)
+            activeJobs.title = { $regex: title,$options: 'i' };
+
+        if (department)
+            activeJobs.department = { $regex: department, $options: 'i' };
+
+        // Retrieve jobs from mongodb
+        const jobs = await Job.find(activeJobs);
+
+        // send response to the user as an json object
+        return res.status(200).json(jobs);
+
+    } catch (error) {
+        console.error("Failed to query jobs:", error);
+        return res.status(500).send("Database search error: " + error.message);
+    }
+    
+});
 // Error handling using middleware
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
