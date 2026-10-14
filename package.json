@@ -9,7 +9,8 @@
   "scripts": {
     "build": "npm install  && cd src/server && npm install && cd ../src/client && npm install && npm run build",
     "start": "npm --prefix src/server start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src/server/**/*.js"
   },
   "repository": {
     "type": "git",
