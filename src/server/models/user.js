@@ -9,7 +9,12 @@ const userSchema = new Schema({
     education : { type: String, default: "None"},
     experience: { type: String, default: "None"},
     skills: { type: String, default: "None"},
-    profileImageId: { type: Schema.Types.ObjectId, default: null }
+    profileImageId: { type: Schema.Types.ObjectId, default: null },
+    resumeFileId: { type: Schema.Types.ObjectId, default: null },
+    resumeFileName: { type: String, default: null },
+    resumeFileSize: { type: Number, default: null },
+    resumeMimeType: { type: String, default: null },
+    resumeUploadedAt: { type: Date, default: null }
 
 });
 

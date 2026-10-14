@@ -19,7 +19,7 @@ const port = 3000;
 
 // Import Modules from validation.js to handle input validation
 import {validateRegistration, sendRegistrationError, sendLoginError} from '../js/validation.js';
-import { getProfilePic, updateProfile } from './profileController.js';
+import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
 
 // 2. MIDDLEWARE SETUP
@@ -45,6 +45,23 @@ app.use(session({
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 2 * 1024 * 1024 }
+});
+
+const resumeUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+        const isPdf = file.mimetype === 'application/pdf' &&
+            file.originalname.toLowerCase().endsWith('.pdf');
+
+        if (!isPdf) {
+            const error = new Error('Only PDF files are allowed.');
+            error.code = 'INVALID_RESUME_TYPE';
+            return callback(error);
+        }
+
+        return callback(null, true);
+    }
 });
 
 // 5. API ROUTES
@@ -74,15 +91,27 @@ app.get('/api/current-user', (req, res) => {
 // API route for user profile information
 app.get('/api/user-profile', async (req, res) => {
     const currUser=req.session.user;
-    if (currUser) {
-
-        res.json({
-            name: currUser.name,
-            education: currUser?.education,
-            experience: currUser?.experience,
-            skills: currUser?.skills
-        });
+    if (!currUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    const user = await User.findOne({ email: currUser.email });
+    if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({
+        name: user.name,
+        role: user.role,
+        education: user.education,
+        experience: user.experience,
+        skills: user.skills,
+        resume: user.resumeFileId ? {
+            fileName: user.resumeFileName,
+            fileSize: user.resumeFileSize,
+            uploadedAt: user.resumeUploadedAt
+        } : null
+    });
 })
 
 // Check email availability before the registration form is submitted.
@@ -103,6 +132,11 @@ app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
 app.post('/api/profile', upload.single("pfpUpload"), updateProfile)
+
+// Resume management
+app.get('/api/profile/resume', getResume);
+app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
+app.delete('/api/profile/resume', deleteResume);
 
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
@@ -193,8 +227,14 @@ app.post('/api/logout', (req, res) => {
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
+            if (req.path === '/api/profile/resume') {
+                return res.status(413).json({error: 'Resume must be 5MB or smaller.'});
+            }
             return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});
         }
+    }
+    if (err.code === 'INVALID_RESUME_TYPE') {
+        return res.status(400).json({error: 'Only PDF files are allowed for resumes.'});
     }
     // Handle other general errors
     console.error("Server error:", err);

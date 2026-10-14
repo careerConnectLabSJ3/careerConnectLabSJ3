@@ -4,7 +4,60 @@ import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { gfsBucket } from './bin/www.js';
+import { gfsBucket, resumeBucket } from './bin/www.js';
+
+const MAX_RESUME_SIZE = 5 * 1024 * 1024;
+
+function isJobSeeker(req) {
+    return req.session.user?.role === 'job_seeker';
+}
+
+function isPdfFile(file) {
+    const hasPdfHeader = file?.buffer?.subarray(0, 5).toString() === '%PDF-';
+    const hasPdfEndMarker = file?.buffer?.lastIndexOf(Buffer.from('%%EOF')) !== -1;
+
+    return file &&
+        file.mimetype === 'application/pdf' &&
+        file.originalname.toLowerCase().endsWith('.pdf') &&
+        hasPdfHeader &&
+        hasPdfEndMarker;
+}
+
+function safeFilename(filename) {
+    return String(filename || 'resume.pdf')
+        .replace(/[\\/\r\n"]/g, '_');
+}
+
+function uploadToGridFS(file) {
+    return new Promise((resolve, reject) => {
+        if (!resumeBucket) {
+            reject(new Error('Resume storage is not initialized.'));
+            return;
+        }
+
+        const uploadStream = resumeBucket.openUploadStream(safeFilename(file.originalname), {
+            contentType: file.mimetype,
+            metadata: {
+                type: 'resume'
+            }
+        });
+
+        uploadStream.on('finish', () => resolve(uploadStream.id));
+        uploadStream.on('error', reject);
+        Readable.from(file.buffer).pipe(uploadStream);
+    });
+}
+
+async function deleteFromGridFS(fileId) {
+    if (!fileId || !resumeBucket) return;
+
+    try {
+        await resumeBucket.delete(new Types.ObjectId(fileId));
+    } catch (error) {
+        // The metadata can outlive a file if storage was manually cleaned up.
+        console.warn('Resume file was not found while deleting it.');
+    }
+}
 
 
 export async function getProfilePic(req, res){
@@ -133,5 +186,120 @@ export async function updateProfile(req, res){
     catch(error){
         console.log(error);
         return res.status(500).json({error : error.message});
+    }
+}
+
+export async function getResume(req, res) {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        if (!isJobSeeker(req)) {
+            return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
+        }
+
+        const user = await User.findOne({ email: req.session.user.email });
+        if (!user || !user.resumeFileId) {
+            return res.status(404).json({ error: 'No resume has been uploaded.' });
+        }
+
+        const fileId = new Types.ObjectId(user.resumeFileId);
+        const files = await resumeBucket.find({ _id: fileId }).toArray();
+        if (!files.length) {
+            return res.status(404).json({ error: 'Resume file could not be found.' });
+        }
+
+        res.setHeader('Content-Type', user.resumeMimeType || files[0].contentType || 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${safeFilename(user.resumeFileName)}"`);
+        return resumeBucket.openDownloadStream(fileId).pipe(res);
+    } catch (error) {
+        console.error('Resume retrieval failed:', error);
+        return res.status(500).json({ error: 'Unable to retrieve resume.' });
+    }
+}
+
+export async function uploadResume(req, res) {
+    let newResumeId;
+
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        if (!isJobSeeker(req)) {
+            return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Please select a PDF resume to upload.' });
+        }
+
+        if (req.file.size > MAX_RESUME_SIZE) {
+            return res.status(413).json({ error: 'Resume must be 5MB or smaller.' });
+        }
+
+        if (!isPdfFile(req.file)) {
+            return res.status(400).json({ error: 'Only valid PDF files can be uploaded as resumes.' });
+        }
+
+        const user = await User.findOne({ email: req.session.user.email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        newResumeId = await uploadToGridFS(req.file);
+        const previousResumeId = user.resumeFileId;
+
+        user.resumeFileId = newResumeId;
+        user.resumeFileName = safeFilename(req.file.originalname);
+        user.resumeFileSize = req.file.size;
+        user.resumeMimeType = 'application/pdf';
+        user.resumeUploadedAt = new Date();
+        await user.save();
+
+        await deleteFromGridFS(previousResumeId);
+
+        return res.status(200).json({
+            message: 'Resume uploaded successfully.',
+            resume: {
+                fileName: user.resumeFileName,
+                fileSize: user.resumeFileSize,
+                uploadedAt: user.resumeUploadedAt
+            }
+        });
+    } catch (error) {
+        if (newResumeId) {
+            await deleteFromGridFS(newResumeId);
+        }
+        console.error('Resume upload failed:', error);
+        return res.status(500).json({ error: 'Unable to save the resume.' });
+    }
+}
+
+export async function deleteResume(req, res) {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        if (!isJobSeeker(req)) {
+            return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
+        }
+
+        const user = await User.findOne({ email: req.session.user.email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        await deleteFromGridFS(user.resumeFileId);
+        user.resumeFileId = null;
+        user.resumeFileName = null;
+        user.resumeFileSize = null;
+        user.resumeMimeType = null;
+        user.resumeUploadedAt = null;
+        await user.save();
+
+        return res.status(200).json({ message: 'Resume deleted successfully.' });
+    } catch (error) {
+        console.error('Resume deletion failed:', error);
+        return res.status(500).json({ error: 'Unable to delete the resume.' });
     }
 }

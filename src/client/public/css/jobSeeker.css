@@ -251,3 +251,95 @@ body {
 #profile-form.is-editing #pfp-upload{
     visibility: visible;
 }
+
+/* Resume upload */
+.resume-section{
+    width: 50%;
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background-color: #f4f7f6;
+}
+
+.resume-section h2{
+    margin-bottom: 10px;
+}
+
+.resume-file,
+.resume-selected,
+.resume-help{
+    margin: 8px 0;
+}
+
+.resume-selected{
+    overflow-wrap: anywhere;
+    font-size: 0.95rem;
+}
+
+.resume-actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.resume-upload-btn,
+.resume-delete-btn{
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    padding: 7px 12px;
+}
+
+.resume-upload-btn{
+    background-color: #3498db;
+}
+
+.resume-delete-btn{
+    background-color: #c0392b;
+}
+
+.resume-upload-btn:hover{
+    background-color: #145b89;
+}
+
+.resume-delete-btn:hover{
+    background-color: #922b21;
+}
+
+.resume-upload-btn:disabled,
+.resume-delete-btn:disabled{
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.resume-progress{
+    position: relative;
+    height: 18px;
+    margin-top: 14px;
+    overflow: hidden;
+    border-radius: 9px;
+    background-color: #dfe6e9;
+}
+
+.resume-progress span{
+    display: block;
+    height: 100%;
+    background-color: #3498db;
+    transition: width 0.15s ease;
+}
+
+.resume-progress small{
+    position: absolute;
+    inset: 0;
+    text-align: center;
+    line-height: 18px;
+    color: #1f2937;
+}
+
+.profile-success{
+    margin-top: 10px;
+    color: #18794e;
+}
