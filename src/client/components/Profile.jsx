@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import editSvgIcon from "/img/edit-pen.svg";
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
@@ -25,6 +26,7 @@ export default function Profile(){
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeProgress, setResumeProgress] = useState(0);
   const resumeInputRef = useRef(null);
+  const resumeRequestControllerRef = useRef(null);
 
   async function handleProfileInit(){
     try{
@@ -157,7 +159,7 @@ export default function Profile(){
     uploadResume();
   }
 
-  function uploadResume(){
+  async function uploadResume(){
     if (!resumeFile || resumeUploading) return;
 
     setResumeUploading(true);
@@ -167,39 +169,47 @@ export default function Profile(){
 
     const data = new FormData();
     data.append('resumeUpload', resumeFile);
+    const requestController = new AbortController();
+    resumeRequestControllerRef.current = requestController;
 
-    const request = new XMLHttpRequest();
-    request.open('POST', '/api/profile/resume');
-    request.withCredentials = true;
-    request.upload.addEventListener('progress', (event) => {
-      if (event.lengthComputable) {
-        setResumeProgress(Math.round((event.loaded / event.total) * 100));
-      }
-    });
-    request.addEventListener('load', () => {
-      let result = {};
-      try {
-        result = JSON.parse(request.responseText || '{}');
-      } catch {
-        result = {};
-      }
+    try {
+      const response = await axios.post('/api/profile/resume', data, {
+        withCredentials: true,
+        signal: requestController.signal,
+        onUploadProgress: (event) => {
+          if (event.total) {
+            setResumeProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        }
+      });
 
-      if (request.status < 200 || request.status >= 300) {
-        setResumeError(result.error || 'Unable to upload the resume.');
-      } else {
-        setResume(result.resume);
-        setResumeFile(null);
-        setResumeMessage(result.message || 'Resume uploaded successfully.');
-        setResumeProgress(100);
-        if (resumeInputRef.current) resumeInputRef.current.value = '';
+      setResume(response.data.resume);
+      setResumeFile(null);
+      setResumeMessage(response.data.message || 'Resume uploaded successfully.');
+      setResumeProgress(100);
+      if (resumeInputRef.current) resumeInputRef.current.value = '';
+    } catch (error) {
+      if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+        return;
       }
+      setResumeError(
+        error.response?.data?.error ||
+        (error.request ? 'Unable to reach the server. Please try again.' : 'Unable to upload the resume.')
+      );
+    } finally {
+      resumeRequestControllerRef.current = null;
       setResumeUploading(false);
-    });
-    request.addEventListener('error', () => {
-      setResumeError('Unable to upload the resume. Please try again.');
-      setResumeUploading(false);
-    });
-    request.send(data);
+    }
+  }
+
+  function cancelResumeUpload(){
+    resumeRequestControllerRef.current?.abort();
+    setResumeFile(null);
+    setResumeError('');
+    setResumeMessage('');
+    setResumeProgress(0);
+    setResumeUploading(false);
+    if (resumeInputRef.current) resumeInputRef.current.value = '';
   }
 
   async function handleResumeDelete(){
@@ -297,10 +307,21 @@ export default function Profile(){
           />
           {resumeFile && <p className="resume-selected">Selected: {resumeFile.name}</p>}
           <div className="resume-actions">
-            <button type="button" className="resume-upload-btn" onClick={handleResumeButtonClick} disabled={resumeUploading}>
-              {resumeUploading ? 'Uploading...' : resumeFile ? 'Upload Resume' : resume ? 'Replace Resume' : 'Upload Resume'}
+            <button
+              type="button"
+              className={`resume-upload-btn${resumeFile ? ' resume-save-btn' : ''}${resumeUploading ? ' is-uploading' : ''}`}
+              onClick={handleResumeButtonClick}
+              disabled={resumeUploading}
+              aria-busy={resumeUploading}
+            >
+              {resumeUploading ? 'Saving resume…' : resumeFile ? 'Save Resume' : resume ? 'Replace Resume' : 'Upload Resume'}
             </button>
-            {resume && (
+            {resumeFile && (
+              <button type="button" className="resume-cancel-btn" onClick={cancelResumeUpload}>
+                Cancel
+              </button>
+            )}
+            {resume && !resumeFile && (
               <button type="button" className="resume-delete-btn" onClick={handleResumeDelete} disabled={resumeUploading}>
                 Delete Resume
               </button>
