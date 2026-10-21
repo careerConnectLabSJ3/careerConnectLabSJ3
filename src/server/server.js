@@ -234,6 +234,36 @@ app.post("/login", async (req, res) => {
     }
 });
 
+// API route for Job Seekers to search and filter jobs
+app.get('/api/jobs/search', async (req, res) => {
+    try {
+        // Extract the search query parameters sent by the frontend
+        const { title, department } = req.query;
+
+        // Filter active jobs
+        let activeJobs = { status: 'Active' };
+
+        if (title)
+            activeJobs.title = { $regex: title,$options: 'i' };
+
+        if (department)
+            activeJobs.department = { $regex: department, $options: 'i' };
+
+        // Retrieve jobs from mongodb
+        const jobs = await Job.find(activeJobs);
+
+        // send response to the user as an json object
+        return res.status(200).json(jobs);
+
+    } catch (error) {
+        console.error("Failed to query jobs:", error);
+        return res.status(500).send("Database search error: " + error.message);
+    }
+    
+});
+
+
+
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
