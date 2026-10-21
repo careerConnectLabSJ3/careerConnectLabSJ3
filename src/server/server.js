@@ -259,7 +259,7 @@ app.get('/api/post-jobs', async (req, res) => {
 app.get('/api/jobs/search', async (req, res) => {
     try {
         // Extract the search query parameters sent by the frontend
-        const { title, department } = req.query;
+        const { title, department,location } = req.query;
 
         // Filter active jobs
         let activeJobs = { status: 'Active' };
@@ -269,6 +269,9 @@ app.get('/api/jobs/search', async (req, res) => {
 
         if (department)
             activeJobs.department = { $regex: department, $options: 'i' };
+
+        if (location) // <-- Add this block
+            activeJobs.location = { $regex: location, $options: 'i' };
 
         // Retrieve jobs from mongodb
         const jobs = await Job.find(activeJobs);

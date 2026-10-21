@@ -6,13 +6,14 @@ export default function JobSeekerDashboard() {
   const [jobs, setJobs] = useState([]);
   const [searchTitle, setSearchTitle] = useState('');
   const [searchDept, setSearchDept] = useState('');
+  const [searchLocation, setSearchLocation] = useState(''); // <-- Added this
   const [loading, setLoading] = useState(true);
 
   // 2. FETCH DATA FUNCTION
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/jobs/search?title=${searchTitle}&department=${searchDept}`);
+      const response = await fetch(`/api/jobs/search?title=${searchTitle}&department=${searchDept}&location=${searchLocation}`);
       const data = await response.json();
       setJobs(data);
     }
@@ -55,6 +56,14 @@ export default function JobSeekerDashboard() {
           onChange={(e) => setSearchDept(e.target.value)}
           style={{ padding: '8px', width: '200px' }}
         />
+        <input 
+          type="text" 
+          placeholder="Filter by location..." 
+          value={searchLocation}
+          onChange={(e) => setSearchLocation(e.target.value)}
+          style={{ padding: '8px', width: '200px' }}
+        />
+        
         <button onClick={fetchJobs} style={{ padding: '8px 16px', cursor: 'pointer' }}>
           Search Jobs
         </button>
