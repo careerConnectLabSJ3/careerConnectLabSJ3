@@ -6,6 +6,7 @@ import app from '../server.js';
 const port = process.env.PORT || 3000;
 
 export let gfsBucket;
+export let resumeBucket;
 
 (async () => {
   try {
@@ -14,6 +15,9 @@ export let gfsBucket;
 
     gfsBucket = new mongoose.mongo.GridFSBucket(nativeDb, {
       bucketName: 'profileImages'
+    });
+    resumeBucket = new mongoose.mongo.GridFSBucket(nativeDb, {
+      bucketName: 'resumes'
     });
     console.log('GridFS Bucket Initialized');
 

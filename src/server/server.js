@@ -19,8 +19,12 @@ const port = 3000;
 
 // Import Modules from validation.js to handle input validation
 import {validateRegistration, sendRegistrationError, sendLoginError} from '../js/validation.js';
-import { getProfilePic, updateProfile } from './profileController.js';
+import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
+
+// import schema for a job postings database
+import Job from './models/job.js';
+
 
 // 2. MIDDLEWARE SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +49,23 @@ app.use(session({
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 2 * 1024 * 1024 }
+});
+
+const resumeUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+        const isPdf = file.mimetype === 'application/pdf' &&
+            file.originalname.toLowerCase().endsWith('.pdf');
+
+        if (!isPdf) {
+            const error = new Error('Only PDF files are allowed.');
+            error.code = 'INVALID_RESUME_TYPE';
+            return callback(error);
+        }
+
+        return callback(null, true);
+    }
 });
 
 // 5. API ROUTES
@@ -74,15 +95,27 @@ app.get('/api/current-user', (req, res) => {
 // API route for user profile information
 app.get('/api/user-profile', async (req, res) => {
     const currUser=req.session.user;
-    if (currUser) {
-
-        res.json({
-            name: currUser.name,
-            education: currUser?.education,
-            experience: currUser?.experience,
-            skills: currUser?.skills
-        });
+    if (!currUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    const user = await User.findOne({ email: currUser.email });
+    if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({
+        name: user.name,
+        role: user.role,
+        education: user.education,
+        experience: user.experience,
+        skills: user.skills,
+        resume: user.resumeFileId ? {
+            fileName: user.resumeFileName,
+            fileSize: user.resumeFileSize,
+            uploadedAt: user.resumeUploadedAt
+        } : null
+    });
 })
 
 // Check email availability before the registration form is submitted.
@@ -103,6 +136,11 @@ app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
 app.post('/api/profile', upload.single("pfpUpload"), updateProfile)
+
+// Resume management
+app.get('/api/profile/resume', getResume);
+app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
+app.delete('/api/profile/resume', deleteResume);
 
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
@@ -189,12 +227,73 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
+// Route to Add Data for job postings
+app.get('/api/post-jobs', async (req, res) => {
+    try {
+        // Create database for recruiter jobs
+        const Job1 = new Job({
+            title: "Junior Software Engineer",
+            department: "Engineering",
+            applicationsCount: 4
+        })
+        const Job2 = new Job({
+            title: "Product Manager",
+            department: "Product Team",
+            applicationsCount: 2
+        });
+
+        // Save jobs to MongoDB
+        await Job1.save();
+        await Job2.save();
+
+        res.send("Successfully inserted jobs into MongoDB!");
+        
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).send("Error inserting jobs to database: " + error.message);
+    }
+});
+
+// API route for Job Seekers to search and filter jobs
+app.get('/api/jobs/search', async (req, res) => {
+    try {
+        // Extract the search query parameters sent by the frontend
+        const { title, department } = req.query;
+
+        // Filter active jobs
+        let activeJobs = { status: 'Active' };
+
+        if (title)
+            activeJobs.title = { $regex: title,$options: 'i' };
+
+        if (department)
+            activeJobs.department = { $regex: department, $options: 'i' };
+
+        // Retrieve jobs from mongodb
+        const jobs = await Job.find(activeJobs);
+
+        // send response to the user as an json object
+        return res.status(200).json(jobs);
+
+    } catch (error) {
+        console.error("Failed to query jobs:", error);
+        return res.status(500).send("Database search error: " + error.message);
+    }
+    
+});
 // Error handling using middleware
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
+            if (req.path === '/api/profile/resume') {
+                return res.status(413).json({error: 'Resume must be 5MB or smaller.'});
+            }
             return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});
         }
+    }
+    if (err.code === 'INVALID_RESUME_TYPE') {
+        return res.status(400).json({error: 'Only PDF files are allowed for resumes.'});
     }
     // Handle other general errors
     console.error("Server error:", err);

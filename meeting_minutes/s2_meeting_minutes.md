@@ -50,3 +50,20 @@
   - **Emmanuelle:** will work on *Github Actions*
   - **Freddy:** will work on the *job searching* feature.
 * **Note-taker**: Emmanuelle
+
+## Meeting 7: 
+* **Date:** October 14, 2026
+* **Attendance:** Freddy, Emmanuelle, Bahaeddine
+* **Purpose:** Coordinate on the next steps of Sprint 2.
+* **Discussion Points:**
+  - **Emmanuelle:** Installed eslint and added linting commands to package.json
+  - **Bahaeddine:** Completed Resume upload feature and made PR
+  - **Freddy:**  Completed baseline Job schema and React hooks for a live-updating board 
+* **Decisions Made:**
+  - Continue working on allocated issues
+* **Action Items:**
+  - **Bahaeddine:** will work on *Track job application status*
+  - **Yacine:** will work on the *job posting* feature.
+  - **Emmanuelle:** will work on *Github Actions*
+  - **Freddy:** will work on the *job searching* feature.
+* **Note-taker**: Emmanuelle
