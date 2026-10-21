@@ -210,6 +210,34 @@ app.post("/api/login", async (req, res) => {
     }
 });
 
+// API route for upcoming deadlines
+app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
+    try {
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+
+        // Since your database stores dates as strings "YYYY-MM-DD", 
+        // we need to format today and next week the same way to compare them.
+        const formatDate = (date) => date.toISOString().split('T')[0];
+
+        const todayString = formatDate(today);
+        const nextWeekString = formatDate(nextWeek);
+
+        const upcomingJobs = await Job.find({
+            deadline: {
+                $gte: todayString,
+                $lte: nextWeekString
+            }
+        }).sort({ deadline: 1 });
+
+        res.status(200).json(upcomingJobs);
+    } catch (error) {
+        console.error("Error fetching upcoming deadlines:", error);
+        res.status(500).json({ error: "Server error fetching deadlines" });
+    }
+});
+
 app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
