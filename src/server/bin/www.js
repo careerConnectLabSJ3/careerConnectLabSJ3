@@ -29,7 +29,7 @@ export let resumeBucket;
     process.on('SIGINT', async () => {
       console.debug('SIGINT signal received: closing HTTP server');
       await mongoose.connection.close(false); 
-      console.debug('Mongoose connection closed')
+      console.debug('Mongoose connection closed');
 
       server.close(() => {
         console.debug('HTTP server closed');

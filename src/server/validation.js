@@ -1,5 +1,5 @@
 // validation.js
-import User from '../server/models/user.js';
+import User from './models/user.js';
 
 // Helper function to send the specialized HTML alert window back on error
 export function sendRegistrationError(res, statusCode, message) {
@@ -58,7 +58,7 @@ export async function validateRegistration(req, res, next) {
         if (terms !== true) {
             return sendRegistrationError(res, 400, 'You must agree to the Terms of Service and Privacy Policy.');
         }
-        if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
+        if (!role || role !== 'job_seeker' && role !== 'recruiter') {
             return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
         }
 
@@ -73,12 +73,12 @@ export async function validateRegistration(req, res, next) {
         req.body.normalizedEmail = normalizedEmail;
 
         next();
-    }
-    catch (error) {
-        console.error("Middleware validation failure:", error);
+    
+    } catch (error) {
+        console.error('Middleware validation failure:', error);
         if (error && error.code === 11000) {
             return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
-        res.status(500).send("Server error during validation registration.");
+        res.status(500).send('Server error during validation registration.');
     }
 }
