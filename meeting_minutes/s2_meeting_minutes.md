@@ -51,7 +51,7 @@
   - **Freddy:** will work on the *job searching* feature.
 * **Note-taker**: Emmanuelle
 
-## Meeting 7: 
+## Meeting 7
 * **Date:** October 14, 2026
 * **Attendance:** Freddy, Emmanuelle, Bahaeddine
 * **Purpose:** Coordinate on the next steps of Sprint 2.
@@ -66,4 +66,24 @@
   - **Yacine:** will work on the *job posting* feature.
   - **Emmanuelle:** will work on *Github Actions*
   - **Freddy:** will work on the *job searching* feature.
+* **Note-taker**: Emmanuelle
+
+## Meeting 8
+* **Date:** October 21, 2026
+* **Attendance:** Freddy, Emmanuelle, Bahaeddine
+* **Purpose:** Coordinate on the next steps of Sprint 2.
+* **Discussion Points:**
+  - **Emmanuelle:** Has setup rules for eslint and started implementation of yml file
+  - **Bahaeddine:** Looked at Freddy's PR
+  - **Freddy:**  Completed baseline location search/filter and deadline notifications
+  - Went through the mongoUri string error and database via network access
+* **Decisions Made:**
+  - Continue working on allocated issues
+  - Merge Yacine's PR if there are no issues
+  - Review Freddy's PR to clear the PR board
+* **Action Items:**
+  - **Bahaeddine:** will continue working on *Track job application status*
+  - **Yacine:** will work on the *job application* feature.
+  - **Emmanuelle:** will continue working on *Github Actions*
+  - **Freddy:** will continue working on the *job searching* feature.
 * **Note-taker**: Emmanuelle
