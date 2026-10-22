@@ -65,11 +65,11 @@ export default function JobPostingForm({ onCancel, onPosted }) {
 
   return (
     <section id="job-posting-form" className="job-posting" aria-labelledby="job-posting-title">
-      <h3 id="job-posting-title">Create a Job Posting</h3>
+      <h2 id="job-posting-title">Create a job posting</h2>
       <p id="job-posting-note">All fields are required. Your job will be visible to job seekers after posting.</p>
 
       <form onSubmit={handlePost} onChange={clearMessage} aria-describedby="job-posting-note">
-        <fieldset disabled={submitting}>
+        <fieldset className="job-posting-grid" disabled={submitting}>
         <div className="job-posting-field">
           <label htmlFor="job-title">Job title</label>
           <input id="job-title" name="title" type="text" required />
@@ -90,27 +90,28 @@ export default function JobPostingForm({ onCancel, onPosted }) {
           <input id="job-location" name="location" type="text" placeholder="For example, Montreal or Remote" required />
         </div>
 
-        <div className="job-posting-field">
+        <div className="job-posting-field job-posting-wide">
           <label htmlFor="job-description">Description</label>
           <textarea id="job-description" name="description" rows="4" required />
         </div>
 
-        <div className="job-posting-field">
+        <div className="job-posting-field job-posting-wide">
           <label htmlFor="job-requirements">Requirements</label>
           <textarea id="job-requirements" name="requirements" rows="4" required />
         </div>
 
         <div className="job-posting-field">
           <label htmlFor="job-deadline">Application deadline</label>
-          <input id="job-deadline" name="deadline" type="date" min={getTodayDate()} required />
+          <input id="job-deadline" name="deadline" type="date" min={getTodayDate()} aria-describedby="job-deadline-hint" required />
+          <p className="job-posting-hint" id="job-deadline-hint">Choose today or a future date.</p>
         </div>
 
         {error && <p className="job-posting-error" role="alert">{error}</p>}
         {message && <p className="job-posting-message" role="status">{message}</p>}
 
         <div className="job-posting-actions">
-          <button className="btn btn-primary" type="submit">{submitting ? 'Posting...' : 'Post job'}</button>
-          <button className="btn" type="button" onClick={onCancel}>Cancel</button>
+          <button className="recruiter-button recruiter-button-primary" type="submit">{submitting ? 'Posting...' : 'Post job'}</button>
+          <button className="recruiter-button" type="button" onClick={onCancel}>Cancel</button>
         </div>
         </fieldset>
       </form>
