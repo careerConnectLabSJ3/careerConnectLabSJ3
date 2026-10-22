@@ -234,8 +234,8 @@ app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
 
         res.status(200).json(upcomingJobs);
     } catch (error) {
-        console.error("Error fetching upcoming deadlines:", error);
-        res.status(500).json({ error: "Server error fetching deadlines" });
+        console.error('Error fetching upcoming deadlines:', error);
+        res.status(500).json({ error: 'Server error fetching deadlines' });
     }
 });
 
@@ -264,7 +264,7 @@ app.get('/api/jobs/mine', getRecruiterJobs);
 app.get('/api/jobs/search', async (req, res) => {
     try {
         // Extract the search query parameters sent by the frontend
-        const { title, department,location } = req.query;
+        const { title, department, location } = req.query;
 
         // Filter active jobs
         const activeJobs = { status: 'Active' };
