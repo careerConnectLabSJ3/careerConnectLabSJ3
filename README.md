@@ -102,6 +102,11 @@ npm run dev
 ```
 npm run start
 ```
+## Run linter
+Make sure all dependencies have been installed and in *root*, run:
+```
+npm run lint
+```
 
 ## CareerConnect Deployment Link
 *insert here*
