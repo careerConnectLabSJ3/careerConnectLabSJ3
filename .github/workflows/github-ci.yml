@@ -23,11 +23,8 @@ jobs:
         node-version: '20'
         cache: 'npm'
 
-    - name: Install client dependencies
-      run: cd src/client && npm install
-
-    - name: Install server dependencies
-      run: cd src/server && npm install
+    - name: Install root dependencies
+      run: npm install
 
     - name: Run eslint
       run: npm run lint
