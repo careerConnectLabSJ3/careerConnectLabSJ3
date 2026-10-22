@@ -18,7 +18,7 @@ const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-import {validateRegistration, sendRegistrationError, sendLoginError} from '../js/validation.js';
+import {validateRegistration, sendRegistrationError, sendLoginError} from './validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
 
