@@ -1,5 +1,4 @@
 import globals from "globals";
-import pluginReact from "eslint-plugin-react";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
@@ -51,6 +50,5 @@ export default defineConfig([
         "version": "detect"
       }
     }
-  },
-  pluginReact.configs.flat.recommended,
+  }
 ]);
