@@ -21,6 +21,7 @@ const port = 3000;
 import {validateRegistration, sendRegistrationError, sendLoginError} from '../js/validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
+import { createJob, getRecruiterJobs } from './jobController.js';
 
 // import schema for a job postings database
 import Job from './models/job.js';
@@ -227,33 +228,9 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
-// Route to Add Data for job postings
-app.get('/api/post-jobs', async (req, res) => {
-    try {
-        // Create database for recruiter jobs
-        const Job1 = new Job({
-            title: "Junior Software Engineer",
-            department: "Engineering",
-            applicationsCount: 4
-        })
-        const Job2 = new Job({
-            title: "Product Manager",
-            department: "Product Team",
-            applicationsCount: 2
-        });
-
-        // Save jobs to MongoDB
-        await Job1.save();
-        await Job2.save();
-
-        res.send("Successfully inserted jobs into MongoDB!");
-        
-    }
-    catch (error) {
-        console.error(error);
-        res.status(500).send("Error inserting jobs to database: " + error.message);
-    }
-});
+// Real job posting replaces the temporary dummy-job insertion route.
+app.post('/api/jobs', createJob);
+app.get('/api/jobs/mine', getRecruiterJobs);
 
 // API route for Job Seekers to search and filter jobs
 app.get('/api/jobs/search', async (req, res) => {

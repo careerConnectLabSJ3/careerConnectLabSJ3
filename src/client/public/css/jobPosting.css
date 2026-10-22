@@ -1,0 +1,75 @@
+.job-posting {
+    width: 100%;
+    max-width: 700px;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.job-posting h3,
+.job-posting > p {
+    margin-bottom: 1rem;
+}
+
+.job-posting-field {
+    margin-bottom: 1rem;
+}
+
+.job-posting fieldset {
+    border: 0;
+    min-width: 0;
+}
+
+.job-posting button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.job-posting-field label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+}
+
+.job-posting-field input,
+.job-posting-field textarea {
+    width: 100%;
+    padding: 0.65rem;
+    border: 1px solid var(--muted);
+    border-radius: 6px;
+    font: inherit;
+}
+
+.job-posting-field textarea {
+    resize: vertical;
+}
+
+.job-posting-field input:focus-visible,
+.job-posting-field textarea:focus-visible,
+.job-posting-actions button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.job-posting-error {
+    color: #b91c1c;
+    margin-bottom: 1rem;
+}
+
+.job-posting-message {
+    margin-bottom: 1rem;
+}
+
+.job-posting-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.job-posting-actions .btn:not(.btn-primary) {
+    background: var(--surface);
+    border-color: var(--muted);
+    color: var(--text);
+}
