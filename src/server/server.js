@@ -94,7 +94,7 @@ app.get('/api/current-user', (req, res) => {
 
 // API route for user profile information
 app.get('/api/user-profile', async (req, res) => {
-    const currUser=req.session.user;
+    const currUser = req.session.user;
     if (!currUser) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -116,7 +116,7 @@ app.get('/api/user-profile', async (req, res) => {
             uploadedAt: user.resumeUploadedAt
         } : null
     });
-})
+});
 
 // Check email availability before the registration form is submitted.
 app.get('/api/check-email', async (req, res) => {
@@ -135,7 +135,7 @@ app.get('/api/check-email', async (req, res) => {
 app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
-app.post('/api/profile', upload.single("pfpUpload"), updateProfile)
+app.post('/api/profile', upload.single('pfpUpload'), updateProfile);
 
 // Resume management
 app.get('/api/profile/resume', getResume);
@@ -159,34 +159,34 @@ app.post('/api/register', validateRegistration, async (req, res) => {
 
         await newUser.save();
         return res.status(200).json({
-            message: "Registration successful"
-        })
-    }
-    catch (error) {
+            message: 'Registration successful'
+        });
+    
+    } catch (error) {
         console.error(error);
         if (error && error.code === 11000) {
             return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
-        return res.status(500).send("Server error during registration");
+        return res.status(500).send('Server error during registration');
     }
 });
 
-app.post("/api/login", async (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
         if (!normalizedEmail || typeof password !== 'string' || !password) {
-            return res.status(400).send("Email and password are required.");
+            return res.status(400).send('Email and password are required.');
         }
 
         const user = await User.findOne({ email: normalizedEmail });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return sendLoginError(res, "Invalid email or password. Please try again.");
+        if (!user || !await bcrypt.compare(password, user.password)) {
+            return sendLoginError(res, 'Invalid email or password. Please try again.');
         }
 
         if (user.role !== 'job_seeker' && user.role !== 'recruiter') {
-            return res.status(403).send("This account does not have a valid role.");
+            return res.status(403).send('This account does not have a valid role.');
         }
 
         req.session.user = {
@@ -200,30 +200,30 @@ app.post("/api/login", async (req, res) => {
         };
 
         return res.status(200).json({
-            message: "Login successful",
+            message: 'Login successful',
             role: user.role
         });
-    }
-    catch (error) {
-        console.error("Login failed:", error);
-        return res.status(500).send("Server error during login.");
+    
+    } catch (error) {
+        console.error('Login failed:', error);
+        return res.status(500).send('Server error during login.');
     }
 });
 
 app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            console.log("Logout failed:", err);
+            console.log('Logout failed:', err);
             return res.status(500).json({
                 loggedIn: true,
-                message: "Logout failed"
+                message: 'Logout failed'
             });
         }
         res.clearCookie('connect.sid');
         return res.status(200).json({
             loggedIn: true,
-            message: "Logout successful"
-        })
+            message: 'Logout successful'
+        });
     });
 });
 
@@ -232,13 +232,13 @@ app.get('/api/post-jobs', async (req, res) => {
     try {
         // Create database for recruiter jobs
         const Job1 = new Job({
-            title: "Junior Software Engineer",
-            department: "Engineering",
+            title: 'Junior Software Engineer',
+            department: 'Engineering',
             applicationsCount: 4
-        })
+        });
         const Job2 = new Job({
-            title: "Product Manager",
-            department: "Product Team",
+            title: 'Product Manager',
+            department: 'Product Team',
             applicationsCount: 2
         });
 
@@ -246,12 +246,11 @@ app.get('/api/post-jobs', async (req, res) => {
         await Job1.save();
         await Job2.save();
 
-        res.send("Successfully inserted jobs into MongoDB!");
+        res.send('Successfully inserted jobs into MongoDB!');
         
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
-        res.status(500).send("Error inserting jobs to database: " + error.message);
+        res.status(500).send('Error inserting jobs to database: ' + error.message);
     }
 });
 
@@ -262,10 +261,10 @@ app.get('/api/jobs/search', async (req, res) => {
         const { title, department } = req.query;
 
         // Filter active jobs
-        let activeJobs = { status: 'Active' };
+        const activeJobs = { status: 'Active' };
 
         if (title)
-            activeJobs.title = { $regex: title,$options: 'i' };
+            activeJobs.title = { $regex: title, $options: 'i' };
 
         if (department)
             activeJobs.department = { $regex: department, $options: 'i' };
@@ -277,8 +276,8 @@ app.get('/api/jobs/search', async (req, res) => {
         return res.status(200).json(jobs);
 
     } catch (error) {
-        console.error("Failed to query jobs:", error);
-        return res.status(500).send("Database search error: " + error.message);
+        console.error('Failed to query jobs:', error);
+        return res.status(500).send('Database search error: ' + error.message);
     }
     
 });
@@ -296,7 +295,7 @@ app.use((err, req, res, next) => {
         return res.status(400).json({error: 'Only PDF files are allowed for resumes.'});
     }
     // Handle other general errors
-    console.error("Server error:", err);
+    console.error('Server error:', err);
     res.status(500).send({error: 'An unexpected error occurred.'});
 });
 
