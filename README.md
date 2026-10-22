@@ -84,6 +84,7 @@ If you are connecting remotely to the hosted database, update your `.env` file t
 PORT=3000
 MONGODB_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
 ```
+**Make sure the .env file is located in src/server**
 
 ## Run Application for **Production**
 Make sure you are in the project **root directory**
@@ -100,6 +101,11 @@ npm run dev
 ### Server
 ```
 npm run start
+```
+## Run linter
+Make sure all dependencies have been installed and in *root*, run:
+```
+npm run lint
 ```
 
 ## CareerConnect Deployment Link

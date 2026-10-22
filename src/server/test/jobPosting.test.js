@@ -23,8 +23,12 @@ function validBody() {
 function response() {
   return {
     statusCode: 200,
-    status(code) { this.statusCode = code; return this; },
-    json(body) { this.body = body; return this; }
+    status(code) { 
+      this.statusCode = code; return this; 
+    },
+    json(body) { 
+      this.body = body; return this; 
+    }
   };
 }
 
@@ -87,15 +91,24 @@ test('recruiter list reads only the logged-in recruiter jobs, newest first', asy
   const jobs = [{ title: 'My job' }];
   t.mock.method(Job, 'find', filter => {
     assert.deepEqual(filter, { recruiter: recruiterId });
-    return { sort(order) { assert.deepEqual(order, { _id: -1 }); return Promise.resolve(jobs); } };
+    return { 
+      sort(order) { 
+        assert.deepEqual(order, { _id: -1 }); 
+        return Promise.resolve(jobs); 
+      } 
+    };
   });
   const res = response();
-  await getRecruiterJobs({ session: { user: recruiter } }, res);
+  await getRecruiterJobs({ session: { 
+    user: recruiter 
+  }}, res);
   assert.deepEqual(res.body, jobs);
 });
 
 test('database save failure returns a useful error without exposing database details', async t => {
-  t.mock.method(Job, 'create', async () => { throw new Error('private database detail'); });
+  t.mock.method(Job, 'create', async () => { 
+    throw new Error('private database detail'); 
+  });
   t.mock.method(console, 'error', () => {});
   const res = response();
   await createJob({ session: { user: recruiter }, body: validBody() }, res);
@@ -104,7 +117,9 @@ test('database save failure returns a useful error without exposing database det
 });
 
 test('database list failure returns a useful error', async t => {
-  t.mock.method(Job, 'find', () => { throw new Error('database unavailable'); });
+  t.mock.method(Job, 'find', () => { 
+    throw new Error('database unavailable'); 
+  });
   t.mock.method(console, 'error', () => {});
   const res = response();
   await getRecruiterJobs({ session: { user: recruiter } }, res);

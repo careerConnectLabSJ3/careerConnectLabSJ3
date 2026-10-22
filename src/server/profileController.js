@@ -24,8 +24,7 @@ function isPdfFile(file) {
 }
 
 function safeFilename(filename) {
-    return String(filename || 'resume.pdf')
-        .replace(/[\\/\r\n"]/g, '_');
+    return String(filename || 'resume.pdf').replace(/[\\/\r\n"]/g, '_');
 }
 
 function uploadToGridFS(file) {
@@ -68,7 +67,7 @@ export async function getProfilePic(req, res){
 
         const user = await User.findOne({ email: req.session.user.email });
         const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename)
+        const __dirname = path.dirname(__filename);
         
         // If user has no custom profile picture, serve the default static image
         if (!user || !user.profileImageId) {
@@ -91,7 +90,7 @@ export async function getProfilePic(req, res){
         downloadStream.pipe(res);
 
     } catch (err) {
-        console.error("Avatar route catch error:", err)
+        console.error('Avatar route catch error:', err);
         res.status(500).send({error: 'Error retrieving image'});
     }
 };
@@ -110,17 +109,17 @@ export async function updateProfile(req, res){
         const symbolPattern = /[^a-zA-Z0-9\s'\-\u2019]/;
         const fieldsToValidate = [name, education, experience, skills];
 
-        for (let value of fieldsToValidate) {
+        for (const value of fieldsToValidate) {
             const normalized = String(value || '').trim();
             if (symbolPattern.test(normalized)) {
                 return res.status(400).json({ 
-                    error: "Validation failed: Only letters, numbers, spaces, apostrophes, and dashes are allowed." 
+                    error: 'Validation failed: Only letters, numbers, spaces, apostrophes, and dashes are allowed.' 
                 });
             }
         }
 
         const user = await User.findOne({ email: currUserInfo.email });
-        if(!user) return res.status(404).json({error: "User not found"});
+        if(!user) return res.status(404).json({error: 'User not found'});
         let newPfpId = user.profileImageId;
 
         if (req.file) {
@@ -138,7 +137,7 @@ export async function updateProfile(req, res){
                     // deleted old pfp
                     await gfsBucket.delete(new Types.ObjectId(user.profileImageId));
                 } catch (err) {
-                    console.log("Old image not found or already deleted");
+                    console.log('Old image not found or already deleted');
                 }
             }
             // Stream buffer to GridFS
@@ -153,8 +152,8 @@ export async function updateProfile(req, res){
                 const generatedId = uploadStream.id;
                 readableStream.pipe(uploadStream);
 
-                uploadStream.on("finish", () => resolve(generatedId));
-                uploadStream.on("error", (err) => reject(err));
+                uploadStream.on('finish', () => resolve(generatedId));
+                uploadStream.on('error', (err) => reject(err));
             });
 
             newPfpId = await uploadPromise;
@@ -179,11 +178,10 @@ export async function updateProfile(req, res){
         };
 
         return res.status(200).json({
-            message: "Profile update success"
+            message: 'Profile update success'
         });
-        
-    }
-    catch(error){
+
+    } catch(error){
         console.log(error);
         return res.status(500).json({error : error.message});
     }

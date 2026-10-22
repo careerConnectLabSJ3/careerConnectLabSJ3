@@ -9,7 +9,8 @@
   "scripts": {
     "build": "npm install  && cd src/server && npm install && cd ../client && npm install && npm run build",
     "start": "npm --prefix src/server start",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src/server/**/*.js"
   },
   "repository": {
     "type": "git",
@@ -23,19 +24,9 @@
     "url": "https://github.com/fmvemba22/SOEN341/issues"
   },
   "homepage": "https://github.com/fmvemba22/SOEN341#readme",
-  "dependencies": {
-    "bcrypt": "^6.0.0",
-    "dotenv": "^18.0.0",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0",
-    "mongodb": "4.1",
-    "mongoose": "^9.10.2",
-    "multer": "^2.4.0",
-    "mysql2": "^3.24.4",
-    "react": "^19.3.0"
-  },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.0"
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.13.0"
   }
 }
