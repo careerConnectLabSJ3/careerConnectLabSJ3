@@ -34,7 +34,6 @@ export default defineConfig([
       ////////// Style //////////
       'array-bracket-spacing': ['error', 'never'],
       'array-bracket-newline': ['error', 'consistent'],
-      'indent': ['error', 2],
       'camelcase': 'error',
       'comma-spacing': ['error', { 'before': false, 'after': true }],
       'comma-style': ['error', 'last'],
