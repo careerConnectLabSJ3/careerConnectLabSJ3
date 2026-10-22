@@ -21,6 +21,7 @@ const port = 3000;
 import {validateRegistration, sendRegistrationError, sendLoginError} from './validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
+import { createJob, getRecruiterJobs } from './jobController.js';
 
 // import schema for a job postings database
 import Job from './models/job.js';
@@ -210,6 +211,34 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// API route for upcoming deadlines
+app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
+    try {
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+
+        // Since your database stores dates as strings "YYYY-MM-DD", 
+        // we need to format today and next week the same way to compare them.
+        const formatDate = (date) => date.toISOString().split('T')[0];
+
+        const todayString = formatDate(today);
+        const nextWeekString = formatDate(nextWeek);
+
+        const upcomingJobs = await Job.find({
+            deadline: {
+                $gte: todayString,
+                $lte: nextWeekString
+            }
+        }).sort({ deadline: 1 });
+
+        res.status(200).json(upcomingJobs);
+    } catch (error) {
+        console.error("Error fetching upcoming deadlines:", error);
+        res.status(500).json({ error: "Server error fetching deadlines" });
+    }
+});
+
 app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -227,38 +256,15 @@ app.post('/api/logout', (req, res) => {
     });
 });
 
-// Route to Add Data for job postings
-app.get('/api/post-jobs', async (req, res) => {
-    try {
-        // Create database for recruiter jobs
-        const Job1 = new Job({
-            title: 'Junior Software Engineer',
-            department: 'Engineering',
-            applicationsCount: 4
-        });
-        const Job2 = new Job({
-            title: 'Product Manager',
-            department: 'Product Team',
-            applicationsCount: 2
-        });
-
-        // Save jobs to MongoDB
-        await Job1.save();
-        await Job2.save();
-
-        res.send('Successfully inserted jobs into MongoDB!');
-        
-    } catch (error) {
-        console.error(error);
-        res.status(500).send('Error inserting jobs to database: ' + error.message);
-    }
-});
+// Real job posting replaces the temporary dummy-job insertion route.
+app.post('/api/jobs', createJob);
+app.get('/api/jobs/mine', getRecruiterJobs);
 
 // API route for Job Seekers to search and filter jobs
 app.get('/api/jobs/search', async (req, res) => {
     try {
         // Extract the search query parameters sent by the frontend
-        const { title, department } = req.query;
+        const { title, department,location } = req.query;
 
         // Filter active jobs
         const activeJobs = { status: 'Active' };
@@ -268,6 +274,9 @@ app.get('/api/jobs/search', async (req, res) => {
 
         if (department)
             activeJobs.department = { $regex: department, $options: 'i' };
+
+        if (location) // <-- Add this block
+            activeJobs.location = { $regex: location, $options: 'i' };
 
         // Retrieve jobs from mongodb
         const jobs = await Job.find(activeJobs);
