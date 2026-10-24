@@ -55,12 +55,12 @@ export default function JobSeekerDashboard() {
             backgroundColor: '#fff3cd', 
             color: '#856404', 
             padding: '15px', 
-            borderRadius: '5px', 
+            borderRadius: '15px', 
             marginBottom: '20px',
             border: '1px solid #ffeeba'
         }}>
           <strong> Heads up!</strong> The following job postings are closing soon:
-          <ul style={{ marginTop: '10px', marginBottom: '0' }}>
+          <ul style={{ marginTop: '10px', marginBottom: '0',listStyleType: 'none' }}>
             {upcomingDeadlines.map(job => (
               <li key={job._id}>
                 <strong>{job.title}</strong> at {job.company} - Deadline: {job.deadline}
