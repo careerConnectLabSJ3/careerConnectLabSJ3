@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import '../public/css/jobSeeker.css';
+import JobApplication from './JobApplication';
 
 export default function JobSeekerDashboard() {
   // 1. STATE MANAGERS
@@ -8,6 +9,11 @@ export default function JobSeekerDashboard() {
   const [searchDept, setSearchDept] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedJobId, setSelectedJobId] = useState(null);
+
+  function handleApplied(jobId, applicationsCount) {
+    setJobs(currentJobs => currentJobs.map(job => job._id === jobId ? { ...job, applicationsCount } : job));
+  }
   
   // NEW STATE FOR DEADLINES
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
@@ -104,6 +110,11 @@ export default function JobSeekerDashboard() {
         </button>
       </section>
 
+      {selectedJobId && (
+        <JobApplication key={selectedJobId} jobId={selectedJobId}
+          onClose={() => setSelectedJobId(null)} onApplied={handleApplied} />
+      )}
+
       <section className="applications-section">
         <h2>Available Job Opportunities</h2>
         
@@ -119,6 +130,7 @@ export default function JobSeekerDashboard() {
                 <th>Department</th>
                 <th>Applications</th>
                 <th>Status</th>
+                <th>Details</th>
               </tr>
             </thead>
             <tbody>
@@ -129,6 +141,11 @@ export default function JobSeekerDashboard() {
                   <td>{job.applicationsCount} candidates</td>
                   <td>
                     <span className="status-badge status-applied">{job.status}</span>
+                  </td>
+                  <td>
+                    <button type="button" onClick={() => setSelectedJobId(job._id)} aria-label={`View details for ${job.title}`}>
+                      View details
+                    </button>
                   </td>
                 </tr>
               ))}
