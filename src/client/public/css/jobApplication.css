@@ -1,0 +1,82 @@
+.job-application {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.job-application-heading,
+.job-application-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.job-application dl,
+.job-application-text {
+    margin: 1rem 0;
+}
+
+.job-application dt {
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.job-application dd {
+    margin: 0;
+}
+
+.job-application-text,
+.job-application dd {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.job-application button {
+    min-height: 44px;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #b8c4d2;
+    border-radius: 4px;
+    font: inherit;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.job-application .job-application-primary {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.job-application button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.job-application button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.job-application-confirmation {
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+}
+
+.job-application-actions {
+    justify-content: flex-start;
+    margin-top: 1rem;
+}
+
+.job-application-error {
+    margin: 1rem 0;
+    color: #991b1b;
+}
+
+.job-application-success {
+    margin: 1rem 0;
+    color: #256039;
+}

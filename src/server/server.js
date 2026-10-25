@@ -22,6 +22,7 @@ import {validateRegistration, sendRegistrationError, sendLoginError} from './val
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
 import { createJob, getRecruiterJobs } from './jobController.js';
+import { getJobDetails, submitApplication, getJobApplications } from './applicationController.js';
 
 // import schema for a job postings database
 import Job from './models/job.js';
@@ -290,6 +291,11 @@ app.get('/api/jobs/search', async (req, res) => {
     }
     
 });
+// Keep the named search/mine/deadline routes above the variable job ID route.
+app.get('/api/jobs/:jobId', getJobDetails);
+app.post('/api/jobs/:jobId/applications', submitApplication);
+app.get('/api/jobs/:jobId/applications', getJobApplications);
+
 // Error handling using middleware
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
