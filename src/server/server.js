@@ -22,7 +22,14 @@ import {validateRegistration, sendRegistrationError, sendLoginError} from './val
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
 import { createJob, getRecruiterJobs } from './jobController.js';
-import { getJobDetails, submitApplication, getJobApplications } from './applicationController.js';
+import {
+    getJobDetails,
+    submitApplication,
+    getJobApplications,
+    getMyApplications,
+    updateMyApplicationStatus,
+    getJobLifecycleStatus
+} from './applicationController.js';
 
 // import schema for a job postings database
 import Job from './models/job.js';
@@ -267,23 +274,26 @@ app.get('/api/jobs/search', async (req, res) => {
         // Extract the search query parameters sent by the frontend
         const { title, department, location } = req.query;
 
-        // Filter active jobs
-        const activeJobs = { status: 'Active' };
+        const jobFilters = {};
 
         if (title)
-            activeJobs.title = { $regex: title, $options: 'i' };
+            jobFilters.title = { $regex: title, $options: 'i' };
 
         if (department)
-            activeJobs.department = { $regex: department, $options: 'i' };
+            jobFilters.department = { $regex: department, $options: 'i' };
 
         if (location) // <-- Add this block
-            activeJobs.location = { $regex: location, $options: 'i' };
+            jobFilters.location = { $regex: location, $options: 'i' };
 
-        // Retrieve jobs from mongodb
-        const jobs = await Job.find(activeJobs);
+        // Retrieve both active and closed jobs so job seekers can see the
+        // current lifecycle status of every opportunity they have found.
+        const jobs = await Job.find(jobFilters).sort({ deadline: 1 });
 
         // send response to the user as an json object
-        return res.status(200).json(jobs);
+        return res.status(200).json(jobs.map(job => ({
+            ...job.toObject(),
+            status: getJobLifecycleStatus(job)
+        })));
 
     } catch (error) {
         console.error('Failed to query jobs:', error);
@@ -291,7 +301,10 @@ app.get('/api/jobs/search', async (req, res) => {
     }
     
 });
+app.get('/api/applications', getMyApplications);
+app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
 // Keep the named search/mine/deadline routes above the variable job ID route.
+app.get('/api/jobs/:jobId/details', getJobDetails);
 app.get('/api/jobs/:jobId', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
