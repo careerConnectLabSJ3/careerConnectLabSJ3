@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import '../public/css/jobApplications.css';
+import JobDetailsModal from './JobDetailsModal';
 
 const FILTERS = [
   { value: 'all', label: 'All applications' },
@@ -115,7 +116,7 @@ export default function JobApplications() {
                   <td><span className={statusClass(application.status || 'Applied')}>{application.status || 'Applied'}</span></td>
                   <td><span className={statusClass(application.jobStatus)}>{application.jobStatus}</span></td>
                   <td>
-                    <button type="button" className="application-details-button" onClick={() => setSelectedApplication(application)}>
+                    <button type="button" className="application-details-button" disabled={!application.job?._id} onClick={() => setSelectedApplication(application)}>
                       View details
                     </button>
                   </td>
@@ -126,24 +127,13 @@ export default function JobApplications() {
         </div>
       )}
 
-      {selectedApplication && (
-        <section className="application-detail-card" aria-labelledby="application-detail-title">
-          <div className="application-detail-heading">
-            <div>
-              <p className="application-detail-eyebrow">Application details</p>
-              <h2 id="application-detail-title">{selectedApplication.job?.title || 'Job no longer available'}</h2>
-            </div>
-            <button type="button" onClick={() => setSelectedApplication(null)}>Close</button>
-          </div>
-          <dl>
-            <dt>Company</dt><dd>{selectedApplication.job?.company || 'Unknown company'}</dd>
-            <dt>Department</dt><dd>{selectedApplication.job?.department || 'Not available'}</dd>
-            <dt>Location</dt><dd>{selectedApplication.job?.location || 'Not available'}</dd>
-            <dt>Applied on</dt><dd>{formatDate(selectedApplication.appliedAt)}</dd>
-            <dt>Application status</dt><dd><span className={statusClass(selectedApplication.status || 'Applied')}>{selectedApplication.status || 'Applied'}</span></dd>
-            <dt>Job status</dt><dd><span className={statusClass(selectedApplication.jobStatus)}>{selectedApplication.jobStatus}</span></dd>
-          </dl>
-        </section>
+      {selectedApplication && selectedApplication.job?._id && (
+        <JobDetailsModal
+          key={selectedApplication._id}
+          jobId={selectedApplication.job._id}
+          application={selectedApplication}
+          onClose={() => setSelectedApplication(null)}
+        />
       )}
     </section>
   );

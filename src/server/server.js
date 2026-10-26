@@ -304,6 +304,7 @@ app.get('/api/jobs/search', async (req, res) => {
 app.get('/api/applications', getMyApplications);
 app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
 // Keep the named search/mine/deadline routes above the variable job ID route.
+app.get('/api/jobs/:jobId/details', getJobDetails);
 app.get('/api/jobs/:jobId', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);

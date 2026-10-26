@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import '../public/css/jobSeeker.css';
-import JobApplication from './JobApplication';
+import JobDetailsModal from './JobDetailsModal';
 
 export default function JobSeekerDashboard() {
   // 1. STATE MANAGERS
@@ -219,7 +219,7 @@ export default function JobSeekerDashboard() {
       </section>
 
       {selectedJobId && (
-        <JobApplication key={selectedJobId} jobId={selectedJobId}
+        <JobDetailsModal key={selectedJobId} jobId={selectedJobId}
           onClose={() => setSelectedJobId(null)} onApplied={handleApplied} />
       )}
 
