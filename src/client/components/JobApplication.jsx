@@ -76,8 +76,16 @@ export default function JobApplication({ jobId, onClose, onApplied }) {
           <p className="job-application-text">{details.job.description || 'Not provided'}</p>
           <h3>Requirements</h3>
           <p className="job-application-text">{details.job.requirements || 'Not provided'}</p>
-          {details.hasApplied ? <p>You have already applied for this job.</p> : !details.canApply ? (
-            <p>This job is no longer accepting applications.</p>
+          {details.hasApplied ? (
+            <p className="job-application-notice job-application-notice-applied" role="status">
+              <strong>Application already submitted</strong>
+              <span>You have already applied for this job.</span>
+            </p>
+          ) : !details.canApply ? (
+            <p className="job-application-notice job-application-notice-closed" role="alert">
+              <strong>Applications are closed</strong>
+              <span>This job is no longer accepting applications.</span>
+            </p>
           ) : confirming ? (
             <div className="job-application-confirmation">
               <p>Submit your application to {details.job.company}? Your CareerConnect profile will be available to this job's recruiter.</p>

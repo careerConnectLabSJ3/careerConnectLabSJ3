@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
-import { getJobDetails, submitApplication, getJobApplications } from '../applicationController.js';
+import { getJobDetails, submitApplication, getJobApplications, getMyApplications, updateMyApplicationStatus } from '../applicationController.js';
 
 const jobId = '507f1f77bcf86cd799439010';
 const applicantId = '507f1f77bcf86cd799439011';
@@ -74,7 +74,7 @@ test('model requires job and applicant and defines the duplicate-prevention inde
 test('all application routes reject missing sessions and the wrong role before database access', async t => {
   t.mock.method(Job, 'findById', () => assert.fail('Unauthorized database access'));
   for (const [handler, wrongUser] of [
-    [getJobDetails, recruiter], [submitApplication, recruiter], [getJobApplications, seeker]
+    [getJobDetails, recruiter], [submitApplication, recruiter], [getJobApplications, seeker], [getMyApplications, recruiter]
   ]) {
     const loggedOut = response();
     await handler({ params: { jobId } }, loggedOut);
@@ -83,6 +83,72 @@ test('all application routes reject missing sessions and the wrong role before d
     await handler(request(wrongUser), forbidden);
     assert.equal(forbidden.statusCode, 403);
   }
+});
+
+test('a job seeker receives their applications with a current job lifecycle status', async t => {
+  const applications = [{
+    _id: 'application-id',
+    status: 'Applied',
+    appliedAt: new Date('2026-10-20T12:00:00Z'),
+    job: {
+      _id: jobId,
+      title: 'Developer',
+      company: 'Example Company',
+      status: 'Active',
+      deadline: date(1)
+    },
+    toObject() {
+      return this;
+    }
+  }];
+  t.mock.method(JobApplication, 'find', filter => {
+    assert.deepEqual(filter, { applicant: applicantId });
+    return {
+      populate(path, fields) {
+        assert.equal(path, 'job');
+        assert.equal(fields, 'title company department location deadline status');
+        return {
+          sort(order) {
+            assert.deepEqual(order, { appliedAt: -1 });
+            return Promise.resolve(applications);
+          }
+        };
+      }
+    };
+  });
+  const res = response();
+  await getMyApplications(request(), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body[0].status, 'Applied');
+  assert.equal(res.body[0].jobStatus, 'Active');
+});
+
+test('a job seeker can temporarily update only their own application status', async t => {
+  t.mock.method(JobApplication, 'findOneAndUpdate', async (filter, change, options) => {
+    assert.deepEqual(filter, { _id: jobId, applicant: applicantId });
+    assert.deepEqual(change, { $set: { status: 'Interview' } });
+    assert.deepEqual(options, { returnDocument: 'after', runValidators: true });
+    return { _id: jobId, status: 'Interview' };
+  });
+  const res = response();
+  await updateMyApplicationStatus({
+    session: { user: seeker },
+    params: { applicationId: jobId },
+    body: { status: 'Interview' }
+  }, res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.body.application.status, 'Interview');
+});
+
+test('application status updates reject unsupported statuses before database access', async t => {
+  t.mock.method(JobApplication, 'findOneAndUpdate', () => assert.fail('Invalid status reached the database'));
+  const res = response();
+  await updateMyApplicationStatus({
+    session: { user: seeker },
+    params: { applicationId: jobId },
+    body: { status: 'Offer extended' }
+  }, res);
+  assert.equal(res.statusCode, 400);
 });
 
 test('malformed job IDs are rejected before database access', async t => {

@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import Job from './models/job.js';
 import JobApplication from './models/jobApplication.js';
 
+export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
+
 function checkAccess(req, res, role) {
   if (!req.session?.user) {
     res.status(401).json({ error: 'Please log in to continue.' });
@@ -16,6 +18,32 @@ function checkAccess(req, res, role) {
     return false;
   }
   return true;
+}
+
+function checkSeeker(req, res) {
+  if (!req.session?.user) {
+    res.status(401).json({ error: 'Please log in to continue.' });
+    return false;
+  }
+  if (req.session.user.role !== 'job_seeker') {
+    res.status(403).json({ error: 'Only job seekers can view their applications.' });
+    return false;
+  }
+  return true;
+}
+
+export function getJobLifecycleStatus(job) {
+  if (String(job?.status || '').toLowerCase() !== 'active') return 'Closed';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(job?.deadline || '')) return 'Closed';
+
+  const deadline = new Date(`${job.deadline}T00:00:00Z`);
+  if (Number.isNaN(deadline.getTime()) || deadline.toISOString().slice(0, 10) !== job.deadline) {
+    return 'Closed';
+  }
+
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return job.deadline < today ? 'Closed' : 'Active';
 }
 
 function isJobOpen(job) {
@@ -83,11 +111,60 @@ export async function getJobApplications(req, res) {
       return res.status(403).json({ error: 'You can only view applications for your own jobs.' });
     }
     const applications = await JobApplication.find({ job: job._id })
-      .populate('applicant', 'name email education experience skills')
-      .sort({ appliedAt: -1 });
+        .populate('applicant', 'name email education experience skills')
+        .sort({ appliedAt: -1 });
     return res.json(applications);
   } catch (error) {
     console.error('Failed to load applications:', error);
     return res.status(500).json({ error: 'Unable to load applications. Please try again.' });
+  }
+}
+
+export async function getMyApplications(req, res) {
+  if (!checkSeeker(req, res)) return;
+
+  try {
+    const applications = await JobApplication.find({ applicant: req.session.user.id })
+        .populate('job', 'title company department location deadline status')
+        .sort({ appliedAt: -1 });
+
+    return res.json(applications.map(application => {
+      const item = typeof application.toObject === 'function' ? application.toObject() : application;
+      return {
+        ...item,
+        jobStatus: getJobLifecycleStatus(item.job)
+      };
+    }));
+  } catch (error) {
+    console.error('Failed to load my applications:', error);
+    return res.status(500).json({ error: 'Unable to load your applications. Please try again.' });
+  }
+}
+
+// Temporary job-seeker debug route for exercising the application tracker
+// before recruiter-managed status updates are implemented.
+export async function updateMyApplicationStatus(req, res) {
+  if (!checkSeeker(req, res)) return;
+  if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
+    return res.status(400).json({ error: 'Invalid application ID.' });
+  }
+
+  const { status } = req.body || {};
+  if (!APPLICATION_STATUSES.includes(status)) {
+    return res.status(400).json({ error: 'Please choose a valid application status.' });
+  }
+
+  try {
+    const application = await JobApplication.findOneAndUpdate(
+      { _id: req.params.applicationId, applicant: req.session.user.id },
+      { $set: { status } },
+      { returnDocument: 'after', runValidators: true }
+    );
+
+    if (!application) return res.status(404).json({ error: 'Application not found.' });
+    return res.json({ message: 'Application status updated.', application });
+  } catch (error) {
+    console.error('Failed to update application status:', error);
+    return res.status(500).json({ error: 'Unable to update the application status.' });
   }
 }

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
 import RecruiterDashboard from "./components/RecruiterDashboard";
+import JobApplications from "./components/JobApplications";
 
 
 function App() {
@@ -63,7 +64,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Header onLogout={logout} loggedIn={session.loggedIn} username={session?.user?.name}/>
+      <Header onLogout={logout} loggedIn={session.loggedIn} username={session?.user?.name} role={session?.user?.role}/>
       <main>
         <Routes>
           <Route path="/" element={session.loggedIn ? <Navigate to="/dashboard"/> : <Welcome />}/>
@@ -82,6 +83,9 @@ function App() {
               )
             } 
           />
+          <Route path="/applications" element={
+            !session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <JobApplications /> : <Navigate to="/dashboard" />
+          } />
           <Route path="/profile" element={session.loggedIn ? <Profile/> : <Navigate to="/login"/>}/>
         </Routes>
       </main>
