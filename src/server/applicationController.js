@@ -110,9 +110,8 @@ export async function getJobApplications(req, res) {
     if (String(job.recruiter) !== req.session.user.id) {
       return res.status(403).json({ error: 'You can only view applications for your own jobs.' });
     }
-    const applications = await JobApplication.find({ job: job._id })
-        .populate('applicant', 'name email education experience skills')
-        .sort({ appliedAt: -1 });
+    const applications = await JobApplication.find({ job: job._id }).populate('applicant', 
+      'name email education experience skills').sort({ appliedAt: -1 });
     return res.json(applications);
   } catch (error) {
     console.error('Failed to load applications:', error);
@@ -124,9 +123,8 @@ export async function getMyApplications(req, res) {
   if (!checkSeeker(req, res)) return;
 
   try {
-    const applications = await JobApplication.find({ applicant: req.session.user.id })
-        .populate('job', 'title company department location deadline status')
-        .sort({ appliedAt: -1 });
+    const applications = await JobApplication.find({ applicant: req.session.user.id }).populate('job', 
+      'title company department location deadline status').sort({ appliedAt: -1 });
 
     return res.json(applications.map(application => {
       const item = typeof application.toObject === 'function' ? application.toObject() : application;
