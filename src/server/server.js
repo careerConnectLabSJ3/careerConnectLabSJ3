@@ -1,28 +1,47 @@
 // server.js
 // 1. CONFIGURATION & ENVIRONMENT SETUP
-require('dotenv').config();
-const dns = require('dns');
+import dotenv from 'dotenv';
+dotenv.config();
+import dns from 'dns';
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
-const mongoose = require('mongoose');
-const express = require("express");
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
+import session from 'express-session';
+import multer from 'multer';
+
 const app = express();
-const path = require('path');
-const bcrypt = require('bcrypt');
-const session = require('express-session');
-const multer = require('multer');
 
 const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-const { validateRegistration, sendRegistrationError, sendLoginError } = require('../js/validation');
-const { getProfilePic, updateProfile } = require('./profileController.js');
-const { User } = require('./models/user');
+import {validateRegistration, sendRegistrationError, sendLoginError} from './validation.js';
+import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
+import User from './models/user.js';
+import { createJob, getRecruiterJobs } from './jobController.js';
+import {
+    getJobDetails,
+    submitApplication,
+    getJobApplications,
+    getMyApplications,
+    updateMyApplicationStatus,
+    getJobLifecycleStatus
+} from './applicationController.js';
+
+// import schema for a job postings database
+import Job from './models/job.js';
+
 
 // 2. MIDDLEWARE SETUP
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../..', 'src')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
+app.use(express.json());
 
 app.use(session({
     secret: 'super_secret_key_for_soen341',
@@ -34,31 +53,6 @@ app.use(session({
     }
 }));
 
-// Error handling using middleware
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).send('File size is too large. Maximum allowed size is 2MB.');
-        }
-    }
-    // Handle other general errors
-    console.error("Server error:", err);
-    res.status(500).send('An unexpected error occurred.');
-});
-
-// 3. DATABASE CONNECTION
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('Connected to MongoDB: careerConnect_db');
-        // Initialize GridFS bucket
-        gfsBucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
-            bucketName: 'profileImages'
-        });
-        console.log('GridFS Bucket Initialized');
-    })
-    .catch(err => console.error('MongoDB connection failed:', err));
-
-
 
 // Multer setup for temp file uploads in memory
 const upload = multer({
@@ -66,7 +60,37 @@ const upload = multer({
     limits: { fileSize: 2 * 1024 * 1024 }
 });
 
+const resumeUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+        const isPdf = file.mimetype === 'application/pdf' &&
+            file.originalname.toLowerCase().endsWith('.pdf');
+
+        if (!isPdf) {
+            const error = new Error('Only PDF files are allowed.');
+            error.code = 'INVALID_RESUME_TYPE';
+            return callback(error);
+        }
+
+        return callback(null, true);
+    }
+});
+
 // 5. API ROUTES
+// checks if user is already logged in, also handles refreshes
+app.get('/api/check-session', (req, res) => {
+    if(req.session.user){
+        return res.json({
+            loggedIn: true,
+            user: req.session.user
+        });
+    }
+    return res.json({
+        loggedIn: false
+    });
+});
+
 // API route to share the session user's data with the frontend
 app.get('/api/current-user', (req, res) => {
     if (req.session.user) {
@@ -79,17 +103,29 @@ app.get('/api/current-user', (req, res) => {
 
 // API route for user profile information
 app.get('/api/user-profile', async (req, res) => {
-    const currUser=req.session.user;
-    if (currUser) {
-
-        res.json({
-            name: currUser.name,
-            education: currUser?.education,
-            experience: currUser?.experience,
-            skills: currUser?.skills
-        });
+    const currUser = req.session.user;
+    if (!currUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
-})
+
+    const user = await User.findOne({ email: currUser.email });
+    if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({
+        name: user.name,
+        role: user.role,
+        education: user.education,
+        experience: user.experience,
+        skills: user.skills,
+        resume: user.resumeFileId ? {
+            fileName: user.resumeFileName,
+            fileSize: user.resumeFileSize,
+            uploadedAt: user.resumeUploadedAt
+        } : null
+    });
+});
 
 // Check email availability before the registration form is submitted.
 app.get('/api/check-email', async (req, res) => {
@@ -104,74 +140,22 @@ app.get('/api/check-email', async (req, res) => {
     }
 });
 
-// 6. PAGE ROUTING (PUBLIC)
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'index.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'login.html'));
-});
-
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'register.html'));
-});
-
-// 7. PAGE ROUTING (PROTECTED BY ROLE)
-app.get('/dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    else if (req.session.user && req.session.user.role === 'recruiter') {
-        // User is logged in! Serve the dashboard page
-        res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
-    }
-    else {
-        res.redirect('/login');
-    }
-});
-
-// Route for profile page
-app.get('/profile', (req, res) => {
-    if(!req.session.user) return res.redirect('/login');
-    res.sendFile(path.join(__dirname, '..', 'Pages', 'profile.html'));
-});
-
 // Profile pic fetch
-app.get('/profile/avatar', getProfilePic);
+app.get('/api/profile/avatar', getProfilePic);
 
 // Profile update
-app.post('/profile', upload.single("pfpUpload"), updateProfile)
+app.post('/api/profile', upload.single('pfpUpload'), updateProfile);
 
+// Resume management
+app.get('/api/profile/resume', getResume);
+app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
+app.delete('/api/profile/resume', deleteResume);
 
-app.get('/jobSeeker_dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'job_seeker') {
-        return res.sendFile(path.join(__dirname, '..', 'Pages', 'jobSeeker_dashboard.html'));
-    }
-    res.redirect('/login');
-});
-
-app.get('/recruiter_dashboard', (req, res) => {
-    if (req.session.user && req.session.user.role === 'recruiter') {
-        return res.sendFile(path.join(__dirname, '..', 'Pages', 'recruiter_dashboard.html'));
-    }
-    res.redirect('/login');
-});
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
-app.post('/register', validateRegistration, async (req, res) => {
+app.post('/api/register', validateRegistration, async (req, res) => {
     try {
         const { normalizedName, normalizedEmail, password, role } = req.body;
-
-        if (!role || (role !== 'job_seeker' && role !== 'recruiter')) {
-            return sendRegistrationError(res, 400, 'Please select either Job Seeker or Recruiter as your role.');
-        }
-
-        const existingUser = await User.exists({ email: normalizedEmail });
-        if (existingUser) {
-            return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
-        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -183,33 +167,35 @@ app.post('/register', validateRegistration, async (req, res) => {
         });
 
         await newUser.save();
-        res.redirect('/login');
-    }
-    catch (error) {
+        return res.status(200).json({
+            message: 'Registration successful'
+        });
+    
+    } catch (error) {
         console.error(error);
         if (error && error.code === 11000) {
             return sendRegistrationError(res, 409, 'This email address is already registered. Please use a different email address.');
         }
-        res.status(500).send("Server error during registration");
+        return res.status(500).send('Server error during registration');
     }
 });
 
-app.post("/login", async (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
 
         if (!normalizedEmail || typeof password !== 'string' || !password) {
-            return res.status(400).send("Email and password are required.");
+            return res.status(400).send('Email and password are required.');
         }
 
         const user = await User.findOne({ email: normalizedEmail });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            return sendLoginError(res, "Invalid email or password. Please try again.");
+        if (!user || !await bcrypt.compare(password, user.password)) {
+            return sendLoginError(res, 'Invalid email or password. Please try again.');
         }
 
         if (user.role !== 'job_seeker' && user.role !== 'recruiter') {
-            return res.status(403).send("This account does not have a valid role.");
+            return res.status(403).send('This account does not have a valid role.');
         }
 
         req.session.user = {
@@ -222,28 +208,127 @@ app.post("/login", async (req, res) => {
             skills: user.skills
         };
 
-        if (user.role === 'job_seeker') {
-            return res.redirect('/jobSeeker_dashboard');
-        }
-
-        return res.redirect('/recruiter_dashboard');
-    }
-    catch (error) {
-        console.error("Login failed:", error);
-        return res.status(500).send("Server error during login.");
+        return res.status(200).json({
+            message: 'Login successful',
+            role: user.role
+        });
+    
+    } catch (error) {
+        console.error('Login failed:', error);
+        return res.status(500).send('Server error during login.');
     }
 });
 
-app.get('/logout', (req, res) => {
+// API route for upcoming deadlines
+app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
+    try {
+        const today = new Date();
+        const nextWeek = new Date();
+        nextWeek.setDate(today.getDate() + 7);
+
+        // Since your database stores dates as strings "YYYY-MM-DD", 
+        // we need to format today and next week the same way to compare them.
+        const formatDate = (date) => date.toISOString().split('T')[0];
+
+        const todayString = formatDate(today);
+        const nextWeekString = formatDate(nextWeek);
+
+        const upcomingJobs = await Job.find({
+            deadline: {
+                $gte: todayString,
+                $lte: nextWeekString
+            }
+        }).sort({ deadline: 1 });
+
+        res.status(200).json(upcomingJobs);
+    } catch (error) {
+        console.error('Error fetching upcoming deadlines:', error);
+        res.status(500).json({ error: 'Server error fetching deadlines' });
+    }
+});
+
+app.post('/api/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            return console.log("Logout failed:", err);
+            console.log('Logout failed:', err);
+            return res.status(500).json({
+                loggedIn: true,
+                message: 'Logout failed'
+            });
         }
-        res.redirect('/login');
+        res.clearCookie('connect.sid');
+        return res.status(200).json({
+            loggedIn: true,
+            message: 'Logout successful'
+        });
     });
 });
 
-// 9. SERVER INITIALIZATION
-app.listen(port, hostname, () => {
-    console.log(`Server running at http://localhost:${port}/`);
+// Real job posting replaces the temporary dummy-job insertion route.
+app.post('/api/jobs', createJob);
+app.get('/api/jobs/mine', getRecruiterJobs);
+
+// API route for Job Seekers to search and filter jobs
+app.get('/api/jobs/search', async (req, res) => {
+    try {
+        // Extract the search query parameters sent by the frontend
+        const { title, department, location } = req.query;
+
+        const jobFilters = {};
+
+        if (title)
+            jobFilters.title = { $regex: title, $options: 'i' };
+
+        if (department)
+            jobFilters.department = { $regex: department, $options: 'i' };
+
+        if (location) // <-- Add this block
+            jobFilters.location = { $regex: location, $options: 'i' };
+
+        // Retrieve both active and closed jobs so job seekers can see the
+        // current lifecycle status of every opportunity they have found.
+        const jobs = await Job.find(jobFilters).sort({ deadline: 1 });
+
+        // send response to the user as an json object
+        return res.status(200).json(jobs.map(job => ({
+            ...job.toObject(),
+            status: getJobLifecycleStatus(job)
+        })));
+
+    } catch (error) {
+        console.error('Failed to query jobs:', error);
+        return res.status(500).send('Database search error: ' + error.message);
+    }
+    
 });
+app.get('/api/applications', getMyApplications);
+app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
+// Keep the named search/mine/deadline routes above the variable job ID route.
+app.get('/api/jobs/:jobId/details', getJobDetails);
+app.get('/api/jobs/:jobId', getJobDetails);
+app.post('/api/jobs/:jobId/applications', submitApplication);
+app.get('/api/jobs/:jobId/applications', getJobApplications);
+
+// Error handling using middleware
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            if (req.path === '/api/profile/resume') {
+                return res.status(413).json({error: 'Resume must be 5MB or smaller.'});
+            }
+            return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});
+        }
+    }
+    if (err.code === 'INVALID_RESUME_TYPE') {
+        return res.status(400).json({error: 'Only PDF files are allowed for resumes.'});
+    }
+    // Handle other general errors
+    console.error('Server error:', err);
+    res.status(500).send({error: 'An unexpected error occurred.'});
+});
+
+app.get('/*splat', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+});
+
+export default app;

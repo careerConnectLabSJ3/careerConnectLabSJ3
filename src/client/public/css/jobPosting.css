@@ -1,0 +1,117 @@
+.job-posting {
+    width: 100%;
+    margin: 0 0 1.5rem;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.job-posting h2 {
+    margin-bottom: 0.4rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.job-posting > p {
+    margin-bottom: 1.5rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.job-posting-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+    border: 0;
+    min-width: 0;
+}
+
+.job-posting-wide,
+.job-posting-error,
+.job-posting-message,
+.job-posting-actions {
+    grid-column: 1 / -1;
+}
+
+.job-posting-field label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.job-posting-field input,
+.job-posting-field textarea {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #b8c4d2;
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+.job-posting-field input::placeholder {
+    color: var(--muted);
+}
+
+.job-posting-field textarea {
+    resize: vertical;
+}
+
+.job-posting-field input:focus-visible,
+.job-posting-field textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-color: var(--primary);
+}
+
+.job-posting-hint {
+    margin-top: 0.4rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+.job-posting-error,
+.job-posting-message {
+    padding: 0.8rem 1rem;
+    border-radius: 7px;
+    font-size: 0.95rem;
+}
+
+.job-posting-error {
+    color: #991b1b;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+}
+
+.job-posting-message {
+    color: #256039;
+    background: #edf7ef;
+    border: 1px solid #c8e4cf;
+}
+
+.job-posting-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+    .job-posting {
+        padding: 1.25rem 1rem;
+    }
+
+    .job-posting-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .job-posting-actions .recruiter-button {
+        flex: 1;
+    }
+}

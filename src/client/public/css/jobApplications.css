@@ -1,0 +1,224 @@
+.job-applications-page {
+    width: min(1180px, calc(100% - 40px));
+    margin: 40px auto;
+}
+
+.job-applications-heading,
+.application-detail-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.job-applications-heading h1 {
+    margin-bottom: 6px;
+}
+
+.job-applications-heading p {
+    color: var(--muted);
+}
+
+.job-applications-count {
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.application-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 28px 0 18px;
+}
+
+.application-filter,
+.application-details-button,
+.application-detail-heading button,
+.application-feedback button {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 9px 14px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.application-filter.is-selected,
+.application-details-button {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+.application-filter:focus-visible,
+.application-details-button:focus-visible,
+.application-detail-heading button:focus-visible,
+.application-feedback button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.application-table-scroll {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.job-applications-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.job-applications-table th,
+.job-applications-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.job-applications-table thead th {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.job-applications-table tbody tr:last-child th,
+.job-applications-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.application-status {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.application-status-applied {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.application-status-interview {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.application-status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.application-status-offer {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.application-status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.application-status-closed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.application-empty,
+.application-feedback,
+.application-detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+}
+
+.application-empty {
+    color: var(--muted);
+}
+
+.application-empty h2 {
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.application-feedback-error {
+    color: #991b1b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.application-feedback button {
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+.application-detail-card {
+    margin-top: 20px;
+}
+
+.application-detail-eyebrow {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.application-detail-card dl {
+    display: grid;
+    grid-template-columns: minmax(130px, 180px) 1fr;
+    gap: 10px 20px;
+    margin-top: 22px;
+}
+
+.application-detail-card dt {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 650px) {
+    .job-applications-page {
+        width: min(100% - 24px, 1180px);
+        margin: 24px auto;
+    }
+
+    .job-applications-heading,
+    .application-detail-heading,
+    .application-feedback-error {
+        flex-direction: column;
+    }
+
+    .application-detail-card dl {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .application-detail-card dd {
+        margin-bottom: 8px;
+    }
+}
