@@ -66,6 +66,26 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
     }
   }
 
+  async function handleFavorite() {
+    try{
+      if(!details.isFavorite){
+        const response = await fetch(`/api/jobs/${jobId}/favorite`, {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify({ confirmed: true })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error || 'Unable to favorite this job. Please try again.');
+          return;
+        }
+        setDetails({ ...details, isFavorite: true });
+      }
+    } catch(e){
+      console.error("Unable to favorite job:", e)
+    }
+  }
+
   function handleBackdropClick(event) {
     if (event.target === event.currentTarget) onClose();
   }
@@ -76,6 +96,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         <section className="job-application" aria-labelledby="application-job-title">
           <div className="job-application-heading">
             <h2 id="application-job-title">{details ? details.job.title : 'Job details'}</h2>
+            <button type="button" onClick={handleFavorite}>Favourite</button>
             <button type="button" disabled={submitting} onClick={onClose}>Close details</button>
           </div>
           {error && <p className="job-application-error" role="alert">{error}</p>}

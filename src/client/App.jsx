@@ -10,7 +10,7 @@ import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
 import RecruiterDashboard from "./components/RecruiterDashboard";
 import JobApplications from "./components/JobApplications";
-
+import FavoriteJobs from "./components/FavoriteJobs";
 
 function App() {
 
