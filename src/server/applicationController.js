@@ -4,7 +4,7 @@ import JobApplication from './models/jobApplication.js';
 
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
-function checkAccess(req, res, role) {
+export function checkAccess(req, res, role) {
   if (!req.session?.user) {
     res.status(401).json({ error: 'Please log in to continue.' });
     return false;

@@ -1,4 +1,6 @@
 import Job from './models/job.js';
+import User from './models/user.js';
+import {checkAccess} from './applicationController.js';
 
 function checkRecruiter(req, res) {
   if (!req.session.user) {
@@ -59,5 +61,19 @@ export async function getRecruiterJobs(req, res) {
   } catch (error) {
     console.error('Failed to load recruiter jobs:', error);
     return res.status(500).json({ error: 'Unable to load your job postings. Please try again.' });
+  }
+}
+
+export async function addFavoriteJob(req, res) {
+  if (!checkAccess(req, res, 'job_seeker')) return;
+  try{
+    const jobId = req.params.jobId;
+    const user = await User.findById(req.session.user.id);
+    if(!user.favoriteJobs.includes(jobId)){
+      user.favoriteJobs.push(jobId);
+      await user.save();
+    }
+  } catch(error){
+    console.error('Failed to add favorite job:', error);
   }
 }
