@@ -17,3 +17,17 @@
   - **Yacine** will be in charge of *Ai assisted resume feedback*
   - **Bahaeddine** will be in charge of *viewing recommended jobs when searching*
 * **Note-taker**: Emmanuelle
+
+##  Meeting 10
+* **Date:** November 4, 2026
+* **Attendance:** Freddy, Yacine, Emmanuelle, Bahaeddine
+* **Purpose:** Looking at what we did this week and 
+* **Discussion Points:**
+  - Discussed what everyone started working on
+  - Everyone having midterms, therefore, there were no PRs 
+* **Action Items:**
+  - **Emmanuelle:** will be in charge of *favoriting jobs*
+  - **Freddy** will be in charge of *job posting management on the recruiter side*
+  - **Yacine** will be in charge of *Ai assisted resume feedback*
+  - **Bahaeddine** will be in charge of *viewing recommended jobs when searching*
+* **Note-taker**: Emmanuelle
