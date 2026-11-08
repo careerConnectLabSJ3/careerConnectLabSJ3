@@ -68,21 +68,26 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
 
   async function handleFavorite() {
     try{
-      if(!details.isFavorite){
-        const response = await fetch(`/api/jobs/${jobId}/favorite`, {
-          method: 'POST',
-          credentials: 'include',
-          body: JSON.stringify({ confirmed: true })
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          setError(data.error || 'Unable to favorite this job. Please try again.');
-          return;
-        }
-        setDetails({ ...details, isFavorite: true });
+      const isFavorite = details.isFavorite;
+      const response = await fetch(`/api/jobs/${jobId}/favorite`, {
+        method: isFavorite ? 'DELETE' : 'POST',
+        credentials: 'include',
+        body: isFavorite ? undefined : JSON.stringify({ confirmed: true })
+      });
+      const data = {};
+      const contentType = response.headers.get('Content-Type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
       }
+      if (!response.ok) {
+        setError(data.error || `Unable to ${isFavorite ? 'unfavorite' : 'favorite'} this job. Please try again.`);
+        return;
+      }
+      setDetails({ ...details, isFavorite: isFavorite });
+      
     } catch(e){
-      console.error("Unable to favorite job:", e)
+      console.error("Unable to update favorite status:", e)
+      setError('An unexpected error occurred while updating favorite status. Please try again.');
     }
   }
 
@@ -96,7 +101,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         <section className="job-application" aria-labelledby="application-job-title">
           <div className="job-application-heading">
             <h2 id="application-job-title">{details ? details.job.title : 'Job details'}</h2>
-            <button type="button" onClick={handleFavorite}>Favourite</button>
+            <button type="button" onClick={handleFavorite}>favorite</button>
             <button type="button" disabled={submitting} onClick={onClose}>Close details</button>
           </div>
           {error && <p className="job-application-error" role="alert">{error}</p>}

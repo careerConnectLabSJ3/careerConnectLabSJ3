@@ -77,3 +77,15 @@ export async function addFavoriteJob(req, res) {
     console.error('Failed to add favorite job:', error);
   }
 }
+
+export async function removeFavoriteJob(req, res) {
+  if (!checkAccess(req, res, 'job_seeker')) return;
+  try{
+    const jobId = req.params.jobId;
+    const user = await User.findById(req.session.user.id);
+    user.favoriteJobs = user.favoriteJobs.filter(favJobId => favJobId.toString() !== jobId);
+    await user.save();
+  } catch(error){
+    console.error('Failed to remove favorite job:', error);
+  }
+}

@@ -21,7 +21,7 @@ const port = 3000;
 import {validateRegistration, sendRegistrationError, sendLoginError} from './validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
 import User from './models/user.js';
-import { createJob, getRecruiterJobs, addFavoriteJob } from './jobController.js';
+import { createJob, getRecruiterJobs, addFavoriteJob, removeFavoriteJob } from './jobController.js';
 import {
     getJobDetails,
     submitApplication,
@@ -310,6 +310,7 @@ app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
 
 app.post('/api/jobs/:jobId/favorite', addFavoriteJob);
+app.delete('/api/jobs/:jobId/favorite', removeFavoriteJob);
 
 // Error handling using middleware
 app.use((err, req, res, next) => {
