@@ -89,3 +89,16 @@ export async function removeFavoriteJob(req, res) {
     console.error('Failed to remove favorite job:', error);
   }
 }
+
+export async function getFavoriteJob(req, res) {
+  if (!checkAccess(req, res, 'job_seeker')) return;
+  try{
+    const jobId = req.params.jobId;
+    const user = await User.findById(req.session.user.id);
+    const isFavorite = user.favoriteJobs.includes(jobId);
+    return res.json({ isFavorite });
+  } catch(error){
+    console.error('Failed to get favorite job status:', error);
+    return res.status(500).json({ error: 'Unable to retrieve favorite job status. Please try again.' });
+  }
+}

@@ -23,14 +23,25 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
     let cancelled = false;
     async function loadDetails() {
       try {
-        const response = await fetch(`/api/jobs/${jobId}/details`, { credentials: 'include' });
+        const [response, setResponse] = await Promise.all([
+          fetch(`/api/jobs/${jobId}/details`, { credentials: 'include' }),
+          fetch(`/api/jobs/${jobId}/favorite`, { credentials: 'include' })
+        ]);
         const data = await response.json();
+        let isFavorite = false;
+
+        if(setResponse.ok) {
+          const favoriteData = await setResponse.json();
+          isFavorite = typeof favoriteData === 'boolean' ? favoriteData : favoriteData.isFavorite;
+        }
+
         if (cancelled) return;
+
         if (!response.ok) {
           setError(data.error || 'Unable to load this job. Close it and try again.');
           return;
         }
-        setDetails(data);
+        setDetails({...data, isFavorite});
       } catch (loadError) {
         if (!cancelled) setError('Unable to load this job. Close it and try again.');
       }
@@ -67,12 +78,17 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
   }
 
   async function handleFavorite() {
+    const previousState = details.isFavorite;
+    const currentState = !previousState;
+
+    setDetails({ ...details, isFavorite: currentState });
+    setError(null);
+
     try{
-      const isFavorite = details.isFavorite;
       const response = await fetch(`/api/jobs/${jobId}/favorite`, {
-        method: isFavorite ? 'DELETE' : 'POST',
+        method: previousState ? 'DELETE' : 'POST',
         credentials: 'include',
-        body: isFavorite ? undefined : JSON.stringify({ confirmed: true })
+        body: previousState ? undefined : JSON.stringify({ confirmed: true })
       });
       const data = {};
       const contentType = response.headers.get('Content-Type');
@@ -80,13 +96,15 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         data = await response.json();
       }
       if (!response.ok) {
-        setError(data.error || `Unable to ${isFavorite ? 'unfavorite' : 'favorite'} this job. Please try again.`);
+        setDetails({ ...details, isFavorite: previousState });
+        setError(data.error || `Unable to ${previousState ? 'unfavorite' : 'favorite'} this job. Please try again.`);
         return;
       }
-      setDetails({ ...details, isFavorite: isFavorite });
+      setDetails({ ...details, isFavorite: previousState });
       
     } catch(e){
-      console.error("Unable to update favorite status:", e)
+      console.error("Unable to update favorite status:", e);
+      setDetails({ ...details, isFavorite: previousState });
       setError('An unexpected error occurred while updating favorite status. Please try again.');
     }
   }
@@ -101,7 +119,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         <section className="job-application" aria-labelledby="application-job-title">
           <div className="job-application-heading">
             <h2 id="application-job-title">{details ? details.job.title : 'Job details'}</h2>
-            <button type="button" onClick={handleFavorite}>favorite</button>
+            <button type="button" onClick={handleFavorite}>{details?.isFavorite ? 'Unfav' : 'Fav'}</button>
             <button type="button" disabled={submitting} onClick={onClose}>Close details</button>
           </div>
           {error && <p className="job-application-error" role="alert">{error}</p>}
