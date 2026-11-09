@@ -5,7 +5,7 @@ import JobDetailsModal from './JobDetailsModal';
 export default function FavoriteJobs() {
 
   const FILTERS = [
-  { value: 'all', label: 'All applications' },
+  { value: 'all', label: 'All' },
   { value: 'Open', label: 'Open' },
   { value: 'Closed', label: 'Closed' }
 ];
@@ -15,7 +15,6 @@ export default function FavoriteJobs() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
   const [selectedJob, setSelectedJob] = useState(null);
-
 
   async function fetchFavoriteJobs() {
     try {
@@ -36,9 +35,25 @@ export default function FavoriteJobs() {
     fetchFavoriteJobs().finally(() => setLoading(false));
   }, []);
 
+  const checkJobStatus = (deadlineString) => {
+    if (!deadlineString) return 'Open'; // Default fallback if no deadline is specified
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to midnight for an accurate day-only comparison
+    
+    const deadlineDate = new Date(deadlineString);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    // If the deadline is today or in the future, it's Open; otherwise Closed
+    return deadlineDate >= today ? 'Open' : 'Closed';
+  };
+
   const filteredFavorites = useMemo(() => {
       if (filter === 'all') return favoriteJobs;
-      return favoriteJobs.filter(job => job.status === filter);
+      return favoriteJobs.filter(job => {
+      const currentStatus = checkJobStatus(job.deadline);
+      return currentStatus.toLowerCase() === filter.toLowerCase();
+    });
     }, [favoriteJobs, filter]);
 
   return(
