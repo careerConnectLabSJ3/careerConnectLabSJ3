@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
 import '../public/css/jobApplications.css';
 
-export default function CloseIcon({ initialFilled = false, onToggle }) {
-  const [isFilled, setIsFilled] = useState(initialFilled);
+export default function CloseIcon({ onToggle }) {
 
   const handleClick = () => {
-    const nextState = !isFilled;
-    setIsFilled(nextState);
-    if (onToggle) onToggle(nextState);
+    if (onToggle) onToggle(false);
   };
 
   return (
     <button 
-      className={`icon-button ${isFilled ? 'filled' : ''}`} 
+      className="icon-button"
       onClick={handleClick}
       aria-label="Close"
       type="button"

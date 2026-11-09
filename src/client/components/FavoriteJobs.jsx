@@ -111,7 +111,7 @@ export default function FavoriteJobs() {
         <JobDetailsModal
           key={selectedJob._id}
           jobId={selectedJob._id}
-          application={selectedJob}
+          application={null}
           onClose={() => setSelectedJob(null)}
         />
       )}

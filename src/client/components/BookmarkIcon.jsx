@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../public/css/jobApplications.css';
 
 export default function BookmarkIcon({ initialFilled, onToggle }) {
   const [isFilled, setIsFilled] = useState(initialFilled);
-
+  
   const handleClick = () => {
     const nextState = !isFilled;
     setIsFilled(nextState);
     if (onToggle) onToggle(nextState);
   };
+
+  useEffect(() => {
+    setIsFilled(initialFilled);
+  }, [initialFilled]);
 
   return (
     <button 
