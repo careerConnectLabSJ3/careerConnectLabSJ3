@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import '../public/css/jobApplication.css';
 import '../public/css/jobApplications.css';
+import BookmarkIcon from './BookmarkIcon';
+import CloseIcon from './CloseIcon';
 
 function formatDate(value) {
   if (!value) return 'Not available';
@@ -119,8 +121,10 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         <section className="job-application" aria-labelledby="application-job-title">
           <div className="job-application-heading">
             <h2 id="application-job-title">{details ? details.job.title : 'Job details'}</h2>
-            <button type="button" onClick={handleFavorite}>{details?.isFavorite ? 'Unfav' : 'Fav'}</button>
-            <button type="button" disabled={submitting} onClick={onClose}>Close details</button>
+            <section className="job-applications-head-buttons">
+              <BookmarkIcon initialFilled={details?.isFavorite} onToggle={handleFavorite} />
+              <CloseIcon onToggle={onClose} />
+            </section>
           </div>
           {error && <p className="job-application-error" role="alert">{error}</p>}
           {message && <p className="job-application-success" role="status">{message}</p>}
