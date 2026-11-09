@@ -1,5 +1,5 @@
 import User  from './models/user.js';
-import { checkAccess } from './applicationController.js';
+import { checkAccess, checkSeeker } from './applicationController.js';
 
 export async function addFavoriteJob(req, res) {
   if (!checkAccess(req, res, 'job_seeker')) return;
@@ -42,10 +42,10 @@ export async function getFavoriteJob(req, res) {
 
 
 export async function getMyFavoriteJobs(req, res) {
-  if (!checkAccess(req, res, 'job_seeker')) return;
+  // if (!checkSeeker()) return;
   try{
-    const user = await User.findById(req.session.user.id).populate('favoriteJobs');
-    return res.json(user.favoriteJobs);
+    const userFavorites = await User.findById(req.session.user.id).populate('favoriteJobs');
+    return res.json(userFavorites.favoriteJobs);
   } catch(error){
     console.error('Failed to get favorite jobs:', error);
     return res.status(500).json({ error: 'Unable to retrieve favorite jobs. Please try again.' });

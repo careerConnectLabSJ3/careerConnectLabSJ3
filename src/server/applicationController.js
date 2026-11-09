@@ -20,7 +20,7 @@ export function checkAccess(req, res, role) {
   return true;
 }
 
-function checkSeeker(req, res) {
+export function checkSeeker(req, res) {
   if (!req.session?.user) {
     res.status(401).json({ error: 'Please log in to continue.' });
     return false;
