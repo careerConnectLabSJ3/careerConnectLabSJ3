@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
+import JobDetailsModal from './JobDetailsModal';
+
 
 export default function FavoriteJobs() {
 
@@ -12,6 +14,7 @@ export default function FavoriteJobs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const [selectedJob, setSelectedJob] = useState(null);
 
 
   async function fetchFavoriteJobs() {
@@ -102,6 +105,15 @@ export default function FavoriteJobs() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedJob && selectedJob._id && (
+        <JobDetailsModal
+          key={selectedJob._id}
+          jobId={selectedJob._id}
+          application={null}
+          onClose={() => setSelectedJob(null)}
+        />
       )}
     </section>
   )
