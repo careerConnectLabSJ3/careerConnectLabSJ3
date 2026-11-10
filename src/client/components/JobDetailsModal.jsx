@@ -24,16 +24,19 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
   useEffect(() => {
     let cancelled = false;
     async function loadDetails() {
+      
+      let isFavorite = false;
+
       try {
-        const [response, setResponse] = await Promise.all([
+        const [response, favoriteResponse] = await Promise.all([
           fetch(`/api/jobs/${jobId}/details`, { credentials: 'include' }),
           fetch(`/api/jobs/${jobId}/favorite`, { credentials: 'include' })
         ]);
-        const data = await response.json();
-        let isFavorite = false;
 
-        if(setResponse.ok) {
-          const favoriteData = await setResponse.json();
+        const data = await response.json();
+
+        if(favoriteResponse.ok) {
+          const favoriteData = await favoriteResponse.json();
           isFavorite = typeof favoriteData === 'boolean' ? favoriteData : favoriteData.isFavorite;
         }
 
