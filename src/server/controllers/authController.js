@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import User from '../models/user.js';
+import { sendLoginError, sendRegistrationError } from '../serverUtils/validation.js';
 
 
 export function checkSession(req, res){
