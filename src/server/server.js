@@ -18,10 +18,14 @@ const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-import {validateRegistration, sendRegistrationError, sendLoginError} from './validation.js';
+import { validateRegistration, sendRegistrationError, sendLoginError } from './validation.js';
+
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } from './profileController.js';
+
 import User from './models/user.js';
-import { createJob, getRecruiterJobs } from './jobController.js';
+
+import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob } from './jobController.js';
+
 import {
     getJobDetails,
     submitApplication,
@@ -226,8 +230,7 @@ app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
         const nextWeek = new Date();
         nextWeek.setDate(today.getDate() + 7);
 
-        // Since your database stores dates as strings "YYYY-MM-DD", 
-        // we need to format today and next week the same way to compare them.
+   
         const formatDate = (date) => date.toISOString().split('T')[0];
 
         const todayString = formatDate(today);
@@ -237,7 +240,8 @@ app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
             deadline: {
                 $gte: todayString,
                 $lte: nextWeekString
-            }
+            },
+            status: { $ne: 'Draft' }
         }).sort({ deadline: 1 });
 
         res.status(200).json(upcomingJobs);
@@ -287,7 +291,7 @@ app.get('/api/jobs/search', async (req, res) => {
 
         // Retrieve both active and closed jobs so job seekers can see the
         // current lifecycle status of every opportunity they have found.
-        const jobs = await Job.find(jobFilters).sort({ deadline: 1 });
+        const jobs = await Job.find({ ...jobFilters, status: { $ne: 'Draft' } }).sort({ deadline: 1 });
 
         // send response to the user as an json object
         return res.status(200).json(jobs.map(job => ({
@@ -308,6 +312,9 @@ app.get('/api/jobs/:jobId/details', getJobDetails);
 app.get('/api/jobs/:jobId', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
+app.put('/api/jobs/:jobId', updateJob);
+app.patch('/api/jobs/:jobId/status', updateJobStatus);
+app.delete('/api/jobs/:jobId', deleteJob);
 
 // Error handling using middleware
 app.use((err, req, res, next) => {

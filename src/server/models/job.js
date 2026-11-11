@@ -11,7 +11,7 @@ const jobSchema = new mongoose.Schema({
   deadline: { type: String, required: true },
   recruiter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   applicationsCount: { type: Number, default: 0 },
-  status: { type: String, default: 'Active' }
+  status: { type: String, enum: ['Active', 'Closed', 'Draft'], default: 'Active' }
 });
 
 const Job = mongoose.model('Job', jobSchema);
