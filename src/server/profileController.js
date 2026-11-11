@@ -5,27 +5,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { gfsBucket, resumeBucket } from './bin/www.js';
+import { convertToSafeFilename, isPdf } from './serverUtils/utils.js';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
+
 
 function isJobSeeker(req) {
     return req.session.user?.role === 'job_seeker';
 }
 
-function isPdfFile(file) {
-    const hasPdfHeader = file?.buffer?.subarray(0, 5).toString() === '%PDF-';
-    const hasPdfEndMarker = file?.buffer?.lastIndexOf(Buffer.from('%%EOF')) !== -1;
-
-    return file &&
-        file.mimetype === 'application/pdf' &&
-        file.originalname.toLowerCase().endsWith('.pdf') &&
-        hasPdfHeader &&
-        hasPdfEndMarker;
-}
-
-function safeFilename(filename) {
-    return String(filename || 'resume.pdf').replace(/[\\/\r\n"]/g, '_');
-}
 
 function uploadToGridFS(file) {
     return new Promise((resolve, reject) => {
@@ -34,7 +22,7 @@ function uploadToGridFS(file) {
             return;
         }
 
-        const uploadStream = resumeBucket.openUploadStream(safeFilename(file.originalname), {
+        const uploadStream = resumeBucket.openUploadStream(convertToSafeFilename(file.originalname), {
             contentType: file.mimetype,
             metadata: {
                 type: 'resume'
@@ -56,6 +44,32 @@ async function deleteFromGridFS(fileId) {
         // The metadata can outlive a file if storage was manually cleaned up.
         console.warn('Resume file was not found while deleting it.');
     }
+}
+
+
+export async function fetchUserProfile(req, res){
+    const currUser = req.session.user;
+    if (!currUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await User.findOne({ email: currUser.email });
+    if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({
+        name: user.name,
+        role: user.role,
+        education: user.education,
+        experience: user.experience,
+        skills: user.skills,
+        resume: user.resumeFileId ? {
+            fileName: user.resumeFileName,
+            fileSize: user.resumeFileSize,
+            uploadedAt: user.resumeUploadedAt
+        } : null
+    });
 }
 
 
@@ -208,7 +222,7 @@ export async function getResume(req, res) {
         }
 
         res.setHeader('Content-Type', user.resumeMimeType || files[0].contentType || 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${safeFilename(user.resumeFileName)}"`);
+        res.setHeader('Content-Disposition', `inline; filename="${convertToSafeFilename(user.resumeFileName)}"`);
         return resumeBucket.openDownloadStream(fileId).pipe(res);
     } catch (error) {
         console.error('Resume retrieval failed:', error);
@@ -235,7 +249,7 @@ export async function uploadResume(req, res) {
             return res.status(413).json({ error: 'Resume must be 5MB or smaller.' });
         }
 
-        if (!isPdfFile(req.file)) {
+        if (!isPdf(req.file)) {
             return res.status(400).json({ error: 'Only valid PDF files can be uploaded as resumes.' });
         }
 
@@ -248,7 +262,7 @@ export async function uploadResume(req, res) {
         const previousResumeId = user.resumeFileId;
 
         user.resumeFileId = newResumeId;
-        user.resumeFileName = safeFilename(req.file.originalname);
+        user.resumeFileName = convertToSafeFilename(req.file.originalname);
         user.resumeFileSize = req.file.size;
         user.resumeMimeType = 'application/pdf';
         user.resumeUploadedAt = new Date();
