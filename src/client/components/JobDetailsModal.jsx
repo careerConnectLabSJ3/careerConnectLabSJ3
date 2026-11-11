@@ -87,7 +87,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         credentials: 'include',
         body: previousState ? undefined : JSON.stringify({ confirmed: true })
       });
-      const data = {};
+      let data = {};
       const contentType = response.headers.get('Content-Type');
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();
