@@ -1,4 +1,4 @@
-import Job from './models/job.js';
+import Job from '../models/job.js';
 
 function checkRecruiter(req, res) {
   if (!req.session.user) {
