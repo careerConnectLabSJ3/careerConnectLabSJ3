@@ -175,3 +175,31 @@ export async function deleteJob(req, res) {
     return res.status(500).json({ error: 'Unable to delete the job. Please try again.' });
   }
 }
+
+// 4. Function to Duplicate a Job
+export async function duplicateJob(req, res) {
+  const job = await findOwnedJob(req, res);
+  if (!job) return;
+
+  try {
+    const duplicatedJobData = {
+      title: `${job.title || 'Untitled Job'} (Copy)`,
+      company: job.company || 'Unknown Company',
+      department: job.department || 'General',
+      location: job.location || 'Not specified',
+      description: job.description || '',
+      requirements: job.requirements || '',
+      deadline: job.deadline,
+      recruiter: req.session.user.id,
+      status: 'Draft',
+      applicationsCount: 0
+    };
+
+    const newJob = await Job.create(duplicatedJobData);
+    return res.status(201).json({ message: 'Job duplicated successfully.', job: newJob });
+  } catch (error) {
+    console.error('Failed to duplicate job:', error);
+    // Send the actual error message back to the frontend so we can see it
+    return res.status(500).json({ error: error.message || 'Unable to duplicate the job.' });
+  }
+}

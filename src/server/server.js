@@ -24,7 +24,7 @@ import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume } f
 
 import User from './models/user.js';
 
-import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob } from './jobController.js';
+import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob, duplicateJob } from './jobController.js';
 
 import {
     getJobDetails,
@@ -230,7 +230,6 @@ app.get('/api/jobs/upcoming-deadlines', async (req, res) => {
         const nextWeek = new Date();
         nextWeek.setDate(today.getDate() + 7);
 
-   
         const formatDate = (date) => date.toISOString().split('T')[0];
 
         const todayString = formatDate(today);
@@ -307,14 +306,18 @@ app.get('/api/jobs/search', async (req, res) => {
 });
 app.get('/api/applications', getMyApplications);
 app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
-// Keep the named search/mine/deadline routes above the variable job ID route.
+
+// action routes 
+app.post('/api/jobs/:jobId/duplicate', duplicateJob); 
 app.get('/api/jobs/:jobId/details', getJobDetails);
-app.get('/api/jobs/:jobId', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
 app.put('/api/jobs/:jobId', updateJob);
 app.patch('/api/jobs/:jobId/status', updateJobStatus);
 app.delete('/api/jobs/:jobId', deleteJob);
+
+//  generic variable job ID route 
+app.get('/api/jobs/:jobId', getJobDetails);
 
 // Error handling using middleware
 app.use((err, req, res, next) => {

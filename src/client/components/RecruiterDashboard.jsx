@@ -74,6 +74,25 @@ export default function RecruiterDashboard() {
     }
   }
 
+    async function handleDuplicate(jobId) {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/duplicate`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (response.ok) {
+        // Add the new duplicated job to the top of the list
+        setJobs(currentJobs => [data.job, ...currentJobs]);
+      }
+      else {
+        alert(data.error || "Failed to duplicate the job.");
+      }
+    } catch (err) {
+      alert("Error duplicating job.");
+    }
+  }
+
   return (
     <section className="recruiter-dashboard" aria-labelledby="recruiter-title">
       <div className="recruiter-page-heading">
@@ -134,6 +153,10 @@ export default function RecruiterDashboard() {
                       <div style={{ display: 'flex', gap: '5px' }}>
                         <button className="recruiter-button" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>
                           Edit
+                        </button>
+
+                        <button className="recruiter-button" onClick={() => handleDuplicate(job._id)}>
+                          Duplicate
                         </button>
                         
                         {job.status === 'Active' && (
