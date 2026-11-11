@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import JobDetailsModal from './JobDetailsModal';
-
+import { checkJobStatus } from '../utils/jobUtils';
 
 export default function FavoriteJobs() {
 
@@ -35,18 +35,6 @@ export default function FavoriteJobs() {
     fetchFavoriteJobs().finally(() => setLoading(false));
   }, []);
 
-  const checkJobStatus = (deadlineString) => {
-    if (!deadlineString) return 'Open'; // Default fallback if no deadline is specified
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to midnight for an accurate day-only comparison
-    
-    const deadlineDate = new Date(deadlineString);
-    deadlineDate.setHours(0, 0, 0, 0);
-
-    // If the deadline is today or in the future, it's Open; otherwise Closed
-    return deadlineDate >= today ? 'Open' : 'Closed';
-  };
 
   const filteredFavorites = useMemo(() => {
       if (filter === 'all') return favoriteJobs;

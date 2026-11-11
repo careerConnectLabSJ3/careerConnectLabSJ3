@@ -3,16 +3,8 @@ import '../public/css/jobApplication.css';
 import '../public/css/jobApplications.css';
 import BookmarkIcon from './BookmarkIcon';
 import CloseIcon from './CloseIcon';
+import { formatDate, statusClass } from '../utils/jobUtils';
 
-function formatDate(value) {
-  if (!value) return 'Not available';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleDateString();
-}
-
-function statusClass(status) {
-  return `application-status application-status-${String(status).toLowerCase()}`;
-}
 
 export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, application = null }) {
   const [details, setDetails] = useState(null);
