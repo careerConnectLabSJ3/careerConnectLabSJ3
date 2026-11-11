@@ -5,14 +5,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { gfsBucket, resumeBucket } from '../bin/www.js';
-import { convertToSafeFilename, isPdf } from '../serverUtils/utils.js';
+import { convertToSafeFilename, isPdf, checkCorrectUser } from '../serverUtils/utils.js';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
-
-
-function isJobSeeker(req) {
-    return req.session.user?.role === 'job_seeker';
-}
 
 
 function uploadToGridFS(file) {
@@ -206,7 +201,7 @@ export async function getResume(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        if (!isJobSeeker(req)) {
+        if (!checkCorrectUser(req, res, 'job_seeker')) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 
@@ -237,7 +232,7 @@ export async function uploadResume(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        if (!isJobSeeker(req)) {
+        if (!checkCorrectUser(req, res, 'job_seeker')) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 
@@ -292,7 +287,7 @@ export async function deleteResume(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        if (!isJobSeeker(req)) {
+        if (!checkCorrectUser(req, res, 'job_seeker')) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 

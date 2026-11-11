@@ -1,8 +1,8 @@
 import User  from '../models/user.js';
-import { checkAccess, checkSeeker } from './applicationController.js';
+import { checkCorrectUser } from '../serverUtils/utils.js';
 
 export async function addFavoriteJob(req, res) {
-  if (!checkAccess(req, res, 'job_seeker')) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
   try{
     const jobId = req.params.jobId;
     const user = await User.findById(req.session.user.id);
@@ -16,7 +16,7 @@ export async function addFavoriteJob(req, res) {
 }
 
 export async function removeFavoriteJob(req, res) {
-  if (!checkAccess(req, res, 'job_seeker')) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
   try{
     const jobId = req.params.jobId;
     const user = await User.findById(req.session.user.id);
@@ -28,7 +28,7 @@ export async function removeFavoriteJob(req, res) {
 }
 
 export async function getFavoriteJob(req, res) {
-  if (!checkAccess(req, res, 'job_seeker')) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
   try{
     const jobId = req.params.jobId;
     const user = await User.findById(req.session.user.id);
@@ -42,7 +42,7 @@ export async function getFavoriteJob(req, res) {
 
 
 export async function getMyFavoriteJobs(req, res) {
-  if (!checkSeeker(req, res)) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
   try{
     const userFavorites = await User.findById(req.session.user.id).populate('favoriteJobs');
     return res.json(userFavorites.favoriteJobs);

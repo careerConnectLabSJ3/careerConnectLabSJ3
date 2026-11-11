@@ -1,32 +1,13 @@
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
+import { checkCorrectUser } from '../serverUtils/utils.js';
 
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
 export function checkAccess(req, res, role) {
-  if (!req.session?.user) {
-    res.status(401).json({ error: 'Please log in to continue.' });
-    return false;
-  }
-  if (req.session.user.role !== role) {
-    res.status(403).json({ error: 'Your account cannot perform this action.' });
-    return false;
-  }
-  if (!mongoose.isObjectIdOrHexString(req.params.jobId)) {
+  if (checkCorrectUser(req, res, role) && !mongoose.isObjectIdOrHexString(req.params.jobId)) {
     res.status(400).json({ error: 'Invalid job ID.' });
-    return false;
-  }
-  return true;
-}
-
-export function checkSeeker(req, res) {
-  if (!req.session?.user) {
-    res.status(401).json({ error: 'Please log in to continue.' });
-    return false;
-  }
-  if (req.session.user.role !== 'job_seeker') {
-    res.status(403).json({ error: 'Only job seekers can view their applications.' });
     return false;
   }
   return true;
@@ -120,7 +101,7 @@ export async function getJobApplications(req, res) {
 }
 
 export async function getMyApplications(req, res) {
-  if (!checkSeeker(req, res)) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
 
   try {
     const applications = await JobApplication.find({ applicant: req.session.user.id }).populate('job', 
@@ -142,7 +123,7 @@ export async function getMyApplications(req, res) {
 // Temporary job-seeker debug route for exercising the application tracker
 // before recruiter-managed status updates are implemented.
 export async function updateMyApplicationStatus(req, res) {
-  if (!checkSeeker(req, res)) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
   if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
     return res.status(400).json({ error: 'Invalid application ID.' });
   }
