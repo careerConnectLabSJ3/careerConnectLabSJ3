@@ -6,7 +6,11 @@ import { checkCorrectUser } from '../serverUtils/utils.js';
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 
 export function checkAccess(req, res, role) {
-  if (checkCorrectUser(req, res, role) && !mongoose.isObjectIdOrHexString(req.params.jobId)) {
+  if(!checkCorrectUser(req, res, role)){
+    return false;
+  }
+
+  if (!mongoose.isObjectIdOrHexString(req.params.jobId)) {
     res.status(400).json({ error: 'Invalid job ID.' });
     return false;
   }
