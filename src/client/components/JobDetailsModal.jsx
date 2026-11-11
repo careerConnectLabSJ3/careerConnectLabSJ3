@@ -78,7 +78,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
     const previousState = details.isFavorite;
     const currentState = !previousState;
 
-    setDetails({ ...details, isFavorite: currentState });
+    setDetails(details => ({ ...details, isFavorite: currentState }));
     setError(null);
 
     try{
@@ -93,15 +93,16 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
         data = await response.json();
       }
       if (!response.ok) {
-        setDetails({ ...details, isFavorite: previousState });
+        setDetails(details => ({ ...details, isFavorite: previousState }));
         setError(data.error || `Unable to ${previousState ? 'unfavorite' : 'favorite'} this job. Please try again.`);
         return;
       }
-      setDetails({ ...details, isFavorite: previousState });
+
+      setDetails(details => ({ ...details, isFavorite: data.isFavorite ?? currentState }));
       
     } catch(e){
       console.error("Unable to update favorite status:", e);
-      setDetails({ ...details, isFavorite: previousState });
+      setDetails(details => ({ ...details, isFavorite: previousState }));
       setError('An unexpected error occurred while updating favorite status. Please try again.');
     }
   }
