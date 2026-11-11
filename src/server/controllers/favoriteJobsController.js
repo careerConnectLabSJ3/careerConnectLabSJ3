@@ -1,4 +1,4 @@
-import User  from './models/user.js';
+import User  from '../models/user.js';
 import { checkAccess, checkSeeker } from './applicationController.js';
 
 export async function addFavoriteJob(req, res) {

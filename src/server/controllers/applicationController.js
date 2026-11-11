@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import Job from './models/job.js';
-import JobApplication from './models/jobApplication.js';
+import Job from '../models/job.js';
+import JobApplication from '../models/jobApplication.js';
 
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 

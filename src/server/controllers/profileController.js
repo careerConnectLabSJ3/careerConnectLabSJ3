@@ -1,11 +1,11 @@
-import User from './models/user.js';
+import User from '../models/user.js';
 import {Types} from 'mongoose';
 import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { gfsBucket, resumeBucket } from './bin/www.js';
-import { convertToSafeFilename, isPdf } from './serverUtils/utils.js';
+import { gfsBucket, resumeBucket } from '../bin/www.js';
+import { convertToSafeFilename, isPdf } from '../serverUtils/utils.js';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
@@ -85,7 +85,7 @@ export async function getProfilePic(req, res){
         
         // If user has no custom profile picture, serve the default static image
         if (!user || !user.profileImageId) {
-            return res.sendFile(path.join(__dirname, '../client/public/img/default-pfp.png'));
+            return res.sendFile(path.join(__dirname, '../../client/public/img/default-pfp.png'));
         }
 
         // Creates an id for the picture in Mongo

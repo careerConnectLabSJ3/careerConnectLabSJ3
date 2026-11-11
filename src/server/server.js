@@ -8,7 +8,6 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import bcrypt from 'bcrypt';
 import session from 'express-session';
 import multer from 'multer';
 
@@ -18,10 +17,9 @@ const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-import {validateRegistration, sendRegistrationError, sendLoginError} from './validation.js';
-import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile } from './profileController.js';
-import User from './models/user.js';
-import { createJob, getRecruiterJobs } from './jobController.js';
+import {validateRegistration} from './serverUtils/validation.js';
+import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile } from './controllers/profileController.js';
+import { createJob, getRecruiterJobs } from './controllers/jobController.js';
 import {
     getJobDetails,
     submitApplication,
@@ -29,14 +27,10 @@ import {
     getMyApplications,
     updateMyApplicationStatus,
     getJobLifecycleStatus
-} from './applicationController.js';
-import { addFavoriteJob, removeFavoriteJob, getFavoriteJob, getMyFavoriteJobs } from './favoriteJobsController.js';
-
-// import schema for a job postings database
-import Job from './models/job.js';
-import { checkEmail, checkSession, fetchCurrentUser, loginUser, logoutUser, registerUser } from './authController.js';
-import { register } from 'module';
-import { checkUpcomingDeadlines, searchJob } from './jobSeekerController.js';
+} from './controllers/applicationController.js';
+import { addFavoriteJob, removeFavoriteJob, getFavoriteJob, getMyFavoriteJobs } from './controllers/favoriteJobsController.js';
+import { checkEmail, checkSession, fetchCurrentUser, loginUser, logoutUser, registerUser } from './controllers/authController.js';
+import { checkUpcomingDeadlines, searchJob } from './controllers/jobSeekerController.js';
 
 
 // 2. MIDDLEWARE SETUP
