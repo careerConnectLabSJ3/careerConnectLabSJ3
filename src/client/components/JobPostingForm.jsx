@@ -21,9 +21,12 @@ export default function JobPostingForm({ onCancel, onPosted, editingJob = null }
 
   // actionType is either 'Active' (Post/Publish) or 'Draft' (Save Draft)
   async function handleSubmit(event, actionType) {
+
     event.preventDefault();
+
     if (submitting) return;
     clearMessage();
+    
     const form = event.currentTarget;
 
     const formData = new FormData(form);
@@ -46,7 +49,6 @@ export default function JobPostingForm({ onCancel, onPosted, editingJob = null }
 
     setSubmitting(true);
     
-   
     const url = editingJob ? `/api/jobs/${editingJob._id}` : '/api/jobs';
     const method = editingJob ? 'PUT' : 'POST';
 
@@ -112,6 +114,12 @@ export default function JobPostingForm({ onCancel, onPosted, editingJob = null }
         <div className="job-posting-field">
           <label htmlFor="job-deadline">Application deadline</label>
           <input id="job-deadline" name="deadline" type="date" defaultValue={editingJob?.deadline || ''} min={getTodayDate()} required />
+        </div>
+        
+        <div className="job-posting-field">
+          <label htmlFor="job-publish-date">Schedule Publication Date (Optional)</label>
+          <input id="job-publish-date" name="publishDate" type="date" defaultValue={editingJob?.publishDate || getTodayDate()} min={getTodayDate()} />
+          <p className="job-posting-hint">If set to a future date, this job will automatically go live on that day.</p>
         </div>
 
         {error && <p className="job-posting-error" role="alert">{error}</p>}

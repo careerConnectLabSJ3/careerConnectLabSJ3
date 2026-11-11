@@ -290,7 +290,18 @@ app.get('/api/jobs/search', async (req, res) => {
 
         // Retrieve both active and closed jobs so job seekers can see the
         // current lifecycle status of every opportunity they have found.
-        const jobs = await Job.find({ ...jobFilters, status: { $ne: 'Draft' } }).sort({ deadline: 1 });
+        const today = new Date().toISOString().split('T')[0];
+
+        // Retrieve active/closed jobs that are either published today/past, or have no publish date
+        const jobs = await Job.find({ 
+            ...jobFilters, 
+            status: { $ne: 'Draft' },
+            $or: [
+                { publishDate: { $lte: today } },
+                { publishDate: { $exists: false } },
+                { publishDate: null }
+            ]
+        }).sort({ deadline: 1 });
 
         // send response to the user as an json object
         return res.status(200).json(jobs.map(job => ({

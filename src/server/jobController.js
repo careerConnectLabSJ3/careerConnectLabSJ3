@@ -45,7 +45,8 @@ export async function createJob(req, res) {
 
   // Copy only the fields a recruiter is allowed to submit.
   const jobData = {};
-  const fields = ['title', 'company', 'department', 'location', 'description', 'requirements', 'deadline'];
+  const fields = ['title', 'company', 'department', 'location', 'description', 'requirements', 'deadline', 'publishDate'];
+
   for (const field of fields) {
     const value = req.body?.[field];
     if (typeof value !== 'string' || !value.trim()) {
@@ -56,6 +57,7 @@ export async function createJob(req, res) {
 
   // Reject impossible dates as well as deadlines before today's calendar date.
   const deadline = new Date(`${jobData.deadline}T00:00:00Z`);
+
   if (!/^\d{4}-\d{2}-\d{2}$/.test(jobData.deadline) ||
       Number.isNaN(deadline.getTime()) ||
       deadline.toISOString().slice(0, 10) !== jobData.deadline) {
@@ -63,7 +65,9 @@ export async function createJob(req, res) {
   }
 
   const now = new Date();
+
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
   if (jobData.deadline < today) {
     return res.status(400).json({ error: 'The application deadline must be today or a future date.' });
   }
@@ -71,30 +75,51 @@ export async function createJob(req, res) {
   try {
     // Ownership comes from the login session, never from the form.
     jobData.recruiter = req.session.user.id;
+
+    // Auto-draft if the publish date is in the future
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (jobData.publishDate && jobData.publishDate > today) {
+      jobData.status = 'Draft';
+    }
+    else if (!req.body.status) {
+      jobData.status = 'Active'; // Fallback
+    }
+    else {
+      jobData.status = req.body.status;
+    }
+
     const job = await Job.create(jobData);
+
     return res.status(201).json({ message: 'Job posted successfully.', job });
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to post job:', error);
     return res.status(500).json({ error: 'Unable to save your job. Please try again.' });
   }
 }
 
 export async function getRecruiterJobs(req, res) {
+
   if (!checkRecruiter(req, res)) return;
+
   try {
     const jobs = await Job.find({ recruiter: req.session.user.id }).sort({ _id: -1 });
     return res.json(jobs);
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Failed to load recruiter jobs:', error);
     return res.status(500).json({ error: 'Unable to load your job postings. Please try again.' });
   }
 }
 // 1. Function to Edit/Update a Job
 export async function updateJob(req, res) {
+
   const job = await findOwnedJob(req, res);
   if (!job) return; 
 
-  const fields = ['title', 'company', 'department', 'location', 'description', 'requirements', 'deadline'];
+  const fields = ['title', 'company', 'department', 'location', 'description', 'requirements', 'deadline', 'publishDate'];
+
   const jobData = {};
   
   for (const field of fields) {
@@ -113,6 +138,7 @@ export async function updateJob(req, res) {
   }
 
   const now = new Date();
+
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   if (jobData.deadline < today) {
     return res.status(400).json({ error: 'The application deadline must be today or a future date.' });

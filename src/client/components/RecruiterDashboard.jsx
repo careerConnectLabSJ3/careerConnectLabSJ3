@@ -8,6 +8,7 @@ export default function RecruiterDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingJob, setEditingJob] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   async function loadJobs() {
     setLoading(true);
@@ -74,7 +75,7 @@ export default function RecruiterDashboard() {
     }
   }
 
-    async function handleDuplicate(jobId) {
+  async function handleDuplicate(jobId) {
     try {
       const response = await fetch(`/api/jobs/${jobId}/duplicate`, {
         method: 'POST',
@@ -82,16 +83,26 @@ export default function RecruiterDashboard() {
       });
       const data = await response.json();
       if (response.ok) {
-        // Add the new duplicated job to the top of the list
         setJobs(currentJobs => [data.job, ...currentJobs]);
-      }
-      else {
+      } else {
         alert(data.error || "Failed to duplicate the job.");
       }
     } catch (err) {
       alert("Error duplicating job.");
     }
   }
+
+  // Helper to get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+
+  // Filter the jobs based on the toggle
+  const filteredJobs = jobs.filter(job => {
+    // If the deadline is before today, it's expired (archived)
+    const isExpired = job.deadline < today;
+    
+    // If showArchived is true, show ONLY expired. If false, show ONLY active.
+    return showArchived ? isExpired : !isExpired;
+  });
 
   return (
     <section className="recruiter-dashboard" aria-labelledby="recruiter-title">
@@ -114,31 +125,50 @@ export default function RecruiterDashboard() {
       )}
       
       <section className="recruiter-postings" aria-labelledby="recruiter-postings-title">
-        <div className="recruiter-section-heading">
-          <h2 id="recruiter-postings-title">Your job postings</h2>
-          {!loading && !error && <span>{jobs.length} {jobs.length === 1 ? 'posting' : 'postings'}</span>}
+        
+        {/* UPDATED HEADING SECTION WITH TOGGLE BUTTON */}
+        <div className="recruiter-section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <div>
+            <h2 id="recruiter-postings-title" style={{ margin: 0 }}>Your job postings</h2>
+            {!loading && !error && <span style={{ fontSize: '0.9em', color: '#666' }}>{filteredJobs.length} {filteredJobs.length === 1 ? 'posting' : 'postings'}</span>}
+          </div>
+          
+          <button 
+            type="button" 
+            className="recruiter-button" 
+            onClick={() => setShowArchived(!showArchived)}
+          >
+            {showArchived ? '← Back to Active Jobs' : 'View Archived Jobs'}
+          </button>
         </div>
+
         {error && (
           <div className="recruiter-feedback recruiter-feedback-error" role="alert">
             <p>{error}</p>
             <button className="recruiter-button" type="button" onClick={loadJobs}>Reload postings</button>
           </div>
         )}
+        
         {loading ? <p className="recruiter-empty" role="status">Loading your postings...</p> : !error && (
-          jobs.length === 0 ? <div className="recruiter-empty"><p>No job postings yet.</p><p>Your opportunities will appear here after you post a job.</p></div> : (
+          filteredJobs.length === 0 ? (
+            <div className="recruiter-empty">
+              <p>{showArchived ? 'No archived jobs found.' : 'No active job postings yet.'}</p>
+              {!showArchived && <p>Your opportunities will appear here after you post a job.</p>}
+            </div> 
+          ) : (
             <div className="recruiter-table-scroll" role="region" aria-label="Your job postings" tabIndex="0">
             <table className="recruiter-table">
               <thead>
                 <tr>
                   <th scope="col">Job title</th>
-                  <th scope="col">Department</th> {/* <-- RESTORED */}
-                  <th scope="col" className="recruiter-number">Applications</th> {/* <-- RESTORED */}
+                  <th scope="col">Department</th> 
+                  <th scope="col" className="recruiter-number" style={{ whiteSpace: 'nowrap' }}>Applications</th>  
                   <th scope="col">Status</th>
-                  <th scope="col">Actions</th> {/* <-- NEW */}
+                  <th scope="col">Actions</th> 
                 </tr>
               </thead>
               <tbody>
-                {jobs.map(job => (
+                {filteredJobs.map(job => (
                   <tr key={job._id}>
                     <th scope="row">{job.title}</th>
                     <td>{job.department}</td>
@@ -149,8 +179,7 @@ export default function RecruiterDashboard() {
                       </span>
                     </td>
                     <td>
-                      {/* Using the recruiter-button class to make them look consistent */}
-                      <div style={{ display: 'flex', gap: '5px' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' }}>
                         <button className="recruiter-button" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>
                           Edit
                         </button>
