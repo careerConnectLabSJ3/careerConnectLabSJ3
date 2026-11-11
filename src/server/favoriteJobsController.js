@@ -42,7 +42,7 @@ export async function getFavoriteJob(req, res) {
 
 
 export async function getMyFavoriteJobs(req, res) {
-  // if (!checkSeeker()) return;
+  if (!checkSeeker(req, res)) return;
   try{
     const userFavorites = await User.findById(req.session.user.id).populate('favoriteJobs');
     return res.json(userFavorites.favoriteJobs);
