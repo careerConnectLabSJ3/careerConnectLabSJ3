@@ -10,6 +10,7 @@ export default defineConfig({
     }
   },
   test: {
+    include: ['tests/**/*.acceptance.test.{js,jsx}'],
     globals: true,
     environment: 'jsdom',
     setupFiles: './tests/setupTests.js',
