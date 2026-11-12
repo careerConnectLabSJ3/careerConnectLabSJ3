@@ -21,7 +21,7 @@ export default function JobPostingForm({ onCancel, onPosted, editingJob = null }
     if (submitting) return;
     clearMessage();
     
-    const form = event.currentTarget;
+    const form = event.currentTarget.closest('form');
 
     const formData = new FormData(form);
     const dataObj = Object.fromEntries(formData);
