@@ -13,6 +13,7 @@ function checkRecruiter(req, res) {
   }
   return true;
 }
+
 async function findOwnedJob(req, res) {
   // 1. Calls checkRecruiter(req, res) and returns null if it fails.
   if (!checkRecruiter(req, res)) {
@@ -65,11 +66,16 @@ export async function createJob(req, res) {
   }
 
   const now = new Date();
-
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   if (jobData.deadline < today) {
     return res.status(400).json({ error: 'The application deadline must be today or a future date.' });
+  }
+
+  // Validate requested status if provided
+  const requestedStatus = req.body?.status;
+  if (requestedStatus && !['Active', 'Closed', 'Draft'].includes(requestedStatus)) {
+    return res.status(400).json({ error: 'Invalid status. Must be Active, Closed, or Draft.' });
   }
 
   try {
@@ -77,51 +83,43 @@ export async function createJob(req, res) {
     jobData.recruiter = req.session.user.id;
 
     // Auto-draft if the publish date is in the future
-    const today = new Date().toISOString().split('T')[0];
-    
     if (jobData.publishDate && jobData.publishDate > today) {
       jobData.status = 'Draft';
-    }
-    else if (!req.body.status) {
-      jobData.status = 'Active'; // Fallback
-    }
-    else {
-      jobData.status = req.body.status;
+    } else if (requestedStatus) {
+      jobData.status = requestedStatus;
+    } else {
+      jobData.status = 'Active';
     }
 
     const job = await Job.create(jobData);
 
     return res.status(201).json({ message: 'Job posted successfully.', job });
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Failed to post job:', error);
     return res.status(500).json({ error: 'Unable to save your job. Please try again.' });
   }
 }
 
 export async function getRecruiterJobs(req, res) {
-
   if (!checkRecruiter(req, res)) return;
 
   try {
     const jobs = await Job.find({ recruiter: req.session.user.id }).sort({ _id: -1 });
     return res.json(jobs);
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Failed to load recruiter jobs:', error);
     return res.status(500).json({ error: 'Unable to load your job postings. Please try again.' });
   }
 }
+
 // 1. Function to Edit/Update a Job
 export async function updateJob(req, res) {
-
   const job = await findOwnedJob(req, res);
-  if (!job) return; 
+  if (!job) return;
 
   const fields = ['title', 'company', 'department', 'location', 'description', 'requirements', 'deadline', 'publishDate'];
-
   const jobData = {};
-  
+
   for (const field of fields) {
     const value = req.body?.[field];
     if (typeof value !== 'string' || !value.trim()) {
@@ -138,10 +136,22 @@ export async function updateJob(req, res) {
   }
 
   const now = new Date();
-
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   if (jobData.deadline < today) {
     return res.status(400).json({ error: 'The application deadline must be today or a future date.' });
+  }
+
+  // Respect requested status and future publish dates when updating
+  const requestedStatus = req.body?.status;
+  if (requestedStatus) {
+    if (!['Active', 'Closed', 'Draft'].includes(requestedStatus)) {
+      return res.status(400).json({ error: 'Invalid status. Must be Active, Closed, or Draft.' });
+    }
+    jobData.status = requestedStatus;
+  }
+
+  if (jobData.publishDate && jobData.publishDate > today) {
+    jobData.status = 'Draft';
   }
 
   try {
@@ -164,7 +174,7 @@ export async function updateJobStatus(req, res) {
     return res.status(400).json({ error: 'Invalid status. Must be Active, Closed, or Draft.' });
   }
 
-  // Itrying to publish a draft, make sure the deadline isn't expired
+  // If trying to publish a draft, make sure the deadline isn't expired
   if (status === 'Active') {
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -183,22 +193,24 @@ export async function updateJobStatus(req, res) {
   }
 }
 
-// 3. Function to Delete a Job
+// 3. Function to Delete a Job (Atomic transaction to prevent partial data loss)
 export async function deleteJob(req, res) {
   const job = await findOwnedJob(req, res);
   if (!job) return;
 
+  const session = await mongoose.startSession();
   try {
-    
-    await JobApplication.deleteMany({ job: job._id });
-    
-    // Then delete the job itself
-    await job.deleteOne();
-    
+    await session.withTransaction(async () => {
+      await JobApplication.deleteMany({ job: job._id }, { session });
+      await job.deleteOne({ session });
+    });
+
     return res.json({ message: 'Job deleted successfully.' });
   } catch (error) {
     console.error('Failed to delete job:', error);
     return res.status(500).json({ error: 'Unable to delete the job. Please try again.' });
+  } finally {
+    await session.endSession();
   }
 }
 
@@ -225,7 +237,6 @@ export async function duplicateJob(req, res) {
     return res.status(201).json({ message: 'Job duplicated successfully.', job: newJob });
   } catch (error) {
     console.error('Failed to duplicate job:', error);
-    // Send the actual error message back to the frontend so we can see it
     return res.status(500).json({ error: error.message || 'Unable to duplicate the job.' });
   }
 }

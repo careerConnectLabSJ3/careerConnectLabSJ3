@@ -22,8 +22,7 @@ export async function checkUpcomingDeadlines(req, res) {
         }).sort({ deadline: 1 });
 
         res.status(200).json(upcomingJobs);
-    }
-    catch (error) {
+    } catch (error) {
         console.error('Error fetching upcoming deadlines:', error);
         res.status(500).json({ error: 'Server error fetching deadlines' });
     }
