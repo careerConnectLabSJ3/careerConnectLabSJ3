@@ -1,31 +1,14 @@
-import User from './models/user.js';
+import User from '../models/user.js';
 import {Types} from 'mongoose';
 import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { gfsBucket, resumeBucket } from './bin/www.js';
+import { gfsBucket, resumeBucket } from '../bin/www.js';
+import { convertToSafeFilename, isPdf, checkCorrectUser } from '../serverUtils/utils.js';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
-function isJobSeeker(req) {
-    return req.session.user?.role === 'job_seeker';
-}
-
-function isPdfFile(file) {
-    const hasPdfHeader = file?.buffer?.subarray(0, 5).toString() === '%PDF-';
-    const hasPdfEndMarker = file?.buffer?.lastIndexOf(Buffer.from('%%EOF')) !== -1;
-
-    return file &&
-        file.mimetype === 'application/pdf' &&
-        file.originalname.toLowerCase().endsWith('.pdf') &&
-        hasPdfHeader &&
-        hasPdfEndMarker;
-}
-
-function safeFilename(filename) {
-    return String(filename || 'resume.pdf').replace(/[\\/\r\n"]/g, '_');
-}
 
 function uploadToGridFS(file) {
     return new Promise((resolve, reject) => {
@@ -34,7 +17,7 @@ function uploadToGridFS(file) {
             return;
         }
 
-        const uploadStream = resumeBucket.openUploadStream(safeFilename(file.originalname), {
+        const uploadStream = resumeBucket.openUploadStream(convertToSafeFilename(file.originalname), {
             contentType: file.mimetype,
             metadata: {
                 type: 'resume'
@@ -59,6 +42,32 @@ async function deleteFromGridFS(fileId) {
 }
 
 
+export async function fetchUserProfile(req, res){
+    const currUser = req.session.user;
+    if (!currUser) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user = await User.findOne({ email: currUser.email });
+    if (!user) {
+        return res.status(404).json({ error: 'User not found.' });
+    }
+
+    return res.json({
+        name: user.name,
+        role: user.role,
+        education: user.education,
+        experience: user.experience,
+        skills: user.skills,
+        resume: user.resumeFileId ? {
+            fileName: user.resumeFileName,
+            fileSize: user.resumeFileSize,
+            uploadedAt: user.resumeUploadedAt
+        } : null
+    });
+}
+
+
 export async function getProfilePic(req, res){
     try {
         if (!req.session.user) {
@@ -71,7 +80,7 @@ export async function getProfilePic(req, res){
         
         // If user has no custom profile picture, serve the default static image
         if (!user || !user.profileImageId) {
-            return res.sendFile(path.join(__dirname, '../client/public/img/default-pfp.png'));
+            return res.sendFile(path.join(__dirname, '../../client/public/img/default-pfp.png'));
         }
 
         // Creates an id for the picture in Mongo
@@ -192,7 +201,7 @@ export async function getResume(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        if (!isJobSeeker(req)) {
+        if (!checkCorrectUser(req, res, 'job_seeker')) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 
@@ -208,7 +217,7 @@ export async function getResume(req, res) {
         }
 
         res.setHeader('Content-Type', user.resumeMimeType || files[0].contentType || 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${safeFilename(user.resumeFileName)}"`);
+        res.setHeader('Content-Disposition', `inline; filename="${convertToSafeFilename(user.resumeFileName)}"`);
         return resumeBucket.openDownloadStream(fileId).pipe(res);
     } catch (error) {
         console.error('Resume retrieval failed:', error);
@@ -223,7 +232,7 @@ export async function uploadResume(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        if (!isJobSeeker(req)) {
+        if (!checkCorrectUser(req, res, 'job_seeker')) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 
@@ -235,7 +244,7 @@ export async function uploadResume(req, res) {
             return res.status(413).json({ error: 'Resume must be 5MB or smaller.' });
         }
 
-        if (!isPdfFile(req.file)) {
+        if (!isPdf(req.file)) {
             return res.status(400).json({ error: 'Only valid PDF files can be uploaded as resumes.' });
         }
 
@@ -248,7 +257,7 @@ export async function uploadResume(req, res) {
         const previousResumeId = user.resumeFileId;
 
         user.resumeFileId = newResumeId;
-        user.resumeFileName = safeFilename(req.file.originalname);
+        user.resumeFileName = convertToSafeFilename(req.file.originalname);
         user.resumeFileSize = req.file.size;
         user.resumeMimeType = 'application/pdf';
         user.resumeUploadedAt = new Date();
@@ -278,7 +287,7 @@ export async function deleteResume(req, res) {
         if (!req.session.user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
-        if (!isJobSeeker(req)) {
+        if (!checkCorrectUser(req, res, 'job_seeker')) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 

@@ -20,7 +20,12 @@ export default function Header({loggedIn, username, role, onLogout}) {
               </>
             ) : (
               <>
-                {role === 'job_seeker' && <Link to="/applications">Applications</Link>}
+                {role === 'job_seeker' && (
+                  <>
+                    <Link to="/applications">Applications</Link>
+                    <Link to="/favorite-jobs">Favourites</Link>
+                  </>
+                )}
                 <span className="site-welcome" id="welcome-message">Welcome Back, {username}!</span>
                 <Link to="/profile" className="profile-link">
                     <img src="/api/profile/avatar" alt="Profile Picture" className="dashboard-profile"/>

@@ -1,6 +1,6 @@
-import Job from './models/job.js';
+import Job from '../models/job.js';
 import mongoose from 'mongoose';
-import JobApplication from './models/jobApplication.js';
+import JobApplication from '../models/jobApplication.js';
 
 function checkRecruiter(req, res) {
   if (!req.session.user) {

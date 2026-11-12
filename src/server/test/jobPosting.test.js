@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import Job from '../models/job.js';
-import { createJob, getRecruiterJobs } from '../jobController.js';
+import { createJob, getRecruiterJobs } from '../controllers/jobController.js';
 
 const recruiterId = '507f1f77bcf86cd799439011';
 const recruiter = { id: recruiterId, role: 'recruiter' };
