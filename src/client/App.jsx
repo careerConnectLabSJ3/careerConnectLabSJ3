@@ -10,7 +10,7 @@ import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
 import RecruiterDashboard from "./components/RecruiterDashboard";
 import JobApplications from "./components/JobApplications";
-
+import FavoriteJobs from "./components/FavoriteJobs";
 
 function App() {
 
@@ -86,6 +86,7 @@ function App() {
           <Route path="/applications" element={
             !session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <JobApplications /> : <Navigate to="/dashboard" />
           } />
+          <Route path="/favorite-jobs" element={!session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <FavoriteJobs /> : <Navigate to="/dashboard" />} />
           <Route path="/profile" element={session.loggedIn ? <Profile/> : <Navigate to="/login"/>}/>
         </Routes>
       </main>

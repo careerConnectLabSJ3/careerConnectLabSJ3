@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import '../public/css/jobPosting.css';
+import { getTodayDate } from '../utils/jobUtils';
 
-function getTodayDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 export default function JobPostingForm({ onCancel, onPosted, editingJob = null }) {
   const [error, setError] = useState('');
@@ -27,7 +21,7 @@ export default function JobPostingForm({ onCancel, onPosted, editingJob = null }
     if (submitting) return;
     clearMessage();
     
-    const form = event.currentTarget;
+    const form = event.currentTarget.closest('form');
 
     const formData = new FormData(form);
     const dataObj = Object.fromEntries(formData);

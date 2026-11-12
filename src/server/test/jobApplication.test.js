@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
-import { getJobDetails, submitApplication, getJobApplications, getMyApplications, updateMyApplicationStatus } from '../applicationController.js';
+import { getJobDetails, submitApplication, getJobApplications, getMyApplications, updateMyApplicationStatus } 
+from '../controllers/applicationController.js';
 
 const jobId = '507f1f77bcf86cd799439010';
 const applicantId = '507f1f77bcf86cd799439011';
