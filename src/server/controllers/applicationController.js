@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
+import { sendResume } from '../serverUtils/fileStorage.js';
 import { checkCorrectUser } from '../serverUtils/utils.js';
 
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
+const APPLICANT_PROFILE_FIELDS = 'name email education experience skills';
 
 export function checkAccess(req, res, role) {
   if(!checkCorrectUser(req, res, role)){
@@ -87,20 +89,94 @@ export async function submitApplication(req, res) {
   }
 }
 
+async function findOwnedJob(req, res) {
+  const job = await Job.findById(req.params.jobId);
+  if (!job) {
+    res.status(404).json({ error: 'Job not found.' });
+    return null;
+  }
+  if (String(job.recruiter) !== req.session.user.id) {
+    res.status(403).json({ error: 'You can only view applications for your own jobs.' });
+    return null;
+  }
+  return job;
+}
+
+function checkApplicationAccess(req, res) {
+  if (!checkAccess(req, res, 'recruiter')) return false;
+  if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
+    res.status(400).json({ error: 'Invalid application ID.' });
+    return false;
+  }
+  return true;
+}
+
+async function findApplication(req, res, job, fields) {
+  const application = await JobApplication.findOne({
+    _id: req.params.applicationId,
+    job: job._id
+  }).populate('applicant', fields);
+  if (!application) {
+    res.status(404).json({ error: 'Application not found.' });
+  }
+  return application;
+}
+
 export async function getJobApplications(req, res) {
   if (!checkAccess(req, res, 'recruiter')) return;
   try {
-    const job = await Job.findById(req.params.jobId);
-    if (!job) return res.status(404).json({ error: 'Job not found.' });
-    if (String(job.recruiter) !== req.session.user.id) {
-      return res.status(403).json({ error: 'You can only view applications for your own jobs.' });
-    }
-    const applications = await JobApplication.find({ job: job._id }).populate('applicant', 
-      'name email education experience skills').sort({ appliedAt: -1 });
+    const job = await findOwnedJob(req, res);
+    if (!job) return;
+    const applications = await JobApplication.find({ job: job._id }).
+      populate('applicant', APPLICANT_PROFILE_FIELDS).sort({ appliedAt: -1 });
+    res.setHeader('Cache-Control', 'private, no-store');
     return res.json(applications);
   } catch (error) {
     console.error('Failed to load applications:', error);
     return res.status(500).json({ error: 'Unable to load applications. Please try again.' });
+  }
+}
+
+export async function getJobApplication(req, res) {
+  if (!checkApplicationAccess(req, res)) return;
+  try {
+    const job = await findOwnedJob(req, res);
+    if (!job) return;
+    const application = await findApplication(req, res, job, `${APPLICANT_PROFILE_FIELDS} resumeFileId resumeFileName`);
+    if (!application) return;
+
+    const { applicant, appliedAt, status } = application;
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.json({
+      job: { title: job.title },
+      appliedAt,
+      status,
+      applicant: applicant ? {
+        name: applicant.name,
+        email: applicant.email,
+        education: applicant.education,
+        experience: applicant.experience,
+        skills: applicant.skills
+      } : null,
+      resume: applicant?.resumeFileId ? { fileName: applicant.resumeFileName || 'resume.pdf' } : null
+    });
+  } catch (error) {
+    console.error('Failed to load application:', error);
+    return res.status(500).json({ error: 'Unable to load this application. Please try again.' });
+  }
+}
+
+export async function getJobApplicationResume(req, res) {
+  if (!checkApplicationAccess(req, res)) return;
+  try {
+    const job = await findOwnedJob(req, res);
+    if (!job) return;
+    const application = await findApplication(req, res, job, 'resumeFileId resumeFileName');
+    if (!application) return;
+    return await sendResume(res, application.applicant);
+  } catch (error) {
+    console.error('Failed to load application resume:', error);
+    return res.status(500).json({ error: 'Unable to retrieve resume.' });
   }
 }
 
