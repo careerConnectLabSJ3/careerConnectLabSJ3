@@ -39,7 +39,7 @@
 
 ---
 
-## Bahaeddine Mahgoudh
+## Bahaeddine Mahfoudh
 #### Sprint 1
 - [Register page validation improvements](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/21)
 
