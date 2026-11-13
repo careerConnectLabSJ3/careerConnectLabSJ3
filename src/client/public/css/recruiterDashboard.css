@@ -31,6 +31,7 @@
 }
 
 .recruiter-dashboard .recruiter-button {
+    display: inline-block;
     min-height: 44px;
     padding: 0.65rem 1rem;
     border: 1px solid #cbd5e1;
@@ -167,6 +168,84 @@
     margin-top: 0.75rem;
 }
 
+.recruiter-applicants {
+    background: #f8fafc;
+}
+
+.recruiter-applicant-table {
+    min-width: 0;
+    background: var(--surface);
+}
+
+.recruiter-applicant-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+}
+
+.recruiter-applicant-controls label {
+    display: grid;
+    flex: 1 1 9rem;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.recruiter-applicant-controls input,
+.recruiter-applicant-controls select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+}
+
+.recruiter-application-heading {
+    margin-top: 1rem;
+}
+
+.recruiter-application-modal {
+    margin: auto;
+    padding: 0;
+    width: min(720px, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+
+.recruiter-application-modal::backdrop {
+    background: rgb(15 23 42 / 55%);
+}
+
+.recruiter-modal-content {
+    padding: 1.5rem;
+}
+
+.recruiter-application-details {
+    padding: 1.5rem;
+    overflow-wrap: anywhere;
+}
+
+.recruiter-application-details dt {
+    font-weight: 600;
+}
+
+.recruiter-application-details dd {
+    white-space: pre-wrap;
+}
+
+.recruiter-application-details dl > div + div,
+.recruiter-application-details p {
+    margin-top: 1rem;
+}
+
 @media (max-width: 640px) {
     .recruiter-dashboard {
         padding: 1.5rem 1rem 2.5rem;
@@ -185,5 +264,20 @@
     .recruiter-section-heading {
         padding: 1rem;
         flex-wrap: wrap;
+    }
+
+    .recruiter-table {
+        min-width: 0;
+        table-layout: fixed;
+    }
+
+    .recruiter-table th,
+    .recruiter-table td {
+        padding: 0.75rem 0.4rem;
+    }
+
+    .recruiter-table .recruiter-button {
+        padding: 0.4rem;
+        overflow-wrap: anywhere;
     }
 }
