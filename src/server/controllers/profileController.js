@@ -4,7 +4,7 @@ import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { gfsBucket, resumeBucket, sendResume } from '../serverUtils/fileStorage.js';
+import { gfsBucket, resumeBucket } from '../bin/www.js';
 import { convertToSafeFilename, isPdf, checkCorrectUser } from '../serverUtils/utils.js';
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
@@ -206,7 +206,19 @@ export async function getResume(req, res) {
         }
 
         const user = await User.findOne({ email: req.session.user.email });
-        return await sendResume(res, user);
+        if (!user || !user.resumeFileId) {
+            return res.status(404).json({ error: 'No resume has been uploaded.' });
+        }
+
+        const fileId = new Types.ObjectId(user.resumeFileId);
+        const files = await resumeBucket.find({ _id: fileId }).toArray();
+        if (!files.length) {
+            return res.status(404).json({ error: 'Resume file could not be found.' });
+        }
+
+        res.setHeader('Content-Type', user.resumeMimeType || files[0].contentType || 'application/pdf');
+        res.setHeader('Content-Disposition', `inline; filename="${convertToSafeFilename(user.resumeFileName)}"`);
+        return resumeBucket.openDownloadStream(fileId).pipe(res);
     } catch (error) {
         console.error('Resume retrieval failed:', error);
         return res.status(500).json({ error: 'Unable to retrieve resume.' });

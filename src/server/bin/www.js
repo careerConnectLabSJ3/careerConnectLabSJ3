@@ -1,19 +1,24 @@
-import dotenv from 'dotenv';
-import dns from 'dns';
 import mongoose from 'mongoose';
 import app from '../server.js';
-import { initializeFileStorage } from '../serverUtils/fileStorage.js';
 
-dotenv.config();
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 
 const port = process.env.PORT || 3000;
+
+export let gfsBucket;
+export let resumeBucket;
 
 (async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI, {dbName: 'careerConnect_db'});
     const nativeDb = mongoose.connection.getClient().db();
-    initializeFileStorage(nativeDb);
+
+    gfsBucket = new mongoose.mongo.GridFSBucket(nativeDb, {
+      bucketName: 'profileImages'
+    });
+    resumeBucket = new mongoose.mongo.GridFSBucket(nativeDb, {
+      bucketName: 'resumes'
+    });
     console.log('GridFS Bucket Initialized');
 
     const server = app.listen(port, () => {

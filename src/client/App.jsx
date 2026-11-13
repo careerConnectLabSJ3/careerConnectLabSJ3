@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
 import RecruiterDashboard from "./components/RecruiterDashboard";
-import { RecruiterApplicantsPage } from "./components/RecruiterApplications";
 import JobApplications from "./components/JobApplications";
 import FavoriteJobs from "./components/FavoriteJobs";
 
@@ -84,10 +83,6 @@ function App() {
               )
             } 
           />
-          <Route path="/dashboard/jobs/:jobId/applications/:applicationId?" element={
-            !session.loggedIn ? <Navigate to="/login" /> :
-              session.user.role === 'recruiter' ? <RecruiterApplicantsPage /> : <Navigate to="/dashboard" />
-          } />
           <Route path="/applications" element={
             !session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <JobApplications /> : <Navigate to="/dashboard" />
           } />

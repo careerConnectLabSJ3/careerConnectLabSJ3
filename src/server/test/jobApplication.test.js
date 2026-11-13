@@ -3,10 +3,8 @@ import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
-import {
-  getJobDetails, submitApplication, getJobApplications, getJobApplication, getJobApplicationResume,
-  getMyApplications, updateMyApplicationStatus
-} from '../controllers/applicationController.js';
+import { getJobDetails, submitApplication, getJobApplications, getMyApplications, updateMyApplicationStatus } 
+from '../controllers/applicationController.js';
 
 const jobId = '507f1f77bcf86cd799439010';
 const applicantId = '507f1f77bcf86cd799439011';
@@ -31,7 +29,6 @@ function request(user = seeker, body = { confirmed: true }) {
 function response() {
   return {
     statusCode: 200,
-    setHeader() {},
     status(code) {
       this.statusCode = code;
       return this;
@@ -78,8 +75,7 @@ test('model requires job and applicant and defines the duplicate-prevention inde
 test('all application routes reject missing sessions and the wrong role before database access', async () => {
   jest.spyOn(Job, 'findById').mockImplementation(() => assert.fail('Unauthorized database access'));
   for (const [handler, wrongUser] of [
-    [getJobDetails, recruiter], [submitApplication, recruiter], [getJobApplications, seeker],
-    [getJobApplication, seeker], [getJobApplicationResume, seeker], [getMyApplications, recruiter]
+    [getJobDetails, recruiter], [submitApplication, recruiter], [getJobApplications, seeker], [getMyApplications, recruiter]
   ]) {
     const loggedOut = response();
     await handler({ params: { jobId } }, loggedOut);
@@ -308,36 +304,6 @@ test('owning recruiter receives job applications with only selected applicant pr
   const res = response();
   await getJobApplications(request(recruiter), res);
   assert.deepEqual(res.body, applications);
-});
-
-test('recruiter application detail and resume validate the application ID before querying', async () => {
-  const findJob = jest.spyOn(Job, 'findById').mockImplementation(() => assert.fail('Invalid ID reached the database'));
-  const req = request(recruiter);
-  req.params.applicationId = 'invalid';
-
-  for (const handler of [getJobApplication, getJobApplicationResume]) {
-    const res = response();
-    await handler(req, res);
-    assert.equal(res.statusCode, 400);
-  }
-  assert.equal(findJob.mock.calls.length, 0);
-});
-
-test('recruiter application detail preserves the date when the applicant profile is gone', async () => {
-  const appliedAt = new Date('2026-10-20T12:00:00Z');
-  jest.spyOn(Job, 'findById').mockResolvedValue(job({ title: 'Developer' }));
-  jest.spyOn(JobApplication, 'findOne').mockReturnValue({
-    populate: async () => ({ appliedAt, status: 'Applied', applicant: null })
-  });
-  const req = request(recruiter);
-  req.params.applicationId = applicantId;
-  const res = response();
-
-  await getJobApplication(req, res);
-
-  assert.deepEqual(res.body, {
-    job: { title: 'Developer' }, appliedAt, status: 'Applied', applicant: null, resume: null
-  });
 });
 
 test('detail and application-list database errors return safe messages', async () => {

@@ -1,4 +1,10 @@
 // server.js
+// 1. CONFIGURATION & ENVIRONMENT SETUP
+import dotenv from 'dotenv';
+dotenv.config();
+import dns from 'dns';
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,8 +24,6 @@ import {
     getJobDetails,
     submitApplication,
     getJobApplications,
-    getJobApplication,
-    getJobApplicationResume,
     getMyApplications,
     updateMyApplicationStatus,
     getJobLifecycleStatus
@@ -121,8 +125,6 @@ app.get('/api/jobs/:jobId/details', getJobDetails);
 app.get('/api/jobs/:jobId', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
-app.get('/api/jobs/:jobId/applications/:applicationId', getJobApplication);
-app.get('/api/jobs/:jobId/applications/:applicationId/resume', getJobApplicationResume);
 
 // Job favoriting API
 app.get('/api/jobs/:jobId/favorite', getFavoriteJob);
