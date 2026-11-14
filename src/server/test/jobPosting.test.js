@@ -14,9 +14,14 @@ function calendarDate(offset = 0) {
 
 function validBody() {
   return {
-    title: ' Junior Developer ', company: 'Example Company', department: 'Engineering',
-    location: 'Montreal', description: 'Build web applications.',
-    requirements: 'JavaScript knowledge.', deadline: calendarDate()
+    title: ' Junior Developer ',
+    company: 'Example Company',
+    department: 'Engineering',
+    location: 'Montreal',
+    description: 'Build web applications.',
+    requirements: 'JavaScript knowledge.',
+    deadline: calendarDate(),
+    publishDate: calendarDate()
   };
 }
 
@@ -67,6 +72,13 @@ test('past and impossible deadlines are rejected without saving', async () => {
   }
 });
 
+test('invalid status values are rejected with 400', async () => {
+  jest.spyOn(Job, 'create').mockImplementation(() => assert.fail('Invalid status must not be saved'));
+  const res = response();
+  await createJob({ session: { user: recruiter }, body: { ...validBody(), status: 'Hidden' } }, res);
+  assert.equal(res.statusCode, 400);
+});
+
 test('today and future deadlines save with session ownership and searchable defaults', async () => {
   jest.spyOn(Job, 'create').mockImplementation(async data => {
     const job = new Job(data);
@@ -75,9 +87,15 @@ test('today and future deadlines save with session ownership and searchable defa
   });
   for (const deadline of [calendarDate(), calendarDate(1)]) {
     const res = response();
-    await createJob({ session: { user: recruiter }, body: {
-      ...validBody(), deadline, recruiter: 'another-user', status: 'Hidden', applicationsCount: 99
-    } }, res);
+    await createJob({
+      session: { user: recruiter },
+      body: {
+        ...validBody(),
+        deadline,
+        recruiter: 'another-user',
+        applicationsCount: 99
+      }
+    }, res);
     assert.equal(res.statusCode, 201);
     assert.equal(res.body.job.title, 'Junior Developer');
     assert.equal(String(res.body.job.recruiter), recruiterId);
@@ -126,3 +144,4 @@ test('database list failure returns a useful error', async () => {
   assert.equal(res.statusCode, 500);
   assert.equal(res.body.error, 'Unable to load your job postings. Please try again.');
 });
+
