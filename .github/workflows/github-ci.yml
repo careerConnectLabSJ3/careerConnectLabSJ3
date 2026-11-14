@@ -16,14 +16,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          
-      - name: Install dependencies
+          node-version: "22"
+
+      - name: Install root dependencies
         run: npm install
+
+      - name: Install server dependencies
+        run: npm install --prefix src/server
 
       - name: Run ESLint
         run: npm run lint
@@ -34,15 +37,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          
-      - name: Install dependencies
+          node-version: "22"
+
+      - name: Install root dependencies
         run: npm install
-        
+
+      - name: Install server dependencies
+        run: npm install --prefix src/server
+
       - name: Run Jest tests
         run: npm run test:unit
 
@@ -52,16 +58,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
           cache-dependency-path: src/client/package-lock.json
-          
+
       - name: Install client dependencies
         run: npm ci --prefix src/client
-        
+
       - name: Run acceptance tests with Vitest
         run: npm run test:acceptance
