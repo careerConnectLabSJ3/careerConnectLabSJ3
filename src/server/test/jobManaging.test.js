@@ -56,8 +56,6 @@ function response() {
   };
 }
 
-// `restoreMocks: true` in jest.config.js restores spies between tests, but
-// `mockClear` on the shared console spy keeps call counts isolated per test.
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -116,7 +114,6 @@ describe('createJob (drafts & scheduling)', () => {
 
 describe('updateJob', () => {
   test('rejects invalid job IDs, missing jobs, and non-owners', async () => {
-    // Invalid ID: findById should never be called.
     jest.spyOn(Job, 'findById').mockImplementation(() => {
       throw new Error('findById must not be called for invalid IDs');
     });
@@ -124,13 +121,11 @@ describe('updateJob', () => {
     await updateJob({ session: { user: recruiter }, params: { jobId: 'bad-id' }, body: validBody() }, res);
     expect(res.statusCode).toBe(400);
 
-    // Job not found
     jest.spyOn(Job, 'findById').mockResolvedValue(null);
     res = response();
     await updateJob({ session: { user: recruiter }, params: { jobId }, body: validBody() }, res);
     expect(res.statusCode).toBe(404);
 
-    // Owned by a different recruiter
     jest.spyOn(Job, 'findById').mockResolvedValue({ _id: jobId, recruiter: otherRecruiterId });
     res = response();
     await updateJob({ session: { user: recruiter }, params: { jobId }, body: validBody() }, res);
@@ -141,7 +136,6 @@ describe('updateJob', () => {
     jest.spyOn(Job, 'findById').mockResolvedValue({ _id: jobId, recruiter: recruiterId, status: 'Active' });
     jest.spyOn(Job, 'findByIdAndUpdate').mockImplementation(async (_id, updateData) => ({ _id, ...updateData }));
 
-    // Saving an edit as Draft
     let res = response();
     await updateJob({
       session: { user: recruiter },
@@ -152,7 +146,6 @@ describe('updateJob', () => {
     expect(res.body.job.title).toBe('Updated Engineer');
     expect(res.body.job.status).toBe('Draft');
 
-    // Rescheduling to a future date forces Draft even if Active was requested
     res = response();
     await updateJob({
       session: { user: recruiter },
@@ -237,14 +230,17 @@ describe('duplicateJob', () => {
 describe('deleteJob', () => {
   test('deletes applications and job inside a transaction, then ends the session', async () => {
     const sessionEnded = { value: false };
-    const withTransaction = jest.fn(async fn => { await fn(); });
+    const withTransaction = jest.fn(async fn => {
+      await fn();
+    });
 
     const mockSession = {
       withTransaction,
-      endSession: jest.fn(async () => { sessionEnded.value = true; })
+      endSession: jest.fn(async () => {
+        sessionEnded.value = true;
+      })
     };
 
-    // `mongoose` is a default import (plain object), so spyOn works here.
     jest.spyOn(mongoose, 'startSession').mockResolvedValue(mockSession);
 
     const deleteOne = jest.fn(async opts => {
@@ -257,7 +253,7 @@ describe('deleteJob', () => {
     });
 
     const deleteMany = jest.fn(async (filter, opts) => {
-      expect(filter).toEqual({ job: jobId });
+      expect(filter).toStrictEqual({ job: jobId });
       expect(opts.session).toBe(mockSession);
     });
     jest.spyOn(JobApplication, 'deleteMany').mockImplementation(deleteMany);
@@ -273,9 +269,13 @@ describe('deleteJob', () => {
   });
 
   test('ends the session even when the transaction throws', async () => {
-    const endSession = jest.fn(async () => {});
+    const endSession = jest.fn(async () => {
+
+    });
     const mockSession = {
-      withTransaction: jest.fn(async () => { throw new Error('tx failed'); }),
+      withTransaction: jest.fn(async () => {
+        throw new Error('tx failed');
+      }),
       endSession
     };
 
@@ -285,6 +285,7 @@ describe('deleteJob', () => {
       recruiter: recruiterId,
       deleteOne: jest.fn()
     });
+    
     jest.spyOn(JobApplication, 'deleteMany').mockResolvedValue({});
 
     const res = response();
@@ -329,12 +330,12 @@ describe('job seeker visibility', () => {
     const searchRes = response();
     await searchJob({ query: {} }, searchRes);
     expect(searchRes.statusCode).toBe(200);
-    expect(captured.search.status).toEqual({ $ne: 'Draft' });
+    expect(captured.search.status).toStrictEqual({ $ne: 'Draft' });
     expect(Array.isArray(captured.search.$or)).toBe(true);
 
     const deadlineRes = response();
     await checkUpcomingDeadlines({}, deadlineRes);
     expect(deadlineRes.statusCode).toBe(200);
-    expect(captured.deadline.status).toEqual({ $ne: 'Draft' });
+    expect(captured.deadline.status).toStrictEqual({ $ne: 'Draft' });
   });
 });
