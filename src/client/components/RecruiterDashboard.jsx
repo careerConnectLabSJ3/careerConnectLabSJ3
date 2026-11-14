@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import JobPostingForm from './JobPostingForm';
-import '../public/css/recruiterDashboard.css';
 
 export default function RecruiterDashboard() {
   const [showJobForm, setShowJobForm] = useState(false);

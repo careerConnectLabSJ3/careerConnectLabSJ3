@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatDate } from '../utils/jobUtils';
-import '../public/css/recruiterDashboard.css';
 
 const PROFILE_FIELDS = [
   ['email', 'Email'],
@@ -10,7 +9,7 @@ const PROFILE_FIELDS = [
   ['skills', 'Skills']
 ];
 
-function useApplicationsRequest(url, errorMessage, refreshInterval = 0) {
+function useApplicationsRequest(url, errorMessage, refreshOnReturn = false) {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
@@ -44,17 +43,15 @@ function useApplicationsRequest(url, errorMessage, refreshInterval = 0) {
     }
 
     load();
-    if (!refreshInterval) return () => controller.abort();
-    const timer = window.setInterval(refreshVisiblePage, refreshInterval);
+    if (!refreshOnReturn) return () => controller.abort();
     window.addEventListener('focus', refreshVisiblePage);
     document.addEventListener('visibilitychange', refreshVisiblePage);
     return () => {
       controller.abort();
-      window.clearInterval(timer);
       window.removeEventListener('focus', refreshVisiblePage);
       document.removeEventListener('visibilitychange', refreshVisiblePage);
     };
-  }, [url, errorMessage, refreshInterval]);
+  }, [url, errorMessage, refreshOnReturn]);
 
   return result?.url === url ? result : {};
 }
@@ -95,7 +92,7 @@ function RecruiterApplicantList({ job }) {
   const { data: applications, error } = useApplicationsRequest(
     `/api/jobs/${job._id}/applications`,
     'Unable to load applications. Please try again.',
-    15000
+    true
   );
 
   const query = keyword.trim().toLowerCase();

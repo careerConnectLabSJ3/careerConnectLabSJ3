@@ -41,6 +41,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -91,7 +92,7 @@ it('opens the applicant overview, searches and sorts, and navigates to the selec
   expect(within(screen.getByRole('table', { name: 'Applications' })).getAllByRole('link')).toHaveLength(1);
 });
 
-it.each(['focus', 'interval'])('refreshes new applications on %s without losing search or sort settings', async trigger => {
+it.each(['focus', 'visibilitychange'])('refreshes on %s without polling or losing search and sort settings', async trigger => {
   vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
   window.history.replaceState(null, '', '/dashboard/jobs/job-1/applications');
   mockApi({ [listUrl]: [applications[0]] });
@@ -99,13 +100,20 @@ it.each(['focus', 'interval'])('refreshes new applications on %s without losing 
   await screen.findByRole('link', { name: 'Taylor Lee' });
   fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'name' } });
   fireEvent.change(screen.getByRole('searchbox', { name: 'Keyword' }), { target: { value: 'e' } });
+  const initialRequestCount = fetch.mock.calls.length;
+  await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+  expect(fetch).toHaveBeenCalledTimes(initialRequestCount);
+  const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
+  expect(fetch).toHaveBeenCalledTimes(initialRequestCount);
+  hidden.mockReturnValue(false);
   fetch.mockResolvedValueOnce({ ok: true, json: async () => applications });
 
   await act(async () => {
     if (trigger === 'focus') {
       fireEvent.focus(window);
     } else {
-      await vi.advanceTimersByTimeAsync(15000);
+      fireEvent(document, new Event('visibilitychange'));
     }
   });
 
@@ -116,8 +124,9 @@ it.each(['focus', 'interval'])('refreshes new applications on %s without losing 
   expect(fetch).toHaveBeenLastCalledWith(listUrl, expect.objectContaining({ cache: 'no-store', credentials: 'include' }));
   cleanup();
   const requestCount = fetch.mock.calls.length;
-  await vi.advanceTimersByTimeAsync(15000);
+  await vi.advanceTimersByTimeAsync(60000);
   fireEvent.focus(window);
+  fireEvent(document, new Event('visibilitychange'));
   expect(fetch).toHaveBeenCalledTimes(requestCount);
 });
 
