@@ -1,5 +1,4 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
+import { jest, test, describe, beforeEach, afterEach } from '@jest/globals';
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
@@ -57,258 +56,285 @@ function response() {
   };
 }
 
+// `restoreMocks: true` in jest.config.js restores spies between tests, but
+// `mockClear` on the shared console spy keeps call counts isolated per test.
+beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 // --- Existing Lifecycle Unit Tests ---
 
-test('Job Lifecycle Status - Active Job', () => {
-  const mockJob = {
-    status: 'Active',
-    deadline: calendarDate(5)
-  };
-  assert.strictEqual(getJobLifecycleStatus(mockJob), 'Active');
-});
+describe('getJobLifecycleStatus', () => {
+  test('returns Active for an Active job with a future deadline', () => {
+    const mockJob = { status: 'Active', deadline: calendarDate(5) };
+    expect(getJobLifecycleStatus(mockJob)).toBe('Active');
+  });
 
-test('Job Lifecycle Status - Expired Job', () => {
-  const mockJob = {
-    status: 'Active',
-    deadline: calendarDate(-1)
-  };
-  assert.strictEqual(getJobLifecycleStatus(mockJob), 'Closed');
-});
+  test('returns Closed for an Active job with a past deadline', () => {
+    const mockJob = { status: 'Active', deadline: calendarDate(-1) };
+    expect(getJobLifecycleStatus(mockJob)).toBe('Closed');
+  });
 
-test('Job Lifecycle Status - Draft Job', () => {
-  const mockJob = {
-    status: 'Draft',
-    deadline: calendarDate(10)
-  };
-  assert.strictEqual(getJobLifecycleStatus(mockJob), 'Closed');
+  test('returns Closed for a Draft job', () => {
+    const mockJob = { status: 'Draft', deadline: calendarDate(10) };
+    expect(getJobLifecycleStatus(mockJob)).toBe('Closed');
+  });
 });
 
 // --- US-07 Drafts & Scheduled Publication Tests ---
 
-test('createJob saves explicitly requested Draft status', async t => {
-  t.mock.method(Job, 'create', async data => data);
+describe('createJob (drafts & scheduling)', () => {
+  test('saves explicitly requested Draft status', async () => {
+    jest.spyOn(Job, 'create').mockImplementation(async data => data);
 
-  const res = response();
-  await createJob({
-    session: { user: recruiter },
-    body: validBody({ status: 'Draft' })
-  }, res);
+    const res = response();
+    await createJob({ session: { user: recruiter }, body: validBody({ status: 'Draft' }) }, res);
 
-  assert.equal(res.statusCode, 201);
-  assert.equal(res.body.job.status, 'Draft');
-});
+    expect(res.statusCode).toBe(201);
+    expect(res.body.job.status).toBe('Draft');
+  });
 
-test('createJob forces status to Draft when publishDate is in the future', async t => {
-  t.mock.method(Job, 'create', async data => data);
+  test('forces status to Draft when publishDate is in the future', async () => {
+    jest.spyOn(Job, 'create').mockImplementation(async data => data);
 
-  const res = response();
-  await createJob({
-    session: { user: recruiter },
-    body: validBody({ status: 'Active', publishDate: calendarDate(3) })
-  }, res);
+    const res = response();
+    await createJob({
+      session: { user: recruiter },
+      body: validBody({ status: 'Active', publishDate: calendarDate(3) })
+    }, res);
 
-  assert.equal(res.statusCode, 201);
-  assert.equal(res.body.job.status, 'Draft');
+    expect(res.statusCode).toBe(201);
+    expect(res.body.job.status).toBe('Draft');
+  });
 });
 
 // --- US-07 Edit & Update Job Tests ---
 
-test('updateJob rejects invalid job IDs, missing jobs, and non-owners', async t => {
-  // Invalid ID
-  let res = response();
-  await updateJob({ session: { user: recruiter }, params: { jobId: 'bad-id' }, body: validBody() }, res);
-  assert.equal(res.statusCode, 400);
+describe('updateJob', () => {
+  test('rejects invalid job IDs, missing jobs, and non-owners', async () => {
+    // Invalid ID: findById should never be called.
+    jest.spyOn(Job, 'findById').mockImplementation(() => {
+      throw new Error('findById must not be called for invalid IDs');
+    });
+    let res = response();
+    await updateJob({ session: { user: recruiter }, params: { jobId: 'bad-id' }, body: validBody() }, res);
+    expect(res.statusCode).toBe(400);
 
-  // Job not found
-  t.mock.method(Job, 'findById', async () => null);
-  res = response();
-  await updateJob({ session: { user: recruiter }, params: { jobId }, body: validBody() }, res);
-  assert.equal(res.statusCode, 404);
+    // Job not found
+    jest.spyOn(Job, 'findById').mockResolvedValue(null);
+    res = response();
+    await updateJob({ session: { user: recruiter }, params: { jobId }, body: validBody() }, res);
+    expect(res.statusCode).toBe(404);
 
-  // Owned by different recruiter
-  t.mock.method(Job, 'findById', async () => ({ _id: jobId, recruiter: otherRecruiterId }));
-  res = response();
-  await updateJob({ session: { user: recruiter }, params: { jobId }, body: validBody() }, res);
-  assert.equal(res.statusCode, 403);
-});
+    // Owned by a different recruiter
+    jest.spyOn(Job, 'findById').mockResolvedValue({ _id: jobId, recruiter: otherRecruiterId });
+    res = response();
+    await updateJob({ session: { user: recruiter }, params: { jobId }, body: validBody() }, res);
+    expect(res.statusCode).toBe(403);
+  });
 
-test('updateJob updates fields, respects Draft status, and auto-drafts future publish dates', async t => {
-  t.mock.method(Job, 'findById', async () => ({ _id: jobId, recruiter: recruiterId, status: 'Active' }));
-  t.mock.method(Job, 'findByIdAndUpdate', async (_id, updateData) => ({ _id, ...updateData }));
+  test('updates fields, respects Draft status, and auto-drafts future publish dates', async () => {
+    jest.spyOn(Job, 'findById').mockResolvedValue({ _id: jobId, recruiter: recruiterId, status: 'Active' });
+    jest.spyOn(Job, 'findByIdAndUpdate').mockImplementation(async (_id, updateData) => ({ _id, ...updateData }));
 
-  // Saving an edit as Draft
-  let res = response();
-  await updateJob({
-    session: { user: recruiter },
-    params: { jobId },
-    body: validBody({ title: 'Updated Engineer', status: 'Draft' })
-  }, res);
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.job.title, 'Updated Engineer');
-  assert.equal(res.body.job.status, 'Draft');
+    // Saving an edit as Draft
+    let res = response();
+    await updateJob({
+      session: { user: recruiter },
+      params: { jobId },
+      body: validBody({ title: 'Updated Engineer', status: 'Draft' })
+    }, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.job.title).toBe('Updated Engineer');
+    expect(res.body.job.status).toBe('Draft');
 
-  // Rescheduling to a future date forces Draft even if Active was requested
-  res = response();
-  await updateJob({
-    session: { user: recruiter },
-    params: { jobId },
-    body: validBody({ status: 'Active', publishDate: calendarDate(5) })
-  }, res);
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.job.status, 'Draft');
+    // Rescheduling to a future date forces Draft even if Active was requested
+    res = response();
+    await updateJob({
+      session: { user: recruiter },
+      params: { jobId },
+      body: validBody({ status: 'Active', publishDate: calendarDate(5) })
+    }, res);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.job.status).toBe('Draft');
+  });
 });
 
 // --- US-07 Status Toggle & Archiving Tests ---
 
-test('updateJobStatus changes status and blocks publishing expired jobs', async t => {
-  // Block publishing if deadline has passed
-  t.mock.method(Job, 'findById', async () => ({
-    _id: jobId,
-    recruiter: recruiterId,
-    status: 'Draft',
-    deadline: calendarDate(-2),
-    async save() {}
-  }));
+describe('updateJobStatus', () => {
+  test('blocks publishing a Draft whose deadline has passed', async () => {
+    jest.spyOn(Job, 'findById').mockResolvedValue({
+      _id: jobId,
+      recruiter: recruiterId,
+      status: 'Draft',
+      deadline: calendarDate(-2),
+      save: jest.fn(async () => {})
+    });
 
-  let res = response();
-  await updateJobStatus({
-    session: { user: recruiter },
-    params: { jobId },
-    body: { status: 'Active' }
-  }, res);
-  assert.equal(res.statusCode, 400);
+    const res = response();
+    await updateJobStatus({ session: { user: recruiter }, params: { jobId }, body: { status: 'Active' } }, res);
+    expect(res.statusCode).toBe(400);
+  });
 
-  // Allow archiving (Closing) an active job
-  const activeJob = {
-    _id: jobId,
-    recruiter: recruiterId,
-    status: 'Active',
-    deadline: calendarDate(5),
-    async save() {}
-  };
-  t.mock.method(Job, 'findById', async () => activeJob);
+  test('allows archiving an Active job to Closed', async () => {
+    const activeJob = {
+      _id: jobId,
+      recruiter: recruiterId,
+      status: 'Active',
+      deadline: calendarDate(5),
+      save: jest.fn(async () => {})
+    };
+    jest.spyOn(Job, 'findById').mockResolvedValue(activeJob);
 
-  res = response();
-  await updateJobStatus({
-    session: { user: recruiter },
-    params: { jobId },
-    body: { status: 'Closed' }
-  }, res);
-  assert.equal(res.statusCode, 200);
-  assert.equal(activeJob.status, 'Closed');
+    const res = response();
+    await updateJobStatus({ session: { user: recruiter }, params: { jobId }, body: { status: 'Closed' } }, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(activeJob.status).toBe('Closed');
+    expect(activeJob.save).toHaveBeenCalledTimes(1);
+  });
 });
 
 // --- US-07 Duplication Tests ---
 
-test('duplicateJob creates a Draft copy with 0 applications', async t => {
-  const existingJob = {
-    _id: jobId,
-    recruiter: recruiterId,
-    title: 'Backend Developer',
-    company: 'Acme Inc',
-    department: 'IT',
-    location: 'Remote',
-    description: 'API design',
-    requirements: 'Express & MongoDB',
-    deadline: calendarDate(10),
-    status: 'Active',
-    applicationsCount: 14
-  };
+describe('duplicateJob', () => {
+  test('creates a Draft copy with 0 applications', async () => {
+    const existingJob = {
+      _id: jobId,
+      recruiter: recruiterId,
+      title: 'Backend Developer',
+      company: 'Acme Inc',
+      department: 'IT',
+      location: 'Remote',
+      description: 'API design',
+      requirements: 'Express & MongoDB',
+      deadline: calendarDate(10),
+      status: 'Active',
+      applicationsCount: 14
+    };
 
-  t.mock.method(Job, 'findById', async () => existingJob);
-  t.mock.method(Job, 'create', async data => data);
+    jest.spyOn(Job, 'findById').mockResolvedValue(existingJob);
+    jest.spyOn(Job, 'create').mockImplementation(async data => data);
 
-  const res = response();
-  await duplicateJob({ session: { user: recruiter }, params: { jobId } }, res);
+    const res = response();
+    await duplicateJob({ session: { user: recruiter }, params: { jobId } }, res);
 
-  assert.equal(res.statusCode, 201);
-  assert.equal(res.body.job.title, 'Backend Developer (Copy)');
-  assert.equal(res.body.job.status, 'Draft');
-  assert.equal(res.body.job.applicationsCount, 0);
-  assert.equal(res.body.job.recruiter, recruiterId);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.job.title).toBe('Backend Developer (Copy)');
+    expect(res.body.job.status).toBe('Draft');
+    expect(res.body.job.applicationsCount).toBe(0);
+    expect(res.body.job.recruiter).toBe(recruiterId);
+  });
 });
 
 // --- US-07 Atomic Delete Transaction Tests ---
 
-test('deleteJob deletes applications and job inside a transaction', async t => {
-  let deletedApps = false;
-  let deletedJob = false;
-  let sessionEnded = false;
+describe('deleteJob', () => {
+  test('deletes applications and job inside a transaction, then ends the session', async () => {
+    const sessionEnded = { value: false };
+    const withTransaction = jest.fn(async fn => { await fn(); });
 
-  const mockSession = {
-    async withTransaction(fn) {
-      await fn();
-    },
-    async endSession() {
-      sessionEnded = true;
-    }
-  };
+    const mockSession = {
+      withTransaction,
+      endSession: jest.fn(async () => { sessionEnded.value = true; })
+    };
 
-  t.mock.method(mongoose, 'startSession', async () => mockSession);
-  t.mock.method(Job, 'findById', async () => ({
-    _id: jobId,
-    recruiter: recruiterId,
-    async deleteOne(opts) {
-      assert.equal(opts.session, mockSession);
-      deletedJob = true;
-    }
-  }));
-  t.mock.method(JobApplication, 'deleteMany', async (filter, opts) => {
-    assert.deepEqual(filter, { job: jobId });
-    assert.equal(opts.session, mockSession);
-    deletedApps = true;
+    // `mongoose` is a default import (plain object), so spyOn works here.
+    jest.spyOn(mongoose, 'startSession').mockResolvedValue(mockSession);
+
+    const deleteOne = jest.fn(async opts => {
+      expect(opts.session).toBe(mockSession);
+    });
+    jest.spyOn(Job, 'findById').mockResolvedValue({
+      _id: jobId,
+      recruiter: recruiterId,
+      deleteOne
+    });
+
+    const deleteMany = jest.fn(async (filter, opts) => {
+      expect(filter).toEqual({ job: jobId });
+      expect(opts.session).toBe(mockSession);
+    });
+    jest.spyOn(JobApplication, 'deleteMany').mockImplementation(deleteMany);
+
+    const res = response();
+    await deleteJob({ session: { user: recruiter }, params: { jobId } }, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(withTransaction).toHaveBeenCalledTimes(1);
+    expect(deleteMany).toHaveBeenCalledTimes(1);
+    expect(deleteOne).toHaveBeenCalledTimes(1);
+    expect(sessionEnded.value).toBe(true);
   });
 
-  const res = response();
-  await deleteJob({ session: { user: recruiter }, params: { jobId } }, res);
+  test('ends the session even when the transaction throws', async () => {
+    const endSession = jest.fn(async () => {});
+    const mockSession = {
+      withTransaction: jest.fn(async () => { throw new Error('tx failed'); }),
+      endSession
+    };
 
-  assert.equal(res.statusCode, 200);
-  assert.equal(deletedApps, true);
-  assert.equal(deletedJob, true);
-  assert.equal(sessionEnded, true);
+    jest.spyOn(mongoose, 'startSession').mockResolvedValue(mockSession);
+    jest.spyOn(Job, 'findById').mockResolvedValue({
+      _id: jobId,
+      recruiter: recruiterId,
+      deleteOne: jest.fn()
+    });
+    jest.spyOn(JobApplication, 'deleteMany').mockResolvedValue({});
+
+    const res = response();
+    await deleteJob({ session: { user: recruiter }, params: { jobId } }, res);
+
+    expect(res.statusCode).toBe(500);
+    expect(endSession).toHaveBeenCalledTimes(1);
+  });
 });
 
 // --- US-07 Job Seeker Visibility & Privacy Filtering Tests ---
 
-test('getJobDetails hides Draft jobs from job seekers with 404', async t => {
-  t.mock.method(Job, 'findById', async () => ({
-    _id: jobId,
-    status: 'Draft',
-    deadline: calendarDate(5)
-  }));
+describe('job seeker visibility', () => {
+  test('getJobDetails hides Draft jobs from job seekers with 404', async () => {
+    jest.spyOn(Job, 'findById').mockResolvedValue({
+      _id: jobId,
+      status: 'Draft',
+      deadline: calendarDate(5)
+    });
 
-  const res = response();
-  await getJobDetails({
-    session: { user: { id: '507f1f77bcf86cd799439033', role: 'job_seeker' } },
-    params: { jobId }
-  }, res);
+    const res = response();
+    await getJobDetails({
+      session: { user: { id: '507f1f77bcf86cd799439033', role: 'job_seeker' } },
+      params: { jobId }
+    }, res);
 
-  assert.equal(res.statusCode, 404);
-});
-
-test('searchJob and checkUpcomingDeadlines exclude Drafts and future publishDate jobs', async t => {
-  let capturedSearchQuery = null;
-  let capturedDeadlineQuery = null;
-
-  t.mock.method(Job, 'find', query => {
-    if (query.deadline) {
-      capturedDeadlineQuery = query;
-    } else {
-      capturedSearchQuery = query;
-    }
-    return {
-      sort: async () => []
-    };
+    expect(res.statusCode).toBe(404);
   });
 
-  const searchRes = response();
-  await searchJob({ query: {} }, searchRes);
-  assert.equal(searchRes.statusCode, 200);
-  assert.deepEqual(capturedSearchQuery.status, { $ne: 'Draft' });
-  assert.ok(Array.isArray(capturedSearchQuery.$or));
+  test('searchJob and checkUpcomingDeadlines exclude Drafts and future publishDate jobs', async () => {
+    const captured = { search: null, deadline: null };
 
-  const deadlineRes = response();
-  await checkUpcomingDeadlines({}, deadlineRes);
-  assert.equal(deadlineRes.statusCode, 200);
-  assert.deepEqual(capturedDeadlineQuery.status, { $ne: 'Draft' });
+    jest.spyOn(Job, 'find').mockImplementation(query => {
+      if (query.deadline) {
+        captured.deadline = query;
+      } else {
+        captured.search = query;
+      }
+      return { sort: jest.fn(async () => []) };
+    });
+
+    const searchRes = response();
+    await searchJob({ query: {} }, searchRes);
+    expect(searchRes.statusCode).toBe(200);
+    expect(captured.search.status).toEqual({ $ne: 'Draft' });
+    expect(Array.isArray(captured.search.$or)).toBe(true);
+
+    const deadlineRes = response();
+    await checkUpcomingDeadlines({}, deadlineRes);
+    expect(deadlineRes.statusCode).toBe(200);
+    expect(captured.deadline.status).toEqual({ $ne: 'Draft' });
+  });
 });
