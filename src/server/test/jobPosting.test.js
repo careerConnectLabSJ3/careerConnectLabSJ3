@@ -72,6 +72,13 @@ test('past and impossible deadlines are rejected without saving', async () => {
   }
 });
 
+test('invalid status values are rejected with 400', async () => {
+  jest.spyOn(Job, 'create').mockImplementation(() => assert.fail('Invalid status must not be saved'));
+  const res = response();
+  await createJob({ session: { user: recruiter }, body: { ...validBody(), status: 'Hidden' } }, res);
+  assert.equal(res.statusCode, 400);
+});
+
 test('today and future deadlines save with session ownership and searchable defaults', async () => {
   jest.spyOn(Job, 'create').mockImplementation(async data => {
     const job = new Job(data);

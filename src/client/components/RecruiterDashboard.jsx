@@ -164,7 +164,7 @@ export default function RecruiterDashboard() {
                   <th scope="col">Department</th> 
                   <th scope="col" className="recruiter-number" style={{ whiteSpace: 'nowrap' }}>Applications</th>  
                   <th scope="col">Status</th>
-                  <th scope="col">Actions</th> 
+                  <th scope="col" style={{ textAlign: 'center' }}>Actions</th> 
                 </tr>
               </thead>
               <tbody>
@@ -199,7 +199,7 @@ export default function RecruiterDashboard() {
                           </button>
                         )}
                         
-                        <button className="recruiter-button" onClick={() => handleDelete(job._id)} style={{ color: 'red', borderColor: 'red' }}>
+                        <button className="recruiter-button" onClick={() => handleDelete(job._id)} style={{ color: 'red', borderColor: 'red',display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap', justifyContent: 'flex-end', width: '100%' }}>
                           Delete
                         </button>
                       </div>
