@@ -12,7 +12,7 @@
     "test": "npm run test:unit && npm run test:acceptance",
     "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:acceptance": "npm --prefix src/client run test:acceptance",
-    "lint": "eslint src/server/**/*.js"
+    "lint": "eslint src/server"
   },
   "repository": {
     "type": "git",

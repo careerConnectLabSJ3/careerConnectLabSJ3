@@ -117,11 +117,10 @@ test('recruiter list reads only the logged-in recruiter jobs, newest first', asy
     };
   });
   const res = response();
-  await getRecruiterJobs({ session: {
-    user: recruiter
-  }}, res);
+  await getRecruiterJobs({ session: { user: recruiter } }, res);
   assert.deepEqual(res.body, jobs);
 });
+
 
 test('database save failure returns a useful error without exposing database details', async () => {
   jest.spyOn(Job, 'create').mockImplementation(async () => {
