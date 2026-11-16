@@ -187,3 +187,19 @@
         flex-wrap: wrap;
     }
 }
+
+.recruiter-button {
+  white-space: nowrap; 
+  padding: 6px 12px; 
+  font-size: 0.85rem; 
+}
+
+.recruiter-table th:last-child,
+.recruiter-table td:last-child {
+  min-width: 280px; 
+  text-align: right; 
+}
+
+.recruiter-status {
+  white-space: nowrap;
+}

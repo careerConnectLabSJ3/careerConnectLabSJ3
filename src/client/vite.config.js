@@ -8,5 +8,11 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:3000'
     }
-  }
+  },
+  test: {
+    include: ['tests/**/*.acceptance.test.{js,jsx}'],
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './tests/setupTests.js',
+  },
 });

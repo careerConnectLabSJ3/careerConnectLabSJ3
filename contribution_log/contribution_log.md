@@ -33,6 +33,10 @@
 #### Sprint 2
 - [React Migration](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/34)
 - [CI/CD Pipeline](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/46)
+
+#### Sprint 3
+- [Favorite/Save Jobs and Controller refactoring](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/55)
+
 ---
 
 ## Bahaeddine Mahgoudh
