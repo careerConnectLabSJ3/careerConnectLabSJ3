@@ -32,7 +32,8 @@
     padding: 0;
 }
 
-.site-nav-links a {
+.site-nav-links a,
+.site-nav-links .site-logout {
     text-decoration: none;
     color: #555555;
     font-weight: 500;
@@ -40,8 +41,17 @@
 }
 
 .site-nav-links a:hover,
+.site-nav-links .site-logout:hover,
 .site-nav-links a.active {
     color: #3498db;
+}
+
+.site-logout {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
 }
 
 .site-welcome {

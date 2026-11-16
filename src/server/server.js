@@ -1,10 +1,4 @@
 // server.js
-// 1. CONFIGURATION & ENVIRONMENT SETUP
-import dotenv from 'dotenv';
-dotenv.config();
-import dns from 'dns';
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -17,13 +11,17 @@ const hostname = '0.0.0.0';
 const port = 3000;
 
 // Import Modules from validation.js to handle input validation
-import {validateRegistration} from './serverUtils/validation.js';
+import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile } from './controllers/profileController.js';
-import { createJob, getRecruiterJobs } from './controllers/jobController.js';
+import User from './models/user.js';
+import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob, duplicateJob } from './controllers/jobController.js';
+
 import {
     getJobDetails,
     submitApplication,
     getJobApplications,
+    getJobApplication,
+    getJobApplicationResume,
     getMyApplications,
     updateMyApplicationStatus,
     getJobLifecycleStatus
@@ -31,7 +29,6 @@ import {
 import { addFavoriteJob, removeFavoriteJob, getFavoriteJob, getMyFavoriteJobs } from './controllers/favoriteJobsController.js';
 import { checkEmail, checkSession, fetchCurrentUser, loginUser, logoutUser, registerUser } from './controllers/authController.js';
 import { checkUpcomingDeadlines, searchJob } from './controllers/jobSeekerController.js';
-
 
 // 2. MIDDLEWARE SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -50,7 +47,6 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24
     }
 }));
-
 
 // Multer setup for temp file uploads in memory
 const upload = multer({
@@ -99,7 +95,6 @@ app.get('/api/profile/resume', getResume);
 app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
 app.delete('/api/profile/resume', deleteResume);
 
-
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
 app.post('/api/register', validateRegistration, registerUser);
 app.post('/api/login', loginUser);
@@ -112,19 +107,24 @@ app.get('/api/jobs/upcoming-deadlines', checkUpcomingDeadlines);
 app.get('/api/jobs/search', searchJob);
 
 // Real job posting replaces the temporary dummy-job insertion route.
+app.get('/api/applications', getMyApplications);
+app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
 app.post('/api/jobs', createJob);
 app.get('/api/jobs/mine', getRecruiterJobs);
 
-
-// Application Page
-app.get('/api/applications', getMyApplications);
-app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
-
-// Keep the named search/mine/deadline routes above the variable job ID route.
+// action routes 
+app.post('/api/jobs/:jobId/duplicate', duplicateJob); 
 app.get('/api/jobs/:jobId/details', getJobDetails);
-app.get('/api/jobs/:jobId', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
+app.get('/api/jobs/:jobId/applications/:applicationId', getJobApplication);
+app.get('/api/jobs/:jobId/applications/:applicationId/resume', getJobApplicationResume);
+app.put('/api/jobs/:jobId', updateJob);
+app.patch('/api/jobs/:jobId/status', updateJobStatus);
+app.delete('/api/jobs/:jobId', deleteJob);
+
+// generic variable job ID route 
+app.get('/api/jobs/:jobId', getJobDetails);
 
 // Job favoriting API
 app.get('/api/jobs/:jobId/favorite', getFavoriteJob);
@@ -133,7 +133,6 @@ app.delete('/api/jobs/:jobId/favorite', removeFavoriteJob);
 
 // Favorite Jobs Page
 app.get('/api/favorite-jobs', getMyFavoriteJobs);
-
 
 // Error handling using middleware
 app.use((err, req, res, next) => {

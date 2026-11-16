@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import '../public/css/jobSeeker.css';
 import JobDetailsModal from './JobDetailsModal';
 
 export default function JobSeekerDashboard() {

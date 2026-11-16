@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import '../public/css/jobApplication.css';
-import '../public/css/jobApplications.css';
 import BookmarkIcon from './BookmarkIcon';
 import CloseIcon from './CloseIcon';
 import { formatDate, statusClass } from '../utils/jobUtils';

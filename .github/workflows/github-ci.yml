@@ -1,4 +1,5 @@
 name: CI Pipeline
+
 on:
   push:
     branches:
@@ -12,64 +13,61 @@ jobs:
   lint:
     name: ESLint
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
-    - name: Install root dependencies
-      run: npm ci
+      - name: Install root dependencies
+        run: npm install
 
-    - name: Run eslint
-      run: npm run lint
+      - name: Install server dependencies
+        run: npm install --prefix src/server
 
-  unit-tests:
+      - name: Run ESLint
+        run: npm run lint
+
+  test:
     name: Jest unit tests
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
-        cache-dependency-path: |
-          package-lock.json
-          src/server/package-lock.json
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
-    - name: Install root test dependencies
-      run: npm ci
+      - name: Install root dependencies
+        run: npm install
 
-    - name: Install server dependencies
-      run: npm ci --prefix src/server
+      - name: Install server dependencies
+        run: npm install --prefix src/server
 
-    - name: Run unit tests with Jest
-      run: npm run test:unit
+      - name: Run Jest tests
+        run: npm run test:unit
 
   acceptance-tests:
     name: Vitest acceptance tests
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
-        cache-dependency-path: src/client/package-lock.json
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: src/client/package-lock.json
 
-    - name: Install client dependencies
-      run: npm ci --prefix src/client
+      - name: Install client dependencies
+        run: npm ci --prefix src/client
 
-    - name: Run acceptance tests with Vitest
-      run: npm run test:acceptance
+      - name: Run acceptance tests with Vitest
+        run: npm run test:acceptance

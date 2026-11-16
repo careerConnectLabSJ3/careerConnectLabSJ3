@@ -1,4 +1,3 @@
-import '../public/css/header.css';
 import { Link } from "react-router-dom";
 
 
@@ -30,7 +29,7 @@ export default function Header({loggedIn, username, role, onLogout}) {
                 <Link to="/profile" className="profile-link">
                     <img src="/api/profile/avatar" alt="Profile Picture" className="dashboard-profile"/>
                 </Link>
-                <Link onClick={onLogout}>Log Out</Link>
+                <button type="button" className="site-logout" onClick={onLogout}>Log Out</button>
               </>
             )}
             

@@ -2,11 +2,13 @@
   "name": "server",
   "private": "true",
   "version": "1.0.0",
+
   "scripts": {
-    "start": "nodemon bin/www",
-    "production": "node bin/www",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "start": "nodemon bin/www",
+  "production": "node bin/www",
+  "test": "node --test",
+  "test:unit": "node --test"
+},
   "license": "ISC",
   "type": "module",
   "dependencies": {
