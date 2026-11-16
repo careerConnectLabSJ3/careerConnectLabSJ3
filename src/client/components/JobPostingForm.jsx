@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import '../public/css/jobPosting.css';
 import { getTodayDate } from '../utils/jobUtils';
 
 

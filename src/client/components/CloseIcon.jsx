@@ -1,4 +1,3 @@
-import '../public/css/jobApplications.css';
 
 export default function CloseIcon({ onToggle }) {
 

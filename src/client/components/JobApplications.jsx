@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import '../public/css/jobApplications.css';
 import JobDetailsModal from './JobDetailsModal';
 import { formatDate, statusClass } from '../utils/jobUtils';
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import JobPostingForm from './JobPostingForm';
-import '../public/css/recruiterDashboard.css';
 
 export default function RecruiterDashboard() {
   const [showJobForm, setShowJobForm] = useState(false);
@@ -172,7 +172,16 @@ export default function RecruiterDashboard() {
                   <tr key={job._id}>
                     <th scope="row">{job.title}</th>
                     <td>{job.department}</td>
-                    <td className="recruiter-number">{job.applicationsCount}</td>
+                    <td className="recruiter-number">
+                      <div>{job.applicationsCount}</div>
+                      <Link
+                        className="recruiter-button"
+                        aria-label={`View applicants for ${job.title}`}
+                        to={`/dashboard/jobs/${job._id}/applications`}
+                      >
+                        View applicants
+                      </Link>
+                    </td>
                     <td>
                       <span className={`recruiter-status ${job.status === 'Active' ? 'recruiter-status-active' : ''}`}>
                         {job.status}

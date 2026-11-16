@@ -1,10 +1,4 @@
 // server.js
-// 1. CONFIGURATION & ENVIRONMENT SETUP
-import dotenv from 'dotenv';
-dotenv.config();
-import dns from 'dns';
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,6 +20,8 @@ import {
     getJobDetails,
     submitApplication,
     getJobApplications,
+    getJobApplication,
+    getJobApplicationResume,
     getMyApplications,
     updateMyApplicationStatus,
     getJobLifecycleStatus
@@ -121,6 +117,8 @@ app.post('/api/jobs/:jobId/duplicate', duplicateJob);
 app.get('/api/jobs/:jobId/details', getJobDetails);
 app.post('/api/jobs/:jobId/applications', submitApplication);
 app.get('/api/jobs/:jobId/applications', getJobApplications);
+app.get('/api/jobs/:jobId/applications/:applicationId', getJobApplication);
+app.get('/api/jobs/:jobId/applications/:applicationId/resume', getJobApplicationResume);
 app.put('/api/jobs/:jobId', updateJob);
 app.patch('/api/jobs/:jobId/status', updateJobStatus);
 app.delete('/api/jobs/:jobId', deleteJob);
