@@ -1,5 +1,5 @@
 // validation.js
-import User from '../models/user.js';
+import User from './models/user.js';
 
 // Helper function to send the specialized HTML alert window back on error
 export function sendRegistrationError(res, statusCode, message) {

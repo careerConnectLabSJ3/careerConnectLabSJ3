@@ -2,19 +2,14 @@ import globals from "globals";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  // 1. Tell ESLint to ignore node_modules and build folders
-  {
-    ignores: ["**/node_modules/**", "src/client/dist/**"]
-  },
-  
-  // 2. Your main configuration
   { 
     files: ["**/*.{js,mjs,cjs,jsx}"], 
     languageOptions: { globals: globals.browser },
     rules: {
-      "prefer-const": "warn",
-      "no-constant-binary-expression": "error",
+			"prefer-const": "warn",
+			"no-constant-binary-expression": "error",
       'one-var': ['warn', 'never'],
+      'prefer-const': 'warn',
       'no-extra-parens': 'warn',
       'block-scoped-var': 'warn',
       'no-cond-assign': ['error', 'always'],
@@ -35,9 +30,11 @@ export default defineConfig([
       ////////// Style //////////
       'array-bracket-spacing': ['error', 'never'],
       'array-bracket-newline': ['error', 'consistent'],
+      'camelcase': 'error',
       'comma-spacing': ['error', { 'before': false, 'after': true }],
       'comma-style': ['error', 'last'],
       'brace-style': ['error'],
+      'max-len': ['error', 150],
       'no-tabs': 'error',
       'quotes': ['error', 'single', {'allowTemplateLiterals': true}],
       'jsx-quotes': ['error', 'prefer-double'],
@@ -45,12 +42,12 @@ export default defineConfig([
       'space-unary-ops': 'error',
       'semi': 'error',
       'semi-spacing': 'error'
-    },
+		},
   },
   {
-    settings: {
-      react: {
-        version: "detect"
+    "settings": {
+      "react": {
+        "version": "detect"
       }
     }
   }

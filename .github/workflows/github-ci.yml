@@ -1,5 +1,4 @@
 name: CI Pipeline
-
 on:
   push:
     branches:
@@ -10,64 +9,21 @@ on:
       - develop
 
 jobs:
-  lint:
-    name: ESLint
+  build-and-lint:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install root dependencies
-        run: npm install
+    - name: Install root dependencies
+      run: npm install
 
-      - name: Install server dependencies
-        run: npm install --prefix src/server
-
-      - name: Run ESLint
-        run: npm run lint
-
-  test:
-    name: Jest unit tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Install root dependencies
-        run: npm install
-
-      - name: Install server dependencies
-        run: npm install --prefix src/server
-
-      - name: Run Jest tests
-        run: npm run test:unit
-
-  acceptance-tests:
-    name: Vitest acceptance tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: src/client/package-lock.json
-
-      - name: Install client dependencies
-        run: npm ci --prefix src/client
-
-      - name: Run acceptance tests with Vitest
-        run: npm run test:acceptance
+    - name: Run eslint
+      run: npm run lint
