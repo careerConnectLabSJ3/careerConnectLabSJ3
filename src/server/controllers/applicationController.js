@@ -46,7 +46,14 @@ export async function getJobDetails(req, res) {
   if (!checkAccess(req, res, 'job_seeker')) return;
   try {
     const job = await Job.findById(req.params.jobId);
-    if (!job) return res.status(404).json({ error: 'Job not found.' });
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const isFutureScheduled = Boolean(job?.publishDate && job.publishDate > today);
+
+    if (!job || job.status === 'Draft' || isFutureScheduled) {
+      return res.status(404).json({ error: 'Job not found.' });
+    }
+
     const hasApplied = Boolean(await JobApplication.exists({ job: job._id, applicant: req.session.user.id }));
     return res.json({ job, hasApplied, canApply: isJobOpen(job) });
   } catch (error) {
@@ -54,6 +61,7 @@ export async function getJobDetails(req, res) {
     return res.status(500).json({ error: 'Unable to load this job. Please try again.' });
   }
 }
+
 
 export async function submitApplication(req, res) {
   if (!checkAccess(req, res, 'job_seeker')) return;

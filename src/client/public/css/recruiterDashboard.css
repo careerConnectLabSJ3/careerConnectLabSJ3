@@ -266,8 +266,7 @@
         flex-wrap: wrap;
     }
 
-    .recruiter-table {
-        min-width: 0;
+    .recruiter-applicant-table {
         table-layout: fixed;
     }
 
@@ -280,4 +279,20 @@
         padding: 0.4rem;
         overflow-wrap: anywhere;
     }
+}
+
+.recruiter-button {
+  white-space: nowrap; 
+  padding: 6px 12px; 
+  font-size: 0.85rem; 
+}
+
+.recruiter-table:not(.recruiter-applicant-table) th:last-child,
+.recruiter-table:not(.recruiter-applicant-table) td:last-child {
+  min-width: 280px; 
+  text-align: right; 
+}
+
+.recruiter-status {
+  white-space: nowrap;
 }
