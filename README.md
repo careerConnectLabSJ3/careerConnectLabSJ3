@@ -108,35 +108,6 @@ Make sure all dependencies have been installed and in *root*, run:
 npm run lint
 ```
 
-## Run tests
-
-Use Node.js 22.12 or newer in the Node 22 release line for this test setup. CI uses Node 22. Install the locked dependencies from the repository root:
-
-```bash
-npm ci
-npm ci --prefix src/server
-npm ci --prefix src/client
-```
-
-Run both suites from the repository root:
-
-```bash
-npm test
-```
-
-Run a suite separately:
-
-```bash
-npm run test:unit
-npm run test:acceptance
-```
-
-Jest runs backend unit tests in `src/server/test/**/*.test.js` and frontend utility tests named `*.unit.test.js` in `src/client/tests`. Backend tests use Jest's `jest.spyOn` mocks and keep database calls mocked. New backend tests should import test helpers from `@jest/globals`, rather than `node:test`.
-
-Vitest runs React acceptance tests named `*.acceptance.test.js` or `*.acceptance.test.jsx` in `src/client/tests`. Both CI commands run once and exit, without watch mode. For acceptance-test watch mode during development, run `npm --prefix src/client run test:watch`.
-
-CI reports ESLint, Jest unit tests, and Vitest acceptance tests as separate jobs on PRs to `develop` or `main`, and pushes to `main`. A failing suite fails its job and the workflow. Mocked tests do not require an `.env` file or an Atlas connection. Jest uses Node's experimental VM-module flag because the project uses ES modules.
-
 ## CareerConnect Deployment Link
 *insert here*
 ## GitHub Repository

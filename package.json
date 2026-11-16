@@ -9,10 +9,8 @@
   "scripts": {
     "build": "npm install  && cd src/server && npm install && cd ../client && npm install && npm run build",
     "start": "npm --prefix src/server start",
-    "test": "npm run test:unit && npm run test:acceptance",
-    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
-    "test:acceptance": "npm --prefix src/client run test:acceptance",
-    "lint": "eslint src/server"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src/server/**/*.js"
   },
   "repository": {
     "type": "git",
@@ -29,7 +27,6 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "eslint-plugin-react": "^7.37.5",
-    "globals": "^17.13.0",
-    "jest": "^30.5.2"
+    "globals": "^17.13.0"
   }
 }
