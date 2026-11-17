@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import JobPostingForm from './JobPostingForm';
+import '../public/css/recruiterDashboard.css';
 
 export default function RecruiterDashboard() {
   const [showJobForm, setShowJobForm] = useState(false);
@@ -100,7 +101,7 @@ export default function RecruiterDashboard() {
     // If the deadline is before today, it's expired (archived)
     const isExpired = job.deadline < today;
     
-    // If showArchived is true, show ONLY expired. If false, show ONLY active.
+    // The current list includes unexpired active, closed, and draft jobs.
     return showArchived ? isExpired : !isExpired;
   });
 
@@ -126,11 +127,10 @@ export default function RecruiterDashboard() {
       
       <section className="recruiter-postings" aria-labelledby="recruiter-postings-title">
         
-        {/* UPDATED HEADING SECTION WITH TOGGLE BUTTON */}
-        <div className="recruiter-section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <div className="recruiter-section-heading">
           <div>
-            <h2 id="recruiter-postings-title" style={{ margin: 0 }}>Your job postings</h2>
-            {!loading && !error && <span style={{ fontSize: '0.9em', color: '#666' }}>{filteredJobs.length} {filteredJobs.length === 1 ? 'posting' : 'postings'}</span>}
+            <h2 id="recruiter-postings-title">{showArchived ? 'Archived job postings' : 'Your job postings'}</h2>
+            {!loading && !error && <span className="recruiter-posting-count">{filteredJobs.length} {filteredJobs.length === 1 ? 'posting' : 'postings'}</span>}
           </div>
           
           <button 
@@ -138,7 +138,7 @@ export default function RecruiterDashboard() {
             className="recruiter-button" 
             onClick={() => setShowArchived(!showArchived)}
           >
-            {showArchived ? '← Back to Active Jobs' : 'View Archived Jobs'}
+            {showArchived ? 'Back to current jobs' : 'View archived jobs'}
           </button>
         </div>
 
@@ -152,19 +152,19 @@ export default function RecruiterDashboard() {
         {loading ? <p className="recruiter-empty" role="status">Loading your postings...</p> : !error && (
           filteredJobs.length === 0 ? (
             <div className="recruiter-empty">
-              <p>{showArchived ? 'No archived jobs found.' : 'No active job postings yet.'}</p>
+              <p>{showArchived ? 'No archived jobs found.' : 'No current job postings yet.'}</p>
               {!showArchived && <p>Your opportunities will appear here after you post a job.</p>}
             </div> 
           ) : (
-            <div className="recruiter-table-scroll" role="region" aria-label="Your job postings" tabIndex="0">
-            <table className="recruiter-table">
+            <div className="recruiter-table-scroll" role="region" aria-label={showArchived ? 'Archived job postings' : 'Your job postings'} tabIndex="0">
+            <table className="recruiter-table recruiter-job-table">
               <thead>
                 <tr>
                   <th scope="col">Job title</th>
                   <th scope="col">Department</th> 
-                  <th scope="col" className="recruiter-number" style={{ whiteSpace: 'nowrap' }}>Applications</th>  
+                  <th scope="col">Applications</th>
                   <th scope="col">Status</th>
-                  <th scope="col" style={{ textAlign: 'center' }}>Actions</th> 
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -172,15 +172,17 @@ export default function RecruiterDashboard() {
                   <tr key={job._id}>
                     <th scope="row">{job.title}</th>
                     <td>{job.department}</td>
-                    <td className="recruiter-number">
-                      <div>{job.applicationsCount}</div>
-                      <Link
-                        className="recruiter-button"
-                        aria-label={`View applicants for ${job.title}`}
-                        to={`/dashboard/jobs/${job._id}/applications`}
-                      >
-                        View applicants
-                      </Link>
+                    <td>
+                      <div className="recruiter-applications-summary">
+                        <span className="recruiter-application-count">{job.applicationsCount}</span>
+                        <Link
+                          className="recruiter-button"
+                          aria-label={`View applicants for ${job.title}`}
+                          to={`/dashboard/jobs/${job._id}/applications`}
+                        >
+                          View applicants
+                        </Link>
+                      </div>
                     </td>
                     <td>
                       <span className={`recruiter-status ${job.status === 'Active' ? 'recruiter-status-active' : ''}`}>
@@ -188,7 +190,7 @@ export default function RecruiterDashboard() {
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap' }}>
+                      <div className="recruiter-job-actions">
                         <button className="recruiter-button" onClick={() => { setEditingJob(job); setShowJobForm(true); }}>
                           Edit
                         </button>
@@ -208,7 +210,7 @@ export default function RecruiterDashboard() {
                           </button>
                         )}
                         
-                        <button className="recruiter-button" onClick={() => handleDelete(job._id)} style={{ color: 'red', borderColor: 'red',display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'nowrap', justifyContent: 'flex-end', width: '100%' }}>
+                        <button className="recruiter-button recruiter-button-danger" onClick={() => handleDelete(job._id)}>
                           Delete
                         </button>
                       </div>
