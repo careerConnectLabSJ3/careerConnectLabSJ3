@@ -222,7 +222,7 @@ export async function updateMyApplicationStatus(req, res) {
   }
 
   try {
-    const application = await JobApplication.findOneAndUpdate(req.params.applicationId).populate('job');
+    const application = await JobApplication.findById(req.params.applicationId).populate('job');
 
     if (!application) return res.status(404).json({ error: 'Application not found.' });
 
