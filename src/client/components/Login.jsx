@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import '../public/css/login.css';
 import { Link, useNavigate } from "react-router-dom";
 import JobSeekerDashboard from './JobSeekerDashboard';
 

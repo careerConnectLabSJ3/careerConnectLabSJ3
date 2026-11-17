@@ -1,32 +1,19 @@
 import mongoose from 'mongoose';
-import Job from './models/job.js';
-import JobApplication from './models/jobApplication.js';
+import Job from '../models/job.js';
+import JobApplication from '../models/jobApplication.js';
+import { sendResume } from '../serverUtils/fileStorage.js';
+import { checkCorrectUser } from '../serverUtils/utils.js';
 
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
+const APPLICANT_PROFILE_FIELDS = 'name email education experience skills';
 
-function checkAccess(req, res, role) {
-  if (!req.session?.user) {
-    res.status(401).json({ error: 'Please log in to continue.' });
+export function checkAccess(req, res, role) {
+  if(!checkCorrectUser(req, res, role)){
     return false;
   }
-  if (req.session.user.role !== role) {
-    res.status(403).json({ error: 'Your account cannot perform this action.' });
-    return false;
-  }
+
   if (!mongoose.isObjectIdOrHexString(req.params.jobId)) {
     res.status(400).json({ error: 'Invalid job ID.' });
-    return false;
-  }
-  return true;
-}
-
-function checkSeeker(req, res) {
-  if (!req.session?.user) {
-    res.status(401).json({ error: 'Please log in to continue.' });
-    return false;
-  }
-  if (req.session.user.role !== 'job_seeker') {
-    res.status(403).json({ error: 'Only job seekers can view their applications.' });
     return false;
   }
   return true;
@@ -59,7 +46,14 @@ export async function getJobDetails(req, res) {
   if (!checkAccess(req, res, 'job_seeker')) return;
   try {
     const job = await Job.findById(req.params.jobId);
-    if (!job) return res.status(404).json({ error: 'Job not found.' });
+    // Match the UTC publication date used by search and the Job schema default.
+    const today = new Date().toISOString().slice(0, 10);
+    const isFutureScheduled = Boolean(job?.publishDate && job.publishDate > today);
+
+    if (!job || job.status === 'Draft' || isFutureScheduled) {
+      return res.status(404).json({ error: 'Job not found.' });
+    }
+
     const hasApplied = Boolean(await JobApplication.exists({ job: job._id, applicant: req.session.user.id }));
     return res.json({ job, hasApplied, canApply: isJobOpen(job) });
   } catch (error) {
@@ -67,6 +61,7 @@ export async function getJobDetails(req, res) {
     return res.status(500).json({ error: 'Unable to load this job. Please try again.' });
   }
 }
+
 
 export async function submitApplication(req, res) {
   if (!checkAccess(req, res, 'job_seeker')) return;
@@ -102,16 +97,47 @@ export async function submitApplication(req, res) {
   }
 }
 
+async function findOwnedJob(req, res) {
+  const job = await Job.findById(req.params.jobId);
+  if (!job) {
+    res.status(404).json({ error: 'Job not found.' });
+    return null;
+  }
+  if (String(job.recruiter) !== req.session.user.id) {
+    res.status(403).json({ error: 'You can only view applications for your own jobs.' });
+    return null;
+  }
+  return job;
+}
+
+function checkApplicationAccess(req, res) {
+  if (!checkAccess(req, res, 'recruiter')) return false;
+  if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
+    res.status(400).json({ error: 'Invalid application ID.' });
+    return false;
+  }
+  return true;
+}
+
+async function findApplication(req, res, job, fields) {
+  const application = await JobApplication.findOne({
+    _id: req.params.applicationId,
+    job: job._id
+  }).populate('applicant', fields);
+  if (!application) {
+    res.status(404).json({ error: 'Application not found.' });
+  }
+  return application;
+}
+
 export async function getJobApplications(req, res) {
   if (!checkAccess(req, res, 'recruiter')) return;
   try {
-    const job = await Job.findById(req.params.jobId);
-    if (!job) return res.status(404).json({ error: 'Job not found.' });
-    if (String(job.recruiter) !== req.session.user.id) {
-      return res.status(403).json({ error: 'You can only view applications for your own jobs.' });
-    }
-    const applications = await JobApplication.find({ job: job._id }).populate('applicant', 
-      'name email education experience skills').sort({ appliedAt: -1 });
+    const job = await findOwnedJob(req, res);
+    if (!job) return;
+    const applications = await JobApplication.find({ job: job._id }).
+      populate('applicant', APPLICANT_PROFILE_FIELDS).sort({ appliedAt: -1 });
+    res.setHeader('Cache-Control', 'private, no-store');
     return res.json(applications);
   } catch (error) {
     console.error('Failed to load applications:', error);
@@ -119,8 +145,52 @@ export async function getJobApplications(req, res) {
   }
 }
 
+export async function getJobApplication(req, res) {
+  if (!checkApplicationAccess(req, res)) return;
+  try {
+    const job = await findOwnedJob(req, res);
+    if (!job) return;
+    const application = await findApplication(req, res, job, `${APPLICANT_PROFILE_FIELDS} resumeFileId resumeFileName`);
+    if (!application) return;
+
+    const { applicant, appliedAt, status, interviewDate } = application;
+    res.setHeader('Cache-Control', 'private, no-store');
+    return res.json({
+      job: { title: job.title },
+      appliedAt,
+      status,
+      applicant: applicant ? {
+        name: applicant.name,
+        email: applicant.email,
+        education: applicant.education,
+        experience: applicant.experience,
+        skills: applicant.skills
+      } : null,
+      resume: applicant?.resumeFileId ? { fileName: applicant.resumeFileName || 'resume.pdf' } : null,
+      interviewDate
+    });
+  } catch (error) {
+    console.error('Failed to load application:', error);
+    return res.status(500).json({ error: 'Unable to load this application. Please try again.' });
+  }
+}
+
+export async function getJobApplicationResume(req, res) {
+  if (!checkApplicationAccess(req, res)) return;
+  try {
+    const job = await findOwnedJob(req, res);
+    if (!job) return;
+    const application = await findApplication(req, res, job, 'resumeFileId resumeFileName');
+    if (!application) return;
+    return await sendResume(res, application.applicant);
+  } catch (error) {
+    console.error('Failed to load application resume:', error);
+    return res.status(500).json({ error: 'Unable to retrieve resume.' });
+  }
+}
+
 export async function getMyApplications(req, res) {
-  if (!checkSeeker(req, res)) return;
+  if (!checkCorrectUser(req, res, 'job_seeker')) return;
 
   try {
     const applications = await JobApplication.find({ applicant: req.session.user.id }).populate('job', 
@@ -142,24 +212,31 @@ export async function getMyApplications(req, res) {
 // Temporary job-seeker debug route for exercising the application tracker
 // before recruiter-managed status updates are implemented.
 export async function updateMyApplicationStatus(req, res) {
-  if (!checkSeeker(req, res)) return;
+  if (!checkCorrectUser(req, res, 'recruiter')) return;
   if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
     return res.status(400).json({ error: 'Invalid application ID.' });
   }
 
-  const { status } = req.body || {};
+  const { status, interviewDate } = req.body || {};
   if (!APPLICATION_STATUSES.includes(status)) {
     return res.status(400).json({ error: 'Please choose a valid application status.' });
   }
 
   try {
-    const application = await JobApplication.findOneAndUpdate(
-      { _id: req.params.applicationId, applicant: req.session.user.id },
-      { $set: { status } },
-      { returnDocument: 'after', runValidators: true }
-    );
+    const application = await JobApplication.findById(req.params.applicationId).populate('job');
 
     if (!application) return res.status(404).json({ error: 'Application not found.' });
+
+    const jobRecruiterId = application.job.recruiter;
+    if(String(jobRecruiterId) !== String(req.session.user.id)){
+      return res.status(404).json({ error: 'Application not found.' });
+    }
+
+    application.status = status;
+    application.interviewDate = status === 'Interview' ? (interviewDate ? new Date(interviewDate) : null) : null;
+
+    await application.save();
+
     return res.json({ message: 'Application status updated.', application });
   } catch (error) {
     console.error('Failed to update application status:', error);

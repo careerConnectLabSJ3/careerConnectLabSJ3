@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import './public/css/style.css';
 import Header from './components/Header'
 import Welcome from './components/Welcome'
 import Login from "./components/Login";
@@ -9,8 +8,9 @@ import { useEffect, useState } from "react";
 import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
 import RecruiterDashboard from "./components/RecruiterDashboard";
+import { RecruiterApplicantsPage } from "./components/RecruiterApplications";
 import JobApplications from "./components/JobApplications";
-
+import FavoriteJobs from "./components/FavoriteJobs";
 
 function App() {
 
@@ -83,9 +83,14 @@ function App() {
               )
             } 
           />
+          <Route path="/dashboard/jobs/:jobId/applications/:applicationId?" element={
+            !session.loggedIn ? <Navigate to="/login" /> :
+              session.user.role === 'recruiter' ? <RecruiterApplicantsPage /> : <Navigate to="/dashboard" />
+          } />
           <Route path="/applications" element={
             !session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <JobApplications /> : <Navigate to="/dashboard" />
           } />
+          <Route path="/favorite-jobs" element={!session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <FavoriteJobs /> : <Navigate to="/dashboard" />} />
           <Route path="/profile" element={session.loggedIn ? <Profile/> : <Navigate to="/login"/>}/>
         </Routes>
       </main>

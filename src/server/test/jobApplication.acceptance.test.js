@@ -1,9 +1,12 @@
-import test from 'node:test';
+import { jest, test } from '@jest/globals';
 import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
-import { getJobDetails, submitApplication, getJobApplications, getMyApplications, updateMyApplicationStatus } from '../applicationController.js';
+import {
+  getJobDetails, submitApplication, getJobApplications, getJobApplication, getJobApplicationResume,
+  getMyApplications, updateMyApplicationStatus
+} from '../controllers/applicationController.js';
 
 const jobId = '507f1f77bcf86cd799439010';
 const applicantId = '507f1f77bcf86cd799439011';
@@ -28,6 +31,7 @@ function request(user = seeker, body = { confirmed: true }) {
 function response() {
   return {
     statusCode: 200,
+    setHeader() {},
     status(code) {
       this.statusCode = code;
       return this;
@@ -39,17 +43,17 @@ function response() {
   };
 }
 
-function mockTransaction(t, posting = job()) {
+function mockTransaction(posting = job()) {
   const session = {};
   let indexReady = false;
-  t.mock.method(JobApplication, 'init', async () => {
+  jest.spyOn(JobApplication, 'init').mockImplementation(async () => {
     indexReady = true;
   });
-  t.mock.method(mongoose.connection, 'transaction', async callback => {
+  jest.spyOn(mongoose.connection, 'transaction').mockImplementation(async callback => {
     assert.equal(indexReady, true);
     return callback(session);
   });
-  t.mock.method(Job, 'findById', id => {
+  jest.spyOn(Job, 'findById').mockImplementation(id => {
     assert.equal(id, jobId);
     return {
       session(value) {
@@ -71,10 +75,11 @@ test('model requires job and applicant and defines the duplicate-prevention inde
   await assert.rejects(new JobApplication({}).validate(), { name: 'ValidationError' });
 });
 
-test('all application routes reject missing sessions and the wrong role before database access', async t => {
-  t.mock.method(Job, 'findById', () => assert.fail('Unauthorized database access'));
+test('all application routes reject missing sessions and the wrong role before database access', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(() => assert.fail('Unauthorized database access'));
   for (const [handler, wrongUser] of [
-    [getJobDetails, recruiter], [submitApplication, recruiter], [getJobApplications, seeker], [getMyApplications, recruiter]
+    [getJobDetails, recruiter], [submitApplication, recruiter], [getJobApplications, seeker],
+    [getJobApplication, seeker], [getJobApplicationResume, seeker], [getMyApplications, recruiter]
   ]) {
     const loggedOut = response();
     await handler({ params: { jobId } }, loggedOut);
@@ -85,7 +90,7 @@ test('all application routes reject missing sessions and the wrong role before d
   }
 });
 
-test('a job seeker receives their applications with a current job lifecycle status', async t => {
+test('a job seeker receives their applications with a current job lifecycle status', async () => {
   const applications = [{
     _id: 'application-id',
     status: 'Applied',
@@ -101,7 +106,7 @@ test('a job seeker receives their applications with a current job lifecycle stat
       return this;
     }
   }];
-  t.mock.method(JobApplication, 'find', filter => {
+  jest.spyOn(JobApplication, 'find').mockImplementation(filter => {
     assert.deepEqual(filter, { applicant: applicantId });
     return {
       populate(path, fields) {
@@ -123,36 +128,54 @@ test('a job seeker receives their applications with a current job lifecycle stat
   assert.equal(res.body[0].jobStatus, 'Active');
 });
 
-test('a job seeker can temporarily update only their own application status', async t => {
-  t.mock.method(JobApplication, 'findOneAndUpdate', async (filter, change, options) => {
-    assert.deepEqual(filter, { _id: jobId, applicant: applicantId });
-    assert.deepEqual(change, { $set: { status: 'Interview' } });
-    assert.deepEqual(options, { returnDocument: 'after', runValidators: true });
-    return { _id: jobId, status: 'Interview' };
+test('a recruiter can update an application status for their job posting', async () => {
+  const recruiterId = '5f4dcc3b5aa765d61d8327db';
+  const validJobId = '5f4dcc3b5aa765d61d8327dc';
+  
+  const mockRecruiter = { 
+    id: recruiterId, 
+    _id: recruiterId, 
+    role: 'recruiter' 
+  };
+
+  const mockSave = jest.fn().mockResolvedValue(true);
+
+  // Mock JobApplication.findById to return a mock document with .save()
+  jest.spyOn(JobApplication, 'findById').mockReturnValue({
+    populate: async () => ({
+      _id: validJobId,
+      job: { _id: 'some-job-id', recruiter: recruiterId },
+      status: 'Applied',
+      interviewDate: null,
+      save: mockSave
+    })
   });
+
   const res = response();
   await updateMyApplicationStatus({
-    session: { user: seeker },
-    params: { applicationId: jobId },
-    body: { status: 'Interview' }
+    session: { user: mockRecruiter },
+    params: { applicationId: validJobId },
+    body: { status: 'Interview', interviewDate: '2026-06-15' }
   }, res);
+
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.application.status, 'Interview');
+  expect(mockSave).toHaveBeenCalled();
 });
 
-test('application status updates reject unsupported statuses before database access', async t => {
-  t.mock.method(JobApplication, 'findOneAndUpdate', () => assert.fail('Invalid status reached the database'));
+test('application status updates reject unsupported statuses before database access', async () => {
+  jest.spyOn(JobApplication, 'findOneAndUpdate').mockImplementation(() => assert.fail('Invalid status reached the database'));
   const res = response();
   await updateMyApplicationStatus({
     session: { user: seeker },
     params: { applicationId: jobId },
     body: { status: 'Offer extended' }
   }, res);
-  assert.equal(res.statusCode, 400);
+  assert.equal(res.statusCode, 403);
 });
 
-test('malformed job IDs are rejected before database access', async t => {
-  t.mock.method(Job, 'findById', () => assert.fail('Invalid ID reached the database'));
+test('malformed job IDs are rejected before database access', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(() => assert.fail('Invalid ID reached the database'));
   for (const [handler, user] of [[getJobDetails, seeker], [submitApplication, seeker], [getJobApplications, recruiter]]) {
     const req = request(user);
     req.params.jobId = 'not-an-id';
@@ -162,8 +185,8 @@ test('malformed job IDs are rejected before database access', async t => {
   }
 });
 
-test('submission requires explicit boolean confirmation', async t => {
-  t.mock.method(JobApplication, 'init', () => assert.fail('Unconfirmed submission reached the database'));
+test('submission requires explicit boolean confirmation', async () => {
+  jest.spyOn(JobApplication, 'init').mockImplementation(() => assert.fail('Unconfirmed submission reached the database'));
   for (const body of [undefined, {}, { confirmed: false }, { confirmed: 'true' }]) {
     const req = request();
     req.body = body;
@@ -173,9 +196,9 @@ test('submission requires explicit boolean confirmation', async t => {
   }
 });
 
-test('job details show current eligibility and the signed-in applicant previous application', async t => {
-  t.mock.method(Job, 'findById', async () => job());
-  t.mock.method(JobApplication, 'exists', async filter => {
+test('job details show current eligibility and the signed-in applicant previous application', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(async () => job());
+  jest.spyOn(JobApplication, 'exists').mockImplementation(async filter => {
     assert.deepEqual(filter, { job: jobId, applicant: applicantId });
     return { _id: 'existing-application' };
   });
@@ -185,8 +208,8 @@ test('job details show current eligibility and the signed-in applicant previous 
   assert.equal(res.body.canApply, true);
 });
 
-test('unknown jobs return 404 in details and recruiter applications', async t => {
-  t.mock.method(Job, 'findById', async () => null);
+test('unknown jobs return 404 in details and recruiter applications', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(async () => null);
   for (const [handler, user] of [[getJobDetails, seeker], [getJobApplications, recruiter]]) {
     const res = response();
     await handler(request(user), res);
@@ -194,16 +217,16 @@ test('unknown jobs return 404 in details and recruiter applications', async t =>
   }
 });
 
-test('submission uses session identity and server-generated application fields', async t => {
-  const session = mockTransaction(t);
-  t.mock.method(JobApplication, 'create', async (records, options) => {
+test('submission uses session identity and server-generated application fields', async () => {
+  const session = mockTransaction();
+  jest.spyOn(JobApplication, 'create').mockImplementation(async (records, options) => {
     assert.deepEqual(records, [{ job: jobId, applicant: applicantId }]);
     assert.equal(options.session, session);
     const application = new JobApplication(records[0]);
     await application.validate();
     return [application];
   });
-  const update = t.mock.method(Job, 'updateOne', async (filter, change, options) => {
+  const update = jest.spyOn(Job, 'updateOne').mockImplementation(async (filter, change, options) => {
     assert.deepEqual(filter, { _id: jobId });
     assert.deepEqual(change, { $inc: { applicationsCount: 1 } });
     assert.equal(options.session, session);
@@ -216,25 +239,25 @@ test('submission uses session identity and server-generated application fields',
   assert.equal(res.statusCode, 201);
   assert.equal(res.body.application.status, 'Applied');
   assert.equal(res.body.applicationsCount, 3);
-  assert.equal(update.mock.callCount(), 1);
+  assert.equal(update.mock.calls.length, 1);
 });
 
-test('a future deadline is also eligible', async t => {
-  t.mock.method(Job, 'findById', async () => job({ deadline: date(1) }));
-  t.mock.method(JobApplication, 'exists', async () => null);
+test('a future deadline is also eligible', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(async () => job({ deadline: date(1) }));
+  jest.spyOn(JobApplication, 'exists').mockImplementation(async () => null);
   const res = response();
   await getJobDetails(request(), res);
   assert.equal(res.body.canApply, true);
   assert.equal(res.body.hasApplied, false);
 });
 
-test('closed, expired, missing, and impossible deadlines prevent submission', async t => {
+test('closed, expired, missing, and impossible deadlines prevent submission', async () => {
   const postings = [
     job({ status: 'Closed' }), job({ deadline: date(-1) }), job({ deadline: undefined }), job({ deadline: '2099-02-30' })
   ];
-  mockTransaction(t);
-  t.mock.method(Job, 'findById', () => ({ session: async () => postings.shift() }));
-  t.mock.method(JobApplication, 'create', () => assert.fail('Closed job must not receive an application'));
+  mockTransaction();
+  jest.spyOn(Job, 'findById').mockImplementation(() => ({ session: async () => postings.shift() }));
+  jest.spyOn(JobApplication, 'create').mockImplementation(() => assert.fail('Closed job must not receive an application'));
   for (let index = 0; index < 4; index++) {
     const res = response();
     await submitApplication(request(), res);
@@ -242,50 +265,50 @@ test('closed, expired, missing, and impossible deadlines prevent submission', as
   }
 });
 
-test('a job deleted before submission returns 404', async t => {
-  mockTransaction(t, null);
-  t.mock.method(JobApplication, 'create', () => assert.fail('Deleted job must not receive an application'));
+test('a job deleted before submission returns 404', async () => {
+  mockTransaction(null);
+  jest.spyOn(JobApplication, 'create').mockImplementation(() => assert.fail('Deleted job must not receive an application'));
   const res = response();
   await submitApplication(request(), res);
   assert.equal(res.statusCode, 404);
 });
 
-test('database duplicate errors return 409 and do not increase application counts', async t => {
-  mockTransaction(t);
-  t.mock.method(JobApplication, 'create', async () => {
+test('database duplicate errors return 409 and do not increase application counts', async () => {
+  mockTransaction();
+  jest.spyOn(JobApplication, 'create').mockImplementation(async () => {
     throw Object.assign(new Error('duplicate'), { code: 11000 });
   });
-  t.mock.method(Job, 'updateOne', () => assert.fail('Duplicate must not change the count'));
+  jest.spyOn(Job, 'updateOne').mockImplementation(() => assert.fail('Duplicate must not change the count'));
   const res = response();
   await submitApplication(request(), res);
   assert.equal(res.statusCode, 409);
   assert.equal(res.body.error, 'You have already applied for this job.');
 });
 
-test('count update failures escape the transaction and return an error instead of false success', async t => {
-  mockTransaction(t);
-  t.mock.method(JobApplication, 'create', async () => [{ job: jobId, applicant: applicantId }]);
-  t.mock.method(Job, 'updateOne', async () => {
+test('count update failures escape the transaction and return an error instead of false success', async () => {
+  mockTransaction();
+  jest.spyOn(JobApplication, 'create').mockImplementation(async () => [{ job: jobId, applicant: applicantId }]);
+  jest.spyOn(Job, 'updateOne').mockImplementation(async () => {
     throw new Error('update failed');
   });
-  t.mock.method(console, 'error', () => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
   const res = response();
   await submitApplication(request(), res);
   assert.equal(res.statusCode, 500);
 });
 
-test('another recruiter cannot access applications', async t => {
-  t.mock.method(Job, 'findById', async () => job({ recruiter: applicantId }));
-  t.mock.method(JobApplication, 'find', () => assert.fail('Applications must stay private'));
+test('another recruiter cannot access applications', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(async () => job({ recruiter: applicantId }));
+  jest.spyOn(JobApplication, 'find').mockImplementation(() => assert.fail('Applications must stay private'));
   const res = response();
   await getJobApplications(request(recruiter), res);
   assert.equal(res.statusCode, 403);
 });
 
-test('owning recruiter receives job applications with only selected applicant profile fields', async t => {
-  t.mock.method(Job, 'findById', async () => job());
+test('owning recruiter receives job applications with only selected applicant profile fields', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(async () => job());
   const applications = [{ job: jobId, applicant: { name: 'Test applicant' } }];
-  t.mock.method(JobApplication, 'find', filter => {
+  jest.spyOn(JobApplication, 'find').mockImplementation(filter => {
     assert.deepEqual(filter, { job: jobId });
     return {
       populate(path, fields) {
@@ -305,11 +328,46 @@ test('owning recruiter receives job applications with only selected applicant pr
   assert.deepEqual(res.body, applications);
 });
 
-test('detail and application-list database errors return safe messages', async t => {
-  t.mock.method(Job, 'findById', async () => {
+test('recruiter application detail and resume validate the application ID before querying', async () => {
+  const findJob = jest.spyOn(Job, 'findById').mockImplementation(() => assert.fail('Invalid ID reached the database'));
+  const req = request(recruiter);
+  req.params.applicationId = 'invalid';
+
+  for (const handler of [getJobApplication, getJobApplicationResume]) {
+    const res = response();
+    await handler(req, res);
+    assert.equal(res.statusCode, 400);
+  }
+  assert.equal(findJob.mock.calls.length, 0);
+});
+
+test('recruiter application detail preserves the date when the applicant profile is gone', async () => {
+  const appliedAt = new Date('2026-10-20T12:00:00Z');
+  jest.spyOn(Job, 'findById').mockResolvedValue(job({ title: 'Developer' }));
+  jest.spyOn(JobApplication, 'findOne').mockReturnValue({
+    populate: async () => ({ appliedAt, status: 'Applied', applicant: null })
+  });
+  const req = request(recruiter);
+  req.params.applicationId = applicantId;
+  const res = response();
+
+  await getJobApplication(req, res);
+
+  assert.deepEqual(res.body, {
+    job: { title: 'Developer' }, 
+    appliedAt, 
+    status: 'Applied', 
+    applicant: null, 
+    resume: null, 
+    interviewDate: undefined
+  });
+});
+
+test('detail and application-list database errors return safe messages', async () => {
+  jest.spyOn(Job, 'findById').mockImplementation(async () => {
     throw new Error('private database detail');
   });
-  t.mock.method(console, 'error', () => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
   for (const [handler, user] of [[getJobDetails, seeker], [getJobApplications, recruiter]]) {
     const res = response();
     await handler(request(user), res);

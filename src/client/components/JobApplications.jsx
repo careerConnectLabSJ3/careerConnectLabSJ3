@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import '../public/css/jobApplications.css';
 import JobDetailsModal from './JobDetailsModal';
+import { formatDate, statusClass } from '../utils/jobUtils';
 
 const FILTERS = [
   { value: 'all', label: 'All applications' },
@@ -9,16 +9,6 @@ const FILTERS = [
   { value: 'Rejected', label: 'Rejected' },
   { value: 'Offer', label: 'Offer' }
 ];
-
-function formatDate(value) {
-  if (!value) return 'Not available';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleDateString();
-}
-
-function statusClass(status) {
-  return `application-status application-status-${String(status).toLowerCase()}`;
-}
 
 export default function JobApplications() {
   const [applications, setApplications] = useState([]);

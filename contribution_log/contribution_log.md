@@ -13,6 +13,11 @@
 - [Implement Job model for MongoDB & search API for live dashboard](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/35)
 - [Add forgotten location search/filter](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/43)
 - [Job deadline notifications](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/45)
+
+#### Sprint 3
+- [Duplicate job functionality](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/57)
+- [Job scheduling and archiving](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/58)
+- Fixed CI integration errors while integrating the recruiter management changes in PR #57.
 ---
 
 ## Yacine Zribi
@@ -24,6 +29,10 @@
 - [Recruiter job posting](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/39)
 - [Recruiter Dashboard Polishing](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/47)
 - [Applying for a job](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/50)
+
+#### Sprint 3
+- [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
+- [Fix recruiter table layout and Sprint 3 contribution credits](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/64)
 ---
 
 ## Emmanuelle Lin
@@ -33,12 +42,21 @@
 #### Sprint 2
 - [React Migration](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/34)
 - [CI/CD Pipeline](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/46)
+
+#### Sprint 3
+- [Favorite/Save Jobs and Controller refactoring](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/55)
+- [Update Candidate Status](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/65)
+
 ---
 
-## Bahaeddine Mahgoudh
+## Bahaeddine Mahfoudh
 #### Sprint 1
 - [Register page validation improvements](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/21)
 
 #### Sprint 2
 - [Resume upload feature](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/36)
 - [Tracking application status](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/51)
+
+#### Sprint 3
+- [View job applicants feature](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/61)
+- [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
