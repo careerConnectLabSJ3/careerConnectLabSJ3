@@ -13,6 +13,11 @@
 - [Implement Job model for MongoDB & search API for live dashboard](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/35)
 - [Add forgotten location search/filter](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/43)
 - [Job deadline notifications](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/45)
+
+#### Sprint 3
+- [Duplicate job functionality](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/57)
+- [Job scheduling and archiving](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/58)
+- Fixed CI integration errors while integrating the recruiter management changes in PR #57.
 ---
 
 ## Yacine Zribi
@@ -24,6 +29,9 @@
 - [Recruiter job posting](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/39)
 - [Recruiter Dashboard Polishing](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/47)
 - [Applying for a job](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/50)
+
+#### Sprint 3
+- [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
 ---
 
 ## Emmanuelle Lin
@@ -49,5 +57,4 @@
 - [Tracking application status](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/51)
 
 #### Sprint 3
-- [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
 - [View job applicants feature](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/61)
