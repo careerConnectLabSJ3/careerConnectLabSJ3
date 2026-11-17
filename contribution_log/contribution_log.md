@@ -36,6 +36,7 @@
 
 #### Sprint 3
 - [Favorite/Save Jobs and Controller refactoring](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/55)
+- [Update Candidate Status](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/65)
 
 ---
 
