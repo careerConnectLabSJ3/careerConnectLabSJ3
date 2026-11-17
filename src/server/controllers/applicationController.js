@@ -211,24 +211,31 @@ export async function getMyApplications(req, res) {
 // Temporary job-seeker debug route for exercising the application tracker
 // before recruiter-managed status updates are implemented.
 export async function updateMyApplicationStatus(req, res) {
-  if (!checkCorrectUser(req, res, 'job_seeker')) return;
+  if (!checkCorrectUser(req, res, 'recruiter')) return;
   if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
     return res.status(400).json({ error: 'Invalid application ID.' });
   }
 
-  const { status } = req.body || {};
+  const { status, interviewDate } = req.body || {};
   if (!APPLICATION_STATUSES.includes(status)) {
     return res.status(400).json({ error: 'Please choose a valid application status.' });
   }
 
   try {
-    const application = await JobApplication.findOneAndUpdate(
-      { _id: req.params.applicationId, applicant: req.session.user.id },
-      { $set: { status } },
-      { returnDocument: 'after', runValidators: true }
-    );
+    const application = await JobApplication.findOneAndUpdate(req.params.applicationId).populate('job');
 
     if (!application) return res.status(404).json({ error: 'Application not found.' });
+
+    const jobRecruiterId = application.job.recruiter;
+    if(String(jobRecruiterId) !== String(req.session.user.id)){
+      return res.status(404).json({ error: 'Application not found.' });
+    }
+
+    application.status = status;
+    application.interviewDate = status === 'Interview' ? (interviewDate ? new Date(interviewDate) : null) : null;
+
+    await application.save();
+
     return res.json({ message: 'Application status updated.', application });
   } catch (error) {
     console.error('Failed to update application status:', error);
