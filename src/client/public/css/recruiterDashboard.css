@@ -83,6 +83,7 @@
 }
 
 .recruiter-section-heading h2 {
+    margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
 }
@@ -281,16 +282,50 @@
     }
 }
 
-.recruiter-button {
-  white-space: nowrap; 
-  padding: 6px 12px; 
-  font-size: 0.85rem; 
+.recruiter-dashboard .recruiter-button {
+    white-space: nowrap;
 }
 
-.recruiter-table:not(.recruiter-applicant-table) th:last-child,
-.recruiter-table:not(.recruiter-applicant-table) td:last-child {
-  min-width: 280px; 
-  text-align: right; 
+.recruiter-posting-count {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.recruiter-job-table {
+    min-width: 960px;
+}
+
+.recruiter-job-table th,
+.recruiter-job-table td {
+    padding: 1rem;
+    overflow-wrap: break-word;
+}
+
+.recruiter-applications-summary,
+.recruiter-job-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.recruiter-application-count {
+    min-width: 1.5rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.recruiter-job-table .recruiter-button {
+    flex: 0 0 auto;
+    padding: 0.6rem 0.75rem;
+}
+
+.recruiter-dashboard .recruiter-button-danger {
+    color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.recruiter-dashboard .recruiter-button-danger:hover {
+    background: #fef2f2;
 }
 
 .recruiter-status {
