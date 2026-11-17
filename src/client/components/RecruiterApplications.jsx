@@ -278,13 +278,13 @@ function RecruiterApplicationDetails({ onClose }) {
 
             <div>
               <dt>Status</dt>
-              <section className="row-recruiter-status">
+              <section className='row-recruiter-status'>
                 {!isEditingStatus ? (
                   <>
                     <dd>
                       {application.status}
                       {application.status === 'Interview' && application.interviewDate && (
-                        <section>
+                        <section className='scheduled-interview'>
                           Scheduled: {formatDate(application.interviewDate)}
                         </section>
                       )}
@@ -296,8 +296,8 @@ function RecruiterApplicationDetails({ onClose }) {
                     </dd>
                   </>
                 ) : (
-                  <form onSubmit={handleStatusSave}>
-                    <div>
+                  <form onSubmit={handleStatusSave} className='status-update-form'>
+                    <div className='status-update-container'>
                       <select className='status-dropdown'
                         value={selectedStatus} 
                         onChange={event => setSelectedStatus(event.target.value)}
@@ -310,8 +310,8 @@ function RecruiterApplicationDetails({ onClose }) {
                       </select>
 
                       {selectedStatus === 'Interview' && (
-                        <label>
-                          Interview Date & Time:
+                        <section className='interview-date-cell'>
+                          <label>Interview Date & Time:</label>
                           <input 
                             type="date" 
                             value={interviewDate} 
@@ -319,15 +319,17 @@ function RecruiterApplicationDetails({ onClose }) {
                             required={selectedStatus === 'Interview'}
                             disabled={updating}
                           />
-                        </label>
+                        </section>
                       )}
                       
-                      <button type="submit" disabled={updating} className="recruiter-button">
-                        {updating ? 'Saving...' : 'Save'}
-                      </button>
-                      <button type="button" onClick={() => setIsEditingStatus(false)} disabled={updating} className="recruiter-button">
-                        Cancel
-                      </button>
+                      <section className='status-update-btns'>
+                        <button type="submit" disabled={updating} className="recruiter-button">
+                          {updating ? 'Saving...' : 'Save'}
+                        </button>
+                        <button type="button" onClick={() => setIsEditingStatus(false)} disabled={updating} className="recruiter-button">
+                          Cancel
+                        </button>
+                      </section>
                     </div>
 
                     {statusUpdateError && <p className="recruiter-feedback-error" role="alert">{statusUpdateError}</p>}

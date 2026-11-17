@@ -296,3 +296,46 @@
 .recruiter-status {
   white-space: nowrap;
 }
+
+
+.row-recruiter-status{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.status-update-form{
+    width: 100%;
+}
+
+.status-update-container{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.status-dropdown{
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 12pt;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.status-update-btns{
+    margin-top: 10px;
+    display: flex;
+    justify-content: right;
+    width: 100%;
+}
+
+.scheduled-interview{
+    font-weight: bold;
+}
+
+.interview-date-cell{
+    display: flex;
+    gap: 15px;
+}
