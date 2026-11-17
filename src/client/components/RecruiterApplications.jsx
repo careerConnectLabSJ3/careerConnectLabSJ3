@@ -171,7 +171,7 @@ function RecruiterApplicantList({ job }) {
   );
 }
 
-function RecruiterApplicationDetails({ onClose }) {
+export default function RecruiterApplicationDetails({ onClose }) {
   const { jobId, applicationId } = useParams();
   const dialogRef = useRef(null);
   const url = `/api/jobs/${encodeURIComponent(jobId)}/applications/${encodeURIComponent(applicationId)}`;

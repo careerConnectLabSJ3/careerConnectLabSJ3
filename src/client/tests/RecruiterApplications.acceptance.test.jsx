@@ -4,6 +4,7 @@ import App from '../App';
 import { formatDate } from '../utils/jobUtils';
 
 vi.mock('../components/Profile', () => ({ default: () => null }));
+vi.mock('/img/edit-pen.svg', () => ({ default: 'edit-pen.svg' }));
 
 const jobs = [
   { _id: 'job-1', title: 'Software Developer', department: 'Engineering', applicationsCount: 2, status: 'Active' },
