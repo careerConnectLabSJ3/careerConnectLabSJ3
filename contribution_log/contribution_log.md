@@ -39,10 +39,14 @@
 
 ---
 
-## Bahaeddine Mahgoudh
+## Bahaeddine Mahfoudh
 #### Sprint 1
 - [Register page validation improvements](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/21)
 
 #### Sprint 2
 - [Resume upload feature](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/36)
 - [Tracking application status](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/51)
+
+#### Sprint 3
+- [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
+- [View job applicants feature](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/61)
