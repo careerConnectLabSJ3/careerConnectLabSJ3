@@ -299,6 +299,36 @@ describe('deleteJob', () => {
 // --- US-07 Job Seeker Visibility & Privacy Filtering Tests ---
 
 describe('job seeker visibility', () => {
+  test('opens a legacy job listed by search when UTC is one day ahead of the server date', async () => {
+    jest.useFakeTimers({ now: new Date('2026-11-17T01:00:00Z') });
+    // Simulate a server where it is still November 16 regardless of the test runner's timezone.
+    jest.spyOn(Date.prototype, 'getDate').mockReturnValue(16);
+
+    try {
+      const job = Job.hydrate({ _id: jobId, status: 'Active', deadline: '2026-11-25' });
+      const find = jest.spyOn(Job, 'find').mockReturnValue({ sort: async () => [job] });
+      jest.spyOn(Job, 'findById').mockResolvedValue(job);
+      jest.spyOn(JobApplication, 'exists').mockResolvedValue(null);
+
+      const searchRes = response();
+      await searchJob({ query: {} }, searchRes);
+      expect(find.mock.calls[0][0].$or).toContainEqual({ publishDate: { $exists: false } });
+      expect(job.publishDate).toBe('2026-11-17');
+      expect(searchRes.body[0]._id.toString()).toBe(jobId);
+
+      const detailsRes = response();
+      await getJobDetails({
+        session: { user: { id: '507f1f77bcf86cd799439033', role: 'job_seeker' } },
+        params: { jobId: searchRes.body[0]._id.toString() }
+      }, detailsRes);
+
+      expect(detailsRes.statusCode).toBe(200);
+      expect(detailsRes.body).toEqual({ job, hasApplied: false, canApply: true });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   test('getJobDetails hides Draft jobs from job seekers with 404', async () => {
     jest.spyOn(Job, 'findById').mockResolvedValue({
       _id: jobId,

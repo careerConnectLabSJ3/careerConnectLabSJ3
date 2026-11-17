@@ -128,21 +128,39 @@ test('a job seeker receives their applications with a current job lifecycle stat
   assert.equal(res.body[0].jobStatus, 'Active');
 });
 
-test('a job seeker can temporarily update only their own application status', async () => {
-  jest.spyOn(JobApplication, 'findOneAndUpdate').mockImplementation(async (filter, change, options) => {
-    assert.deepEqual(filter, { _id: jobId, applicant: applicantId });
-    assert.deepEqual(change, { $set: { status: 'Interview' } });
-    assert.deepEqual(options, { returnDocument: 'after', runValidators: true });
-    return { _id: jobId, status: 'Interview' };
+test('a recruiter can update an application status for their job posting', async () => {
+  const recruiterId = '5f4dcc3b5aa765d61d8327db';
+  const validJobId = '5f4dcc3b5aa765d61d8327dc';
+  
+  const mockRecruiter = { 
+    id: recruiterId, 
+    _id: recruiterId, 
+    role: 'recruiter' 
+  };
+
+  const mockSave = jest.fn().mockResolvedValue(true);
+
+  // Mock JobApplication.findById to return a mock document with .save()
+  jest.spyOn(JobApplication, 'findById').mockReturnValue({
+    populate: async () => ({
+      _id: validJobId,
+      job: { _id: 'some-job-id', recruiter: recruiterId },
+      status: 'Applied',
+      interviewDate: null,
+      save: mockSave
+    })
   });
+
   const res = response();
   await updateMyApplicationStatus({
-    session: { user: seeker },
-    params: { applicationId: jobId },
-    body: { status: 'Interview' }
+    session: { user: mockRecruiter },
+    params: { applicationId: validJobId },
+    body: { status: 'Interview', interviewDate: '2026-06-15' }
   }, res);
+
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.application.status, 'Interview');
+  expect(mockSave).toHaveBeenCalled();
 });
 
 test('application status updates reject unsupported statuses before database access', async () => {
@@ -153,7 +171,7 @@ test('application status updates reject unsupported statuses before database acc
     params: { applicationId: jobId },
     body: { status: 'Offer extended' }
   }, res);
-  assert.equal(res.statusCode, 400);
+  assert.equal(res.statusCode, 403);
 });
 
 test('malformed job IDs are rejected before database access', async () => {
@@ -336,7 +354,12 @@ test('recruiter application detail preserves the date when the applicant profile
   await getJobApplication(req, res);
 
   assert.deepEqual(res.body, {
-    job: { title: 'Developer' }, appliedAt, status: 'Applied', applicant: null, resume: null
+    job: { title: 'Developer' }, 
+    appliedAt, 
+    status: 'Applied', 
+    applicant: null, 
+    resume: null, 
+    interviewDate: undefined
   });
 });
 

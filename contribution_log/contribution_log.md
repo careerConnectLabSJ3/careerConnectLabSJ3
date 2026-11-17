@@ -32,6 +32,7 @@
 
 #### Sprint 3
 - [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
+- [Fix recruiter table layout and Sprint 3 contribution credits](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/64)
 ---
 
 ## Emmanuelle Lin
@@ -44,6 +45,7 @@
 
 #### Sprint 3
 - [Favorite/Save Jobs and Controller refactoring](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/55)
+- [Update Candidate Status](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/65)
 
 ---
 
@@ -57,3 +59,4 @@
 
 #### Sprint 3
 - [View job applicants feature](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/61)
+- [Run Vitest acceptance tests and Jest unit tests in CI](https://github.com/careerConnectLabSJ3/careerConnectLabSJ3/pull/60)
