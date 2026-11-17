@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatDate } from '../utils/jobUtils';
+import editSvgIcon from "/img/edit-pen.svg";
 
 const PROFILE_FIELDS = [
   ['email', 'Email'],
@@ -176,6 +177,21 @@ function RecruiterApplicationDetails({ onClose }) {
   const url = `/api/jobs/${encodeURIComponent(jobId)}/applications/${encodeURIComponent(applicationId)}`;
   const { data: application, error } = useApplicationsRequest(url, 'Unable to load this application. Please try again.');
 
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [interviewDate, setInterviewDate] = useState('');
+  const [statusUpdateError, setStatusUpdateError] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    if (application) {
+      setSelectedStatus(application.status || 'Applied');
+      if (application.interviewDate) {
+        setInterviewDate(application.interviewDate.split('T')[0]);
+      }
+    }
+  }, [application]);
+
   useEffect(() => {
     const dialog = dialogRef.current;
     const previousFocus = document.activeElement;
@@ -188,6 +204,39 @@ function RecruiterApplicationDetails({ onClose }) {
       previousFocus?.focus();
     };
   }, []);
+
+  async function handleStatusSave(event) {
+    event.preventDefault();
+    if (updating) return;
+
+    setUpdating(true);
+    setStatusUpdateError('');
+
+    try {
+      const response = await fetch(`/api/applications/${applicationId}/status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: selectedStatus,
+          interviewDate: selectedStatus === 'Interview' ? interviewDate : null
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setStatusUpdateError(data.error || 'Unable to update the application status.');
+        return;
+      }
+
+      setIsEditingStatus(false);
+      window.location.reload();
+    } catch (err) {
+      setStatusUpdateError('Unable to update the application status.');
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   return (
     <dialog
@@ -211,7 +260,7 @@ function RecruiterApplicationDetails({ onClose }) {
         <section className="recruiter-postings recruiter-application-details" aria-label="Application">
           <dl>
             <div><dt>Date applied</dt><dd>{formatDate(application.appliedAt)}</dd></div>
-            <div><dt>Status</dt><dd>{application.status}</dd></div>
+           
             {application.applicant && PROFILE_FIELDS.map(([field, label]) => (
               <div key={field}>
                 <dt>{label}</dt>
@@ -225,6 +274,66 @@ function RecruiterApplicationDetails({ onClose }) {
                   <a href={`${url}/resume`} target="_blank" rel="noopener">View CV ({application.resume.fileName})</a>
                 ) : 'No CV on file.'}
               </dd>
+            </div>
+
+            <div>
+              <dt>Status</dt>
+              <section className="row-recruiter-status">
+                {!isEditingStatus ? (
+                  <>
+                    <dd>
+                      {application.status}
+                      {application.status === 'Interview' && application.interviewDate && (
+                        <span>
+                          Scheduled: {formatDate(application.interviewDate)}
+                        </span>
+                      )}
+                    </dd>
+                    <dd>
+                      <button type="button" onClick={() => setIsEditingStatus(true)} aria-label="Edit status">
+                        <img src={editSvgIcon} className="icon" alt="Edit" />
+                      </button>
+                    </dd>
+                  </>
+                ) : (
+                  <form onSubmit={handleStatusSave}>
+                    <div>
+                      <select 
+                        value={selectedStatus} 
+                        onChange={event => setSelectedStatus(event.target.value)}
+                        disabled={updating}
+                      >
+                        <option value="Applied">Applied</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Offer">Offer</option>
+                      </select>
+                      
+                      <button type="submit" disabled={updating} className="recruiter-button">
+                        {updating ? 'Saving...' : 'Save'}
+                      </button>
+                      <button type="button" onClick={() => setIsEditingStatus(false)} disabled={updating}>
+                        Cancel
+                      </button>
+                    </div>
+
+                    {selectedStatus === 'Interview' && (
+                      <label>
+                        Interview Date & Time:
+                        <input 
+                          type="date" 
+                          value={interviewDate} 
+                          onChange={event => setInterviewDate(event.target.value)}
+                          required={selectedStatus === 'Interview'}
+                          disabled={updating}
+                        />
+                      </label>
+                    )}
+
+                    {statusUpdateError && <p className="recruiter-feedback-error" role="alert">{statusUpdateError}</p>}
+                  </form>
+                )}
+              </section>
             </div>
           </dl>
           {!application.applicant && <p>The applicant’s profile is unavailable.</p>}
