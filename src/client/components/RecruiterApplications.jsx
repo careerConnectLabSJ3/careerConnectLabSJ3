@@ -284,9 +284,9 @@ function RecruiterApplicationDetails({ onClose }) {
                     <dd>
                       {application.status}
                       {application.status === 'Interview' && application.interviewDate && (
-                        <span>
+                        <section>
                           Scheduled: {formatDate(application.interviewDate)}
-                        </span>
+                        </section>
                       )}
                     </dd>
                     <dd>
@@ -298,7 +298,7 @@ function RecruiterApplicationDetails({ onClose }) {
                 ) : (
                   <form onSubmit={handleStatusSave}>
                     <div>
-                      <select 
+                      <select className='status-dropdown'
                         value={selectedStatus} 
                         onChange={event => setSelectedStatus(event.target.value)}
                         disabled={updating}
@@ -308,27 +308,27 @@ function RecruiterApplicationDetails({ onClose }) {
                         <option value="Rejected">Rejected</option>
                         <option value="Offer">Offer</option>
                       </select>
+
+                      {selectedStatus === 'Interview' && (
+                        <label>
+                          Interview Date & Time:
+                          <input 
+                            type="date" 
+                            value={interviewDate} 
+                            onChange={event => setInterviewDate(event.target.value)}
+                            required={selectedStatus === 'Interview'}
+                            disabled={updating}
+                          />
+                        </label>
+                      )}
                       
                       <button type="submit" disabled={updating} className="recruiter-button">
                         {updating ? 'Saving...' : 'Save'}
                       </button>
-                      <button type="button" onClick={() => setIsEditingStatus(false)} disabled={updating}>
+                      <button type="button" onClick={() => setIsEditingStatus(false)} disabled={updating} className="recruiter-button">
                         Cancel
                       </button>
                     </div>
-
-                    {selectedStatus === 'Interview' && (
-                      <label>
-                        Interview Date & Time:
-                        <input 
-                          type="date" 
-                          value={interviewDate} 
-                          onChange={event => setInterviewDate(event.target.value)}
-                          required={selectedStatus === 'Interview'}
-                          disabled={updating}
-                        />
-                      </label>
-                    )}
 
                     {statusUpdateError && <p className="recruiter-feedback-error" role="alert">{statusUpdateError}</p>}
                   </form>

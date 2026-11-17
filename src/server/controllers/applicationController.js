@@ -153,7 +153,7 @@ export async function getJobApplication(req, res) {
     const application = await findApplication(req, res, job, `${APPLICANT_PROFILE_FIELDS} resumeFileId resumeFileName`);
     if (!application) return;
 
-    const { applicant, appliedAt, status } = application;
+    const { applicant, appliedAt, status, interviewDate } = application;
     res.setHeader('Cache-Control', 'private, no-store');
     return res.json({
       job: { title: job.title },
@@ -166,7 +166,8 @@ export async function getJobApplication(req, res) {
         experience: applicant.experience,
         skills: applicant.skills
       } : null,
-      resume: applicant?.resumeFileId ? { fileName: applicant.resumeFileName || 'resume.pdf' } : null
+      resume: applicant?.resumeFileId ? { fileName: applicant.resumeFileName || 'resume.pdf' } : null,
+      interviewDate
     });
   } catch (error) {
     console.error('Failed to load application:', error);
