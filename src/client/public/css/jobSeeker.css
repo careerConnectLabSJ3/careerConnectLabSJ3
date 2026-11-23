@@ -51,14 +51,32 @@ body {
     color: #333;
 }
 
-/* ===== Stats Overview Cards ===== */
-.recommendations label { display: block; font-weight: 600; }
-.recommendations input { width: min(100%, 30rem); margin: 0.5rem 0 1rem; padding: 0.65rem; }
-.recommendations ul { list-style: none; padding: 0; }
-.recommendations li { border-top: 1px solid #d4dce1; padding: 1rem 0; }
-.recommendations li p { margin: 0.4rem 0; }
-.recommendations button { cursor: pointer; padding: 0.4rem 0.7rem; }
+/* Job Opportunities */
+.applications-section.opportunities { border-radius: 14px; padding: clamp(16px, 3vw, 28px); }
+.opportunities-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.opportunities-heading h2 { margin: 0; color: #203447; }
+.opportunities-views { display: inline-flex; padding: 4px; border-radius: 12px; background: #edf2f7; }
+.opportunities-views label { position: relative; cursor: pointer; }
+.opportunities-views input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.opportunities-views span { display: block; padding: 8px 14px; border-radius: 9px; color: #41546a; font-weight: 600; }
+.opportunities-views input:checked + span { color: white; background: #244766; }
+.opportunities-views input:focus-visible + span, .opportunities-search input:focus-visible {
+    outline: 2px solid #2563eb; outline-offset: 2px;
+}
+.opportunities-search { display: grid; gap: 6px; margin: 20px 0; font-size: 0.9rem; font-weight: 600; color: #34475b; }
+.opportunities-search input { width: 100%; padding: 11px 14px; border: 1px solid #aebdca; border-radius: 8px; font: inherit; font-weight: 400; }
+.opportunities-results { overflow-x: auto; }
+.opportunities-results table { min-width: 42rem; }
+.opportunities-results td { overflow-wrap: anywhere; }
+.opportunities-results th:nth-child(4) { min-width: 6rem; }
+.opportunities-results .status-badge { white-space: nowrap; }
+.opportunities-results thead { background: #f5f8fa; color: #40546a; }
+.opportunities-results .company-name div { margin-top: 4px; font-size: 0.88rem; font-weight: 400; color: #506276; }
+.fresh-matches button { padding: 8px 16px; cursor: pointer; }
+.fresh-matches ul { list-style: none; padding: 0; }
+.fresh-matches li { padding: 0.75rem 0; border-top: 1px solid #d4dce1; }
 
+/* Stats overview */
 .stats-section {
     display: flex;
     gap: 20px;

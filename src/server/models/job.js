@@ -10,6 +10,7 @@ const jobSchema = new mongoose.Schema({
   description: { type: String, required: true, trim: true },
   requirements: { type: String, required: true, trim: true },
   deadline: { type: String, required: true },
+  publishedAt: Date,
   publishDate: { type: String, default: () => new Date().toISOString().split('T')[0] },
   recruiter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   applicationsCount: { type: Number, default: 0 },

@@ -93,6 +93,7 @@ export async function createJob(req, res) {
       jobData.status = 'Active';
     }
 
+    if (jobData.status === 'Active') jobData.publishedAt = new Date();
     const job = await Job.create(jobData);
 
     return res.status(201).json({ message: 'Job posted successfully.', job });
@@ -160,6 +161,7 @@ export async function updateJob(req, res) {
 
   try {
     // Update the job with the new data
+    if (jobData.status === 'Active' && job.status !== 'Active') jobData.publishedAt = new Date();
     const updatedJob = await Job.findByIdAndUpdate(job._id, jobData, { new: true, runValidators: true });
     return res.json({ message: 'Job updated successfully.', job: updatedJob });
   } catch (error) {
@@ -188,6 +190,7 @@ export async function updateJobStatus(req, res) {
   }
 
   try {
+    if (status === 'Active' && job.status !== 'Active') job.publishedAt = new Date();
     job.status = status;
     await job.save();
     return res.json({ message: `Job status changed to ${status}.`, job });

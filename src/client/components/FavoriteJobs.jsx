@@ -1,15 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import JobDetailsModal from './JobDetailsModal';
-import { checkJobStatus } from '../utils/jobUtils';
+import { statusClass } from '../utils/jobUtils';
+
+const statusLabels = { Active: 'Open', Closed: 'Closed' };
+const filters = [{ value: 'all', label: 'All' },
+  ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))];
 
 export default function FavoriteJobs() {
-
-  const FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'Open', label: 'Open' },
-  { value: 'Closed', label: 'Closed' }
-];
-
   const [favoriteJobs, setFavoriteJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,13 +33,7 @@ export default function FavoriteJobs() {
   }, []);
 
 
-  const filteredFavorites = useMemo(() => {
-      if (filter === 'all') return favoriteJobs;
-      return favoriteJobs.filter(job => {
-      const currentStatus = checkJobStatus(job.deadline);
-      return currentStatus.toLowerCase() === filter.toLowerCase();
-    });
-    }, [favoriteJobs, filter]);
+  const filteredFavorites = filter === 'all' ? favoriteJobs : favoriteJobs.filter(job => job.status === filter);
 
   return(
     <section className="job-applications-page">
@@ -56,8 +47,8 @@ export default function FavoriteJobs() {
         </span>
       </div>
 
-      <nav className="application-filters" aria-label="Filter applications">
-        {FILTERS.map(option => (
+      <nav className="application-filters" aria-label="Filter saved jobs">
+        {filters.map(option => (
           <button
             key={option.value}
             type="button"
@@ -95,7 +86,7 @@ export default function FavoriteJobs() {
                 <tr key={job._id}>
                   <th scope="row">{job?.title || 'Job no longer available'}</th>
                   <td>{job?.company || 'Unknown company'}</td>
-                  <td><span className={job.status}>{job.status}</span></td>
+                  <td><span className={statusClass(job.status)}>{statusLabels[job.status]}</span></td>
                   <td><span className={job.deadline}>{job.deadline}</span></td>
                   <td>{job?.location || 'Not provided'}</td>
                   <td>

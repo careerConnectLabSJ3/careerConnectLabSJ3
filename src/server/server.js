@@ -105,6 +105,7 @@ app.get('/api/jobs/upcoming-deadlines', checkUpcomingDeadlines);
 
 // API route for Job Seekers to search and filter jobs
 app.get('/api/jobs/search', searchJob);
+app.post('/api/jobs/search', searchJob);
 app.get('/api/jobs/recommendations', getRecommendations);
 
 // Real job posting replaces the temporary dummy-job insertion route.
