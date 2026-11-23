@@ -13,6 +13,8 @@ const port = 3000;
 // Import Modules from validation.js to handle input validation
 import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile } from './controllers/profileController.js';
+import { reviewResume } from './controllers/resumeFeedbackController.js';
+import { MAX_RESUME_SIZE } from './serverUtils/fileStorage.js';
 import User from './models/user.js';
 import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob, duplicateJob } from './controllers/jobController.js';
 
@@ -56,7 +58,7 @@ const upload = multer({
 
 const resumeUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: MAX_RESUME_SIZE },
     fileFilter: (req, file, callback) => {
         const isPdf = file.mimetype === 'application/pdf' &&
             file.originalname.toLowerCase().endsWith('.pdf');
@@ -94,6 +96,7 @@ app.post('/api/profile', upload.single('pfpUpload'), updateProfile);
 app.get('/api/profile/resume', getResume);
 app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
 app.delete('/api/profile/resume', deleteResume);
+app.post('/api/profile/resume-feedback', reviewResume);
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
 app.post('/api/register', validateRegistration, registerUser);

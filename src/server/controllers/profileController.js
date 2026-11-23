@@ -4,10 +4,9 @@ import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { gfsBucket, resumeBucket, sendResume } from '../serverUtils/fileStorage.js';
+import { gfsBucket, resumeBucket, sendResume, MAX_RESUME_SIZE } from '../serverUtils/fileStorage.js';
 import { convertToSafeFilename, isPdf, checkCorrectUser } from '../serverUtils/utils.js';
 
-const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
 
 function uploadToGridFS(file) {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import ResumeFeedback from './ResumeFeedback';
 import editSvgIcon from "/img/edit-pen.svg";
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
@@ -241,6 +242,7 @@ export default function Profile(){
   }, []);
 
   return(
+    <>
     <form id="profile-form" encType="multipart/form-data" onSubmit={handleSave}>
       <section className="profile-main">
         <img src={`/api/profile/avatar?v=${avatarVersion}`} alt="Profile Picture" id="profile-img"/>
@@ -339,5 +341,8 @@ export default function Profile(){
         </section>}
       </section>
     </form>
+    {role === 'job_seeker' && <ResumeFeedback key={resume ? `${resume.fileName}:${resume.uploadedAt}` : 'no-resume'}
+      resume={resume} uploading={resumeUploading} />}
+    </>
   );
 }

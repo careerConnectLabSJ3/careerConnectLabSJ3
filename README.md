@@ -86,6 +86,20 @@ MONGODB_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/career
 ```
 **Make sure the .env file is located in src/server**
 
+### AI resume feedback
+
+Sign in as a job seeker and open **Profile**. Upload and save a PDF (up to 5 MB) to see it in **Resume Improver**. **Improve with Claude** sends the saved document, including anything personal it contains, to Anthropic. The review offers up to five useful edits, with ready-to-approve rewrites first and at most one required question. **Add detail** optionally asks for a short answer to strengthen an existing rewrite. Follow-up answers also go to Claude. Approve, skip, or undo each edit, then copy the wording you approved. Decisions last for the current page session and the saved PDF remains the original. Check [Anthropic's API data retention terms](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) for the workspace and model used.
+
+To enable live feedback, add this line to the existing local `src/server/.env` file and restart the backend:
+
+```env
+ANTHROPIC_API_KEY=your_key_here
+```
+
+The default model is Claude Haiku 5.5. Set `ANTHROPIC_MODEL` in the same file if your workspace uses another model that supports PDFs and structured outputs. Check [Anthropic's pricing](https://platform.claude.com/docs/en/about-claude/pricing) and workspace spending limits before enabling live use. Reviews allow up to 1,400 output tokens and follow-up rewrites allow 250, with limits of 5 requests per user and 30 total per minute per server process.
+
+The review criteria use [MIT's Project, Action, Result method](https://capd.mit.edu/resources/resumes-writing-about-your-skills/) and [Penn Engineering's advice on showing technical skills in context](https://careerservices.upenn.edu/a-few-resume-application-tips-from-jamie-grant-senior-associate-director-for-seas/).
+
 ## Run Application for **Production**
 Make sure you are in the project **root directory**
 ```bash
@@ -110,7 +124,7 @@ npm run lint
 
 ## Run tests
 
-Use Node.js 22.12 or newer in the Node 22 release line for this test setup. CI uses Node 22. Install the locked dependencies from the repository root:
+Use Node.js 22.13 or newer in the Node 22 release line for this test setup. CI uses Node 22. Install the locked dependencies from the repository root:
 
 ```bash
 npm ci
