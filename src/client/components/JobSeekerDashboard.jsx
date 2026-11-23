@@ -6,6 +6,7 @@ export default function JobSeekerDashboard() {
   // 1. STATE MANAGERS
   const [result, setResult] = useState(null);
   const tableRef = useRef(null);
+  const [minResultsHeight, setMinResultsHeight] = useState(0);
   const [layouts, setLayouts] = useState({});
   const [listing, setListing] = useState({ keywords: '', view: 'active', typing: false });
   const [jobsError, setJobsError] = useState('');
@@ -13,11 +14,7 @@ export default function JobSeekerDashboard() {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [applications, setApplications] = useState([]);
   const [applicationsError, setApplicationsError] = useState('');
-  const [showStatusDebugger, setShowStatusDebugger] = useState(false);
-  const [debugApplicationId, setDebugApplicationId] = useState('');
-  const [debugStatus, setDebugStatus] = useState('Applied');
-  const [debugStatusError, setDebugStatusError] = useState('');
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
   async function loadApplications() {
     setApplicationsError('');
@@ -39,42 +36,6 @@ export default function JobSeekerDashboard() {
       job._id === jobId ? { ...job, applicationsCount } : job) }));
     loadApplications();
   }
-
-  function openStatusDebugger() {
-    setDebugStatusError('');
-    setDebugApplicationId(currentId => currentId || applications[0]?._id || '');
-    setShowStatusDebugger(true);
-  }
-
-  async function updateApplicationStatus(event) {
-    event.preventDefault();
-    if (!debugApplicationId || updatingStatus) return;
-
-    setUpdatingStatus(true);
-    setDebugStatusError('');
-    try {
-      const response = await fetch(`/api/applications/${debugApplicationId}/status`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: debugStatus })
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setDebugStatusError(data.error || 'Unable to update the application status.');
-        return;
-      }
-      await loadApplications();
-      setShowStatusDebugger(false);
-    } catch (error) {
-      setDebugStatusError('Unable to update the application status.');
-    } finally {
-      setUpdatingStatus(false);
-    }
-  }
-  
-  // NEW STATE FOR DEADLINES
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -145,6 +106,17 @@ export default function JobSeekerDashboard() {
     return applicationsByJob.get(String(job._id))?.status || job.status;
   }
 
+  function switchView(view) {
+    // A shorter list can leave too little document below the viewport to retain
+    // scrollY. Reserve just that space, while allowing longer lists to grow.
+    const results = tableRef.current.parentElement;
+    const distanceBelowViewport = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+    setMinResultsHeight(window.scrollY > 0
+      ? Math.max(0, Math.ceil(results.offsetHeight - distanceBelowViewport))
+      : 0);
+    setListing({ ...listing, view, typing: false });
+  }
+
   return (
     <section className="dashboard-main">
       <h1 className="dashboard-title">Job Seeker Dashboard</h1>
@@ -180,47 +152,6 @@ export default function JobSeekerDashboard() {
 
       {applicationsError && <p className="dashboard-feedback-error" role="alert">{applicationsError}</p>}
 
-      <button type="button" className="debug-status-button" onClick={openStatusDebugger} disabled={applications.length === 0}>
-        Debug: update application status
-      </button>
-
-      {showStatusDebugger && (
-        <div className="debug-modal-backdrop" role="presentation">
-          <section className="debug-status-modal" role="dialog" aria-modal="true" aria-labelledby="debug-status-title">
-            <div className="debug-status-modal-heading">
-              <h2 id="debug-status-title">Update application status</h2>
-              <button type="button" onClick={() => setShowStatusDebugger(false)} disabled={updatingStatus}>Close</button>
-            </div>
-            <p>Temporary testing control. Choose one of your applications and set its status.</p>
-            <form onSubmit={updateApplicationStatus}>
-              <label htmlFor="debug-application">Application</label>
-              <select id="debug-application" value={debugApplicationId} onChange={event => setDebugApplicationId(event.target.value)} required>
-                <option value="" disabled>Select an application</option>
-                {applications.map(application => (
-                  <option key={application._id} value={application._id}>
-                    {application.job?.company || 'Unknown company'} — {application.job?.title || 'Unknown job'}
-                  </option>
-                ))}
-              </select>
-              <label htmlFor="debug-status">New status</label>
-              <select id="debug-status" value={debugStatus} onChange={event => setDebugStatus(event.target.value)}>
-                <option value="Applied">Applied</option>
-                <option value="Interview">Interview</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Offer">Offer</option>
-              </select>
-              {debugStatusError && <p className="debug-status-error" role="alert">{debugStatusError}</p>}
-              <div className="debug-status-actions">
-                <button type="button" onClick={() => setShowStatusDebugger(false)} disabled={updatingStatus}>Cancel</button>
-                <button type="submit" className="debug-status-save" disabled={updatingStatus || !debugApplicationId}>
-                  {updatingStatus ? 'Updating...' : 'Update status'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      )}
-
       {selectedJobId && (
         <JobDetailsModal key={selectedJobId} jobId={selectedJobId}
           onClose={() => setSelectedJobId(null)} onApplied={handleApplied} />
@@ -233,7 +164,7 @@ export default function JobSeekerDashboard() {
             {['active', 'past'].map(view => (
               <label key={view}>
                 <input type="radio" name="posting-status" value={view} checked={listing.view === view}
-                  onChange={() => setListing({ ...listing, view, typing: false })} />
+                  onChange={() => switchView(view)} />
                 <span>{view === 'active' ? 'Active jobs' : 'Past jobs'}</span>
               </label>
             ))}
@@ -246,7 +177,8 @@ export default function JobSeekerDashboard() {
               setListing({ ...listing, keywords: event.target.value, typing: true })} />
         </label>
         
-        <div className="opportunities-results" aria-busy={loading}>
+        <div className="opportunities-results" role="region" aria-label="Job listings" tabIndex={0} aria-busy={loading}
+          style={{ minHeight: minResultsHeight }}>
           <table ref={tableRef} className="applications-table" style={{ tableLayout: columnWidths ? 'fixed' : 'auto' }}>
             {columnWidths && <colgroup>{columnWidths.map((width, index) =>
               <col key={index} style={{ width: width + '%' }} />)}</colgroup>}
