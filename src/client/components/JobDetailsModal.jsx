@@ -116,7 +116,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
           <div className="job-application-heading">
             <h2 id="application-job-title">{details ? details.job.title : 'Job details'}</h2>
             <section className="job-applications-head-buttons">
-              <BookmarkIcon initialFilled={details?.isFavorite} onToggle={handleFavorite} />
+              {details && <BookmarkIcon initialFilled={details.isFavorite} onToggle={handleFavorite} />}
               <CloseIcon onToggle={onClose} />
             </section>
           </div>
@@ -128,6 +128,7 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
               <dl>
                 <dt>Company</dt><dd>{details.job.company || 'Not provided'}</dd>
                 <dt>Location</dt><dd>{details.job.location || 'Not provided'}</dd>
+                <dt>Job type</dt><dd>{details.job.jobType || 'Not specified'}</dd>
                 <dt>Department</dt><dd>{details.job.department}</dd>
                 <dt>Application deadline</dt><dd>{details.job.deadline || 'Not provided'}</dd>
                 {application && (

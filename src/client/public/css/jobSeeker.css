@@ -52,6 +52,13 @@ body {
 }
 
 /* ===== Stats Overview Cards ===== */
+.recommendations label { display: block; font-weight: 600; }
+.recommendations input { width: min(100%, 30rem); margin: 0.5rem 0 1rem; padding: 0.65rem; }
+.recommendations ul { list-style: none; padding: 0; }
+.recommendations li { border-top: 1px solid #d4dce1; padding: 1rem 0; }
+.recommendations li p { margin: 0.4rem 0; }
+.recommendations button { cursor: pointer; padding: 0.4rem 0.7rem; }
+
 .stats-section {
     display: flex;
     gap: 20px;

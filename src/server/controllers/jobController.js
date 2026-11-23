@@ -56,6 +56,8 @@ export async function createJob(req, res) {
     jobData[field] = value.trim();
   }
 
+  if (typeof req.body.jobType === 'string') jobData.jobType = req.body.jobType.trim() || 'Not specified';
+
   // Reject impossible dates as well as deadlines before today's calendar date.
   const deadline = new Date(`${jobData.deadline}T00:00:00Z`);
 
@@ -141,6 +143,8 @@ export async function updateJob(req, res) {
     return res.status(400).json({ error: 'The application deadline must be today or a future date.' });
   }
 
+  if (typeof req.body.jobType === 'string') jobData.jobType = req.body.jobType.trim() || 'Not specified';
+
   // Respect requested status and future publish dates when updating
   const requestedStatus = req.body?.status;
   if (requestedStatus) {
@@ -224,6 +228,7 @@ export async function duplicateJob(req, res) {
       title: `${job.title || 'Untitled Job'} (Copy)`,
       company: job.company || 'Unknown Company',
       department: job.department || 'General',
+      jobType: job.jobType,
       location: job.location || 'Not specified',
       description: job.description || '',
       requirements: job.requirements || '',

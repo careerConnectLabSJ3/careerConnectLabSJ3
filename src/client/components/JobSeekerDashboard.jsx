@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import JobDetailsModal from './JobDetailsModal';
+import RecommendedJobs from './RecommendedJobs';
 
 export default function JobSeekerDashboard() {
   // 1. STATE MANAGERS
@@ -188,6 +189,8 @@ export default function JobSeekerDashboard() {
           </section>
         </div>
       )}
+
+      <RecommendedJobs onView={setSelectedJobId} />
 
       {/* --- SEARCH & FILTER INTERFACE SECTION --- */}
       <section className="search-section" style={{ margin: '20px 0', display: 'flex', gap: '10px' }}>
