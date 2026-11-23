@@ -37,8 +37,9 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   expect(await section.findByText(job.title)).toBeInTheDocument();
   expect(section.getByText('Atlas · Remote · Contract')).toBeInTheDocument();
   fireEvent.click(section.getByRole('button', { name: job.title }));
-  const dialog = within(screen.getByRole('dialog'));
-  expect(await dialog.findByText(job.description)).toBeInTheDocument();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  const dialog = within(await screen.findByRole('dialog'));
+  expect(dialog.getByText(job.description)).toBeInTheDocument();
   fireEvent.click(dialog.getByRole('button', { name: /bookmark/i }));
   expect(api).toHaveBeenCalledWith('/api/jobs/j1/favorite', expect.objectContaining({ method: 'POST' }));
   fireEvent.click(dialog.getByRole('button', { name: 'Apply' }));
@@ -46,6 +47,7 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   expect(await dialog.findByText('Application submitted successfully.')).toBeInTheDocument();
   expect(api).toHaveBeenCalledWith('/api/jobs/j1/applications', expect.objectContaining({ method: 'POST' }));
   fireEvent.click(dialog.getByRole('button', { name: 'Close' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('radio', { name: 'Past jobs' }));
   expect(await screen.findByText('Past engineer')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'View details for Systems engineer' })).not.toBeInTheDocument();

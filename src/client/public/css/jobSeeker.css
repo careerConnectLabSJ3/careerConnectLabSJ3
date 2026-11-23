@@ -266,7 +266,8 @@ body {
     padding: 12px 8px;
 }
 
-.applications-table button {
+.applications-table [role="alert"] button,
+.application-details-button {
     display: inline-flex;
     padding: 6px 10px;
     border: 1px solid #2563eb;
@@ -281,12 +282,14 @@ body {
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.applications-table button:hover {
+.applications-table [role="alert"] button:hover,
+.application-details-button:hover:not(:disabled) {
     background: #2563eb;
     color: #ffffff;
 }
 
-.applications-table button:focus-visible {
+.applications-table [role="alert"] button:focus-visible,
+.application-details-button:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
 }

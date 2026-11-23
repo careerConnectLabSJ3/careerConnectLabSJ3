@@ -278,7 +278,7 @@ export default function JobSeekerDashboard() {
                     </span>
                   </td>
                   <td>
-                    <button type="button" onClick={() => setSelectedJobId(job._id)} aria-label={`View details for ${job.title}`}>
+                    <button type="button" className="application-details-button" onClick={() => setSelectedJobId(job._id)} aria-label={`View details for ${job.title}`}>
                       View details
                     </button>
                   </td>

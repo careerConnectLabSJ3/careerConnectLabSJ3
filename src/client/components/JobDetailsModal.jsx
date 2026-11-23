@@ -3,6 +3,7 @@ import BookmarkIcon from './BookmarkIcon';
 import CloseIcon from './CloseIcon';
 import { formatDate, statusClass } from '../utils/jobUtils';
 
+const detailsDelayMs = 150;
 
 export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, application = null }) {
   const [details, setDetails] = useState(null);
@@ -10,9 +11,11 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
   const [message, setMessage] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [delayElapsed, setDelayElapsed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    const timer = window.setTimeout(() => setDelayElapsed(true), detailsDelayMs);
     async function loadDetails() {
       
       let isFavorite = false;
@@ -42,7 +45,10 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
       }
     }
     loadDetails();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [jobId]);
 
   async function handleApply() {
@@ -109,6 +115,8 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
     if (event.target === event.currentTarget) onClose();
   }
 
+  if (!delayElapsed || (!details && !error)) return null;
+
   return (
     <div className="job-details-modal-backdrop" role="presentation" onMouseDown={handleBackdropClick}>
       <div className="job-details-modal" role="dialog" aria-modal="true" aria-labelledby="application-job-title">
@@ -122,7 +130,6 @@ export default function JobDetailsModal({ jobId, onClose, onApplied = () => {}, 
           </div>
           {error && <p className="job-application-error" role="alert">{error}</p>}
           {message && <p className="job-application-success" role="status">{message}</p>}
-          {!details && !error && <p role="status">Loading job details...</p>}
           {details && (
             <>
               <dl>
