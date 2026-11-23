@@ -28,7 +28,7 @@ import {
 } from './controllers/applicationController.js';
 import { addFavoriteJob, removeFavoriteJob, getFavoriteJob, getMyFavoriteJobs } from './controllers/favoriteJobsController.js';
 import { checkEmail, checkSession, fetchCurrentUser, loginUser, logoutUser, registerUser } from './controllers/authController.js';
-import { checkUpcomingDeadlines, searchJob } from './controllers/jobSeekerController.js';
+import { checkUpcomingDeadlines, searchJob, getRecommendations } from './controllers/jobSeekerController.js';
 
 // 2. MIDDLEWARE SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -105,6 +105,8 @@ app.get('/api/jobs/upcoming-deadlines', checkUpcomingDeadlines);
 
 // API route for Job Seekers to search and filter jobs
 app.get('/api/jobs/search', searchJob);
+app.post('/api/jobs/search', searchJob);
+app.get('/api/jobs/recommendations', getRecommendations);
 
 // Real job posting replaces the temporary dummy-job insertion route.
 app.get('/api/applications', getMyApplications);

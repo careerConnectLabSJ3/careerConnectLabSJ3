@@ -1,4 +1,5 @@
-import User  from '../models/user.js';
+import { getJobLifecycleStatus } from './applicationController.js';
+import User from '../models/user.js';
 import { checkCorrectUser } from '../serverUtils/utils.js';
 
 export async function addFavoriteJob(req, res) {
@@ -54,8 +55,8 @@ export async function getFavoriteJob(req, res) {
 export async function getMyFavoriteJobs(req, res) {
   if (!checkCorrectUser(req, res, 'job_seeker')) return;
   try{
-    const userFavorites = await User.findById(req.session.user.id).populate('favoriteJobs');
-    return res.json(userFavorites.favoriteJobs);
+    const userFavorites = await User.findById(req.session.user.id).populate('favoriteJobs').lean();
+    return res.json(userFavorites.favoriteJobs.map(job => ({ ...job, status: getJobLifecycleStatus(job) })));
   } catch(error){
     console.error('Failed to get favorite jobs:', error);
     return res.status(500).json({ error: 'Unable to retrieve favorite jobs. Please try again.' });

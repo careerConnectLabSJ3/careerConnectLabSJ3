@@ -41,7 +41,7 @@ body {
 
 /* ===== Main Content Container ===== */
 .dashboard-main {
-    max-width: 1000px;
+    width: min(100%, 1000px);
     margin: 40px auto;
     padding: 0 20px;
 }
@@ -51,7 +51,133 @@ body {
     color: #333;
 }
 
-/* ===== Stats Overview Cards ===== */
+/* Job Opportunities */
+html:has(.opportunities) {
+    scrollbar-gutter: stable;
+}
+
+.applications-section.opportunities {
+    border-radius: 14px;
+    padding: clamp(16px, 3vw, 28px);
+}
+
+.opportunities-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.opportunities-heading h2 {
+    margin: 0;
+    color: #203447;
+}
+
+.opportunities-views {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 12px;
+    background: #edf2f7;
+}
+
+.opportunities-views label {
+    position: relative;
+    cursor: pointer;
+}
+
+.opportunities-views input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.opportunities-views span {
+    display: block;
+    padding: 8px 14px;
+    border-radius: 9px;
+    color: #41546a;
+    font-weight: 600;
+}
+
+.opportunities-views input:checked + span {
+    color: white;
+    background: #244766;
+}
+
+.opportunities-views input:focus-visible + span,
+.opportunities-search input:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.opportunities-search {
+    display: grid;
+    gap: 6px;
+    margin: 20px 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #34475b;
+}
+
+.opportunities-search input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #aebdca;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: 400;
+}
+
+.opportunities-results {
+    overflow-x: auto;
+}
+
+.opportunities-results table {
+    min-width: 42rem;
+}
+
+.opportunities-results td {
+    overflow-wrap: anywhere;
+}
+
+.opportunities-results th:nth-child(4) {
+    min-width: 6rem;
+}
+
+.opportunities-results .status-badge {
+    white-space: nowrap;
+}
+
+.opportunities-results thead {
+    background: #f5f8fa;
+    color: #40546a;
+}
+
+.opportunities-results .company-name div {
+    margin-top: 4px;
+    font-size: 0.88rem;
+    font-weight: 400;
+    color: #506276;
+}
+
+.fresh-matches button {
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.fresh-matches ul {
+    list-style: none;
+    padding: 0;
+}
+
+.fresh-matches li {
+    padding: 0.75rem 0;
+    border-top: 1px solid #d4dce1;
+}
+
+/* Stats overview */
 .stats-section {
     display: flex;
     gap: 20px;
@@ -121,90 +247,6 @@ body {
     color: #991b1b;
 }
 
-.debug-status-button {
-    margin: 0 0 20px;
-    padding: 9px 14px;
-    border: 1px dashed #64748b;
-    border-radius: 8px;
-    background: #f8fafc;
-    color: #475569;
-    cursor: pointer;
-}
-
-.debug-status-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-}
-
-.debug-modal-backdrop {
-    position: fixed;
-    z-index: 10;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    padding: 20px;
-    background: rgba(15, 23, 42, 0.45);
-}
-
-.debug-status-modal {
-    width: min(100%, 520px);
-    padding: 24px;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
-}
-
-.debug-status-modal-heading,
-.debug-status-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.debug-status-modal-heading {
-    margin-bottom: 8px;
-}
-
-.debug-status-modal-heading button,
-.debug-status-actions button {
-    padding: 8px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #ffffff;
-    cursor: pointer;
-}
-
-.debug-status-modal form {
-    display: grid;
-    gap: 8px;
-    margin-top: 20px;
-}
-
-.debug-status-modal select {
-    min-height: 40px;
-    margin-bottom: 8px;
-    padding: 7px 9px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font: inherit;
-}
-
-.debug-status-actions {
-    justify-content: flex-end;
-    margin-top: 8px;
-}
-
-.debug-status-actions .debug-status-save {
-    border-color: #2563eb;
-    background: #2563eb;
-    color: #ffffff;
-}
-
-.debug-status-error {
-    color: #991b1b;
-}
-
 /* ===== Application List Table ===== */
 .applications-section {
     background: #fff;
@@ -241,7 +283,8 @@ body {
     padding: 12px 8px;
 }
 
-.applications-table button {
+.applications-table [role="alert"] button,
+.application-details-button {
     display: inline-flex;
     padding: 6px 10px;
     border: 1px solid #2563eb;
@@ -256,12 +299,14 @@ body {
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.applications-table button:hover {
+.applications-table [role="alert"] button:hover,
+.application-details-button:hover:not(:disabled) {
     background: #2563eb;
     color: #ffffff;
 }
 
-.applications-table button:focus-visible {
+.applications-table [role="alert"] button:focus-visible,
+.application-details-button:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
 }

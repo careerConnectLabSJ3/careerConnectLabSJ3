@@ -49,6 +49,24 @@ describe('Saved jobs acceptance tests', () => {
     expect(screen.getByText('1 job')).toBeInTheDocument();
   });
 
+  it('uses the returned status for both the filter and the row label', async () => {
+    fetch.mockResolvedValueOnce(jsonResponse([
+      { _id: '1', title: 'Hiring', status: 'Active', deadline: '2999-01-01' },
+      { _id: '2', title: 'Closed early', status: 'Closed', deadline: '2999-01-01' },
+      { _id: '3', title: 'Expired', status: 'Closed', deadline: '2000-01-01' }
+    ]));
+    render(<FavoriteJobs />);
+    await screen.findByText('Hiring');
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('cell', { name: 'Open' })).toBeInTheDocument();
+    expect(screen.queryByText('Closed early')).not.toBeInTheDocument();
+    expect(screen.queryByText('Expired')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Closed' }));
+    expect(screen.getByRole('row', { name: /Closed early.*Closed/ })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /Expired.*Closed/ })).toBeInTheDocument();
+    expect(screen.queryByText('Hiring')).not.toBeInTheDocument();
+  });
+
   it('shows a filled bookmark for an already saved job', async () => {
     mockJobDetails(true);
     render(<JobDetailsModal jobId="job-2" onClose={() => {}} />);
