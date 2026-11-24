@@ -96,7 +96,7 @@ export async function reviewResume(req, res) {
     res.set('Cache-Control', 'no-store');
     if (!checkCorrectUser(req, res, 'job_seeker')) return;
 
-    const { action, original, question, answer } = req.body || {};
+    const { action, original, question, answer, version } = req.body || {};
     const followUp = action === 'rewrite-with-claude';
     const isReview = followUp || action === 'review-with-claude';
     if (!req.is('application/json') || !isReview) {
@@ -119,6 +119,9 @@ export async function reviewResume(req, res) {
         const user = await User.findById(req.session.user.id).select('resumeFileId').lean();
         if (!user?.resumeFileId) {
             return res.status(404).json({ error: 'Upload a PDF resume to your profile first.' });
+        }
+        if (version && version !== String(user.resumeFileId)) {
+            return res.status(409).json({ error: 'Your resume changed. Reload it before checking again.' });
         }
         pdf = await readResumePdf(user.resumeFileId);
         if (!pdf.length) {

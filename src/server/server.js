@@ -12,7 +12,7 @@ const port = 3000;
 
 // Import Modules from validation.js to handle input validation
 import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
-import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile } from './controllers/profileController.js';
+import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile, saveResumeRevision, restoreOriginalResume } from './controllers/profileController.js';
 import { reviewResume } from './controllers/resumeFeedbackController.js';
 import { MAX_RESUME_SIZE } from './serverUtils/fileStorage.js';
 import User from './models/user.js';
@@ -95,6 +95,8 @@ app.post('/api/profile', upload.single('pfpUpload'), updateProfile);
 // Resume management
 app.get('/api/profile/resume', getResume);
 app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
+app.post('/api/profile/resume/revision', resumeUpload.single('resumeUpload'), saveResumeRevision);
+app.post('/api/profile/resume/restore', restoreOriginalResume);
 app.delete('/api/profile/resume', deleteResume);
 app.post('/api/profile/resume-feedback', reviewResume);
 
@@ -141,7 +143,7 @@ app.get('/api/favorite-jobs', getMyFavoriteJobs);
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            if (req.path === '/api/profile/resume') {
+            if (req.path.startsWith('/api/profile/resume')) {
                 return res.status(413).json({error: 'Resume must be 5MB or smaller.'});
             }
             return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});

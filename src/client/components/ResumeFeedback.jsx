@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '../public/css/resumeFeedback.css';
 
 const ResumePdf = lazy(() => import('./ResumePdf'));
@@ -15,7 +15,7 @@ async function requestReview(body) {
     });
     data = await response.json();
   } catch {
-    throw new Error('Unable to reach Claude. Try again.');
+    throw new Error('Unable to reach the AI service. Try again.');
   }
   if (!response.ok) throw new Error(data.error || 'Unable to review this resume.');
   return data;
@@ -61,7 +61,7 @@ function EditCard({ edit, decision, busy, onDecide, onRewrite }) {
   );
 }
 
-export default function ResumeFeedback({ resume, uploading }) {
+export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
   const [edits, setEdits] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [pages, setPages] = useState({});
@@ -69,8 +69,14 @@ export default function ResumeFeedback({ resume, uploading }) {
   const [decisions, setDecisions] = useState({});
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [preview, setPreview] = useState(null);
+  const [previewPageCount, setPreviewPageCount] = useState(0);
   const panel = useRef(null);
+  const exportSource = useRef({ pdf: null, layouts: new Map() });
+
+  useEffect(() => {
+    if (preview) return () => URL.revokeObjectURL(preview.url);
+  }, [preview]);
 
   const byPage = useMemo(() => {
     const groups = {};
@@ -102,16 +108,14 @@ export default function ResumeFeedback({ resume, uploading }) {
 
   function decide(id, decision) {
     setDecisions(previous => ({ ...previous, [id]: decision }));
-    setMessage('');
   }
 
   async function improve() {
     if (!hasText || uploading || busy) return;
     setBusy('review');
     setError('');
-    setMessage('');
     try {
-      const data = await requestReview({ action: 'review-with-claude' });
+      const data = await requestReview({ action: 'review-with-claude', version: resume.version });
       setPages(previous => Object.fromEntries(Object.entries(previous).map(([number, page]) =>
         [number, { ...page, ids: [] }])));
       setEdits(data.edits.map((edit, index) => ({ ...edit, id: index + 1 })));
@@ -129,7 +133,9 @@ export default function ResumeFeedback({ resume, uploading }) {
     setBusy('rewrite');
     setError('');
     try {
-      const data = await requestReview({ action: 'rewrite-with-claude', original: edit.original, question: edit.question, answer });
+      const data = await requestReview({
+        action: 'rewrite-with-claude', version: resume.version, original: edit.original, question: edit.question, answer
+      });
       setEdits(previous => previous.map(item => item.id === edit.id
         ? { ...item, replacement: data.replacement, question: '' } : item));
     } catch (err) {
@@ -139,12 +145,45 @@ export default function ResumeFeedback({ resume, uploading }) {
     }
   }
 
-  async function copyApproved() {
+  async function previewApproved() {
+    if (!approved.length || busy || uploading) return;
+    setBusy('preview');
+    setError('');
     try {
-      await navigator.clipboard.writeText(approved.map(edit => edit.replacement).join('\n'));
-      setMessage('Approved changes copied.');
-    } catch {
-      setMessage('Unable to copy. Select the approved text to copy it.');
+      const { writeResumePdf } = await import('../utils/writeResumePdf');
+      const pdf = await writeResumePdf(exportSource.current, approved);
+      setPreviewPageCount(0);
+      setPreview({ pdf, url: URL.createObjectURL(pdf) });
+    } catch (err) {
+      setError(err.message || 'Unable to create the PDF preview.');
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function updateSavedResume(restore = false) {
+    if (busy || uploading || (!restore && (!preview || !previewPageCount))) return;
+    setBusy(restore ? 'restore' : 'save');
+    setError('');
+    try {
+      const body = new FormData();
+      body.append('version', resume.version);
+      if (!restore) body.append('resumeUpload', preview.pdf, resume.fileName);
+      const action = restore ? 'restore' : 'revision';
+      const options = { method: 'POST', credentials: 'include', body };
+      if (restore) {
+        options.headers = { 'Content-Type': 'application/json' };
+        options.body = JSON.stringify({ version: resume.version });
+      }
+      const response = await fetch(`/api/profile/resume/${action}`, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to update your resume.');
+      setPreview(null);
+      onResumeSaved(data.resume, data.message);
+    } catch (err) {
+      setError(err.message || 'Unable to update your resume.');
+    } finally {
+      setBusy('');
     }
   }
 
@@ -161,20 +200,30 @@ export default function ResumeFeedback({ resume, uploading }) {
       {!resume ? <p className="resume-improver-empty">Upload and save a PDF above to start.</p> : (
         <div className="resume-improver-grid">
           <Suspense fallback={<p role="status">Loading the PDF viewer…</p>}>
-            <ResumePdf edits={byPage} activeId={active?.id} decisions={decisions} onSelect={selectEdit}
-              onDocument={setPageCount} onPage={onPage} />
+            {preview ? <ResumePdf key="revision" source={preview.url} label="Updated resume PDF preview"
+              onDocument={setPreviewPageCount} /> :
+              <ResumePdf key="saved" edits={byPage} activeId={active?.id} decisions={decisions} onSelect={selectEdit}
+                onDocument={setPageCount} onPage={onPage} exportSource={exportSource} />}
           </Suspense>
 
           <aside className="resume-review-panel" ref={panel} aria-label="Review suggestions">
-            <h3>Review</h3>
+            <h3>{preview ? 'Review updated PDF' : 'Review'}</h3>
+            {error && <p className="resume-review-error" role="alert">{error}</p>}
+            {preview ? (
+              <>
+                <p>Saving replaces the resume recruiters can view, including on past applications. You can restore your original.</p>
+                <button className="resume-run" type="button" onClick={() => updateSavedResume()}
+                  disabled={Boolean(busy) || uploading || !previewPageCount}>{busy === 'save' ? 'Saving…' : 'Save updated resume'}</button>
+                <button type="button" disabled={Boolean(busy)} onClick={() => { setPreview(null); setError(''); }}>Back to edits</button>
+              </>
+            ) : <>
             {(!edits || (!placed.length && allPagesReady)) && <button type="button" className="resume-run" onClick={improve}
-              disabled={!hasText || uploading || Boolean(busy)} title="Sends your saved PDF to Claude">
-              {busy === 'review' ? 'Reviewing…' : edits ? 'Review again with Claude' : 'Improve with Claude'}
+              disabled={!hasText || uploading || Boolean(busy)} title="Sends your saved PDF to Anthropic for AI review">
+              {busy === 'review' ? 'Reviewing…' : edits ? 'Check again with AI' : 'Check with AI'}
             </button>}
             {!hasText && allPagesReady && <p>This PDF has no selectable text. Upload a text-based PDF to see inline edits.</p>}
             {busy === 'review' && <p role="status">Looking for the most useful edits…</p>}
             {busy === 'rewrite' && <p role="status">Rewriting bullet…</p>}
-            {error && <p className="resume-review-error" role="alert">{error}</p>}
             {edits && !placed.length && allPagesReady && (
               <p>{edits.length ? 'No suggestions could be matched to the PDF.' : 'No specific improvements found.'}</p>
             )}
@@ -194,13 +243,21 @@ export default function ResumeFeedback({ resume, uploading }) {
               </>
             )}
             {approved.length > 0 && (
-              <details className="resume-approved">
-                <summary>Approved changes ({approved.length})</summary>
-                <ul>{approved.map(edit => <li key={edit.id}>{edit.replacement}</li>)}</ul>
-                <button type="button" onClick={copyApproved}>Copy approved changes</button>
-              </details>
+              <div className="resume-approved resume-save-options">
+                <button type="button" className="resume-run" disabled={Boolean(busy) || uploading} onClick={previewApproved}>
+                  {busy === 'preview' ? 'Preparing PDF…' : 'Preview updated PDF'}
+                </button>
+                <details>
+                  <summary>Approved changes ({approved.length})</summary>
+                  <ul>{approved.map(edit => <li key={edit.id}>{edit.replacement}</li>)}</ul>
+                </details>
+              </div>
             )}
-            {message && <p role="status">{message}</p>}
+            {resume.hasOriginal && <button type="button" disabled={Boolean(busy) || uploading}
+              onClick={() => {
+                if (window.confirm('Restore your original resume? This replaces the current PDF.')) updateSavedResume(true);
+              }}>{busy === 'restore' ? 'Restoring…' : 'Restore original'}</button>}
+            </>}
           </aside>
         </div>
       )}

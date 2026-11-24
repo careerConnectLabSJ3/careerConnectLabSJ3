@@ -3,14 +3,18 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { findResumeAnchor } from '../utils/resumeAnchors';
 import ResumeFeedback from '../components/ResumeFeedback';
 
+vi.mock('../utils/writeResumePdf', () => ({
+  writeResumePdf: async () => new Blob(['%PDF-1.7'], { type: 'application/pdf' })
+}));
+
 vi.mock('../components/ResumePdf', async () => {
   const { useEffect } = await import('react');
-  return { default: function FakePdf({ edits, onDocument, onPage }) {
+  return { default: function FakePdf({ edits, onDocument, onPage, label }) {
     useEffect(() => {
-      onDocument(1);
-      onPage(1, true, (edits[1] || []).map(edit => edit.id));
+      onDocument?.(1);
+      onPage?.(1, true, (edits?.[1] || []).map(edit => edit.id));
     }, [edits, onDocument, onPage]);
-    return null;
+    return <section aria-label={label} />;
   } };
 });
 
@@ -26,7 +30,7 @@ it('matches text across wrapped runs and refuses ambiguous matches', () => {
   expect(findResumeAnchor(['Built a demo'], 'Grew sales')).toEqual([]);
 });
 
-it('reviews the saved PDF, rewrites one bullet, and supports approve, copy, skip and undo', async () => {
+it('reviews and saves an updated PDF after the user previews it', async () => {
   const fetch = vi.fn().mockResolvedValueOnce({
     ok: true, json: async () => ({ edits: [{
       page: 1, original: 'Used React to build a dashboard.', reason: 'Lead with the contribution',
@@ -37,18 +41,20 @@ it('reviews the saved PDF, rewrites one bullet, and supports approve, copy, skip
     }] })
   }).mockResolvedValueOnce({
     ok: true, json: async () => ({ replacement: 'Built a demo that reduced load time by 15%.' })
+  }).mockResolvedValueOnce({
+    ok: true, json: async () => ({ resume: { version: 'revision' }, message: 'Updated resume saved.' })
   });
   vi.stubGlobal('fetch', fetch);
-  const copy = vi.fn().mockResolvedValue();
-  const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
-  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: copy } });
+  const onResumeSaved = vi.fn();
+  const createURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
+  const revokeURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
   try {
     const { rerender } = render(<ResumeFeedback />);
     expect(screen.getByText('Upload and save a PDF above to start.')).toBeInTheDocument();
-    rerender(<ResumeFeedback resume={{ fileName: 'John Smith.pdf' }} />);
+    rerender(<ResumeFeedback resume={{ fileName: 'John Smith.pdf', version: 'original' }} onResumeSaved={onResumeSaved} />);
     expect(screen.getByText('John Smith.pdf')).toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
-    const improve = screen.getByRole('button', { name: 'Improve with Claude' });
+    const improve = screen.getByRole('button', { name: 'Check with AI' });
     await waitFor(() => expect(improve).toBeEnabled());
     fireEvent.click(improve);
     await screen.findByText('Built a dashboard using React.');
@@ -63,16 +69,25 @@ it('reviews the saved PDF, rewrites one bullet, and supports approve, copy, skip
     fireEvent.click(screen.getByRole('button', { name: 'Rewrite bullet' }));
     await screen.findByText('Built a demo that reduced load time by 15%.');
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
-    fireEvent.click(screen.getByText('Approved changes (1)'));
-    fireEvent.click(screen.getByRole('button', { name: 'Copy approved changes' }));
-    expect(copy).toHaveBeenCalledWith('Built a demo that reduced load time by 15%.');
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(screen.getByText('Skipped')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(screen.getByRole('button', { name: 'Approve' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Preview updated PDF' }));
+    expect(await screen.findByRole('region', { name: 'Updated resume PDF preview' })).toBeInTheDocument();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const save = screen.getByRole('button', { name: 'Save updated resume' });
+    await waitFor(() => expect(save).toBeEnabled());
+    fireEvent.click(save);
+    await waitFor(() => expect(onResumeSaved).toHaveBeenCalledWith({ version: 'revision' }, 'Updated resume saved.'));
+    const [url, options] = fetch.mock.calls[2];
+    expect(url).toBe('/api/profile/resume/revision');
+    expect(options.body.get('version')).toBe('original');
+    expect(options.body.get('resumeUpload').type).toBe('application/pdf');
   } finally {
-    if (clipboard) Object.defineProperty(navigator, 'clipboard', clipboard);
-    else delete navigator.clipboard;
+    cleanup();
+    createURL.mockRestore();
+    revokeURL.mockRestore();
   }
 });

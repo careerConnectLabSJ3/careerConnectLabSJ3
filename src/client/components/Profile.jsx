@@ -341,8 +341,12 @@ export default function Profile(){
         </section>}
       </section>
     </form>
-    {role === 'job_seeker' && <ResumeFeedback key={resume ? `${resume.fileName}:${resume.uploadedAt}` : 'no-resume'}
-      resume={resume} uploading={resumeUploading} />}
+    {role === 'job_seeker' && <ResumeFeedback key={resume?.version || resume?.uploadedAt || 'no-resume'}
+      resume={resume} uploading={resumeUploading} onResumeSaved={(updated, message) => {
+        setResume(updated);
+        setResumeError('');
+        setResumeMessage(message);
+      }} />}
     </>
   );
 }
