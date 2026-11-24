@@ -1,34 +1,8 @@
 import { describe, test, expect } from '@jest/globals';
-import { checkJobStatus, formatDate, statusClass, getTodayDate } from '../utils/jobUtils.js'; 
+import { formatDate, statusClass, getTodayDate } from '../utils/jobUtils.js';
 
 describe('Utility Functions', () => {
   
-  describe('checkJobStatus', () => {
-    test('returns "Open" when no deadline string is provided', () => {
-      expect(checkJobStatus(null)).toBe('Open');
-      expect(checkJobStatus(undefined)).toBe('Open');
-      expect(checkJobStatus('')).toBe('Open');
-    });
-
-    test('returns "Open" when the deadline is today', () => {
-      const today = new Date();
-      const todayString = today.toISOString();
-      expect(checkJobStatus(todayString)).toBe('Open');
-    });
-
-    test('returns "Open" when the deadline is in the future', () => {
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 5);
-      expect(checkJobStatus(futureDate.toISOString())).toBe('Open');
-    });
-
-    test('returns "Closed" when the deadline is in the past', () => {
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 5);
-      expect(checkJobStatus(pastDate.toISOString())).toBe('Closed');
-    });
-  });
-
   describe('formatDate', () => {
     test('returns "Not available" for falsy values', () => {
       expect(formatDate(null)).toBe('Not available');

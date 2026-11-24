@@ -24,6 +24,7 @@ const userSchema = new Schema({
         }, { _id: false }),
         default: null
     },
+    recentSearches: [{ _id: false, keywords: String, searchedAt: Date }],
     favoriteJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
 
 });

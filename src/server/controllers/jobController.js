@@ -56,6 +56,8 @@ export async function createJob(req, res) {
     jobData[field] = value.trim();
   }
 
+  if (typeof req.body.jobType === 'string') jobData.jobType = req.body.jobType.trim() || 'Not specified';
+
   // Reject impossible dates as well as deadlines before today's calendar date.
   const deadline = new Date(`${jobData.deadline}T00:00:00Z`);
 
@@ -91,6 +93,7 @@ export async function createJob(req, res) {
       jobData.status = 'Active';
     }
 
+    if (jobData.status === 'Active') jobData.publishedAt = new Date();
     const job = await Job.create(jobData);
 
     return res.status(201).json({ message: 'Job posted successfully.', job });
@@ -141,6 +144,8 @@ export async function updateJob(req, res) {
     return res.status(400).json({ error: 'The application deadline must be today or a future date.' });
   }
 
+  if (typeof req.body.jobType === 'string') jobData.jobType = req.body.jobType.trim() || 'Not specified';
+
   // Respect requested status and future publish dates when updating
   const requestedStatus = req.body?.status;
   if (requestedStatus) {
@@ -156,6 +161,7 @@ export async function updateJob(req, res) {
 
   try {
     // Update the job with the new data
+    if (jobData.status === 'Active' && job.status !== 'Active') jobData.publishedAt = new Date();
     const updatedJob = await Job.findByIdAndUpdate(job._id, jobData, { new: true, runValidators: true });
     return res.json({ message: 'Job updated successfully.', job: updatedJob });
   } catch (error) {
@@ -184,6 +190,7 @@ export async function updateJobStatus(req, res) {
   }
 
   try {
+    if (status === 'Active' && job.status !== 'Active') job.publishedAt = new Date();
     job.status = status;
     await job.save();
     return res.json({ message: `Job status changed to ${status}.`, job });
@@ -224,6 +231,7 @@ export async function duplicateJob(req, res) {
       title: `${job.title || 'Untitled Job'} (Copy)`,
       company: job.company || 'Unknown Company',
       department: job.department || 'General',
+      jobType: job.jobType,
       location: job.location || 'Not specified',
       description: job.description || '',
       requirements: job.requirements || '',
