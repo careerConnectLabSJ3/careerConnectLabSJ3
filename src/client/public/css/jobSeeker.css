@@ -406,6 +406,14 @@ html:has(.opportunities) {
     padding: 5px;
     margin: 3px 0;
     font-size: 12pt;
+    color: #17273a;
+    background: #fff;
+}
+
+.profile-main-info input:disabled {
+    color: #45566b;
+    background: #f8fafc;
+    opacity: 1;
 }
 
 .icon{
@@ -422,7 +430,8 @@ html:has(.opportunities) {
 #profile-edit-icon{
     border-radius: 10px;
     border: none;
-    color: white;
+    background: #e8eef4;
+    color: #17273a;
     cursor: pointer;
 
 }
@@ -498,6 +507,20 @@ html:has(.opportunities) {
 
 .resume-upload-btn{
     background-color: #3498db;
+}
+
+.resume-improve-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 4px;
+    background: #19496f;
+    color: white;
+    text-decoration: none;
+}
+
+.resume-improve-link:hover {
+    background: #123854;
 }
 
 .resume-delete-btn,

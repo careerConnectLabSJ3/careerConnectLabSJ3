@@ -3,10 +3,26 @@ import { convertToSafeFilename } from './utils.js';
 
 export let gfsBucket;
 export let resumeBucket;
+export const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
 export function initializeFileStorage(db) {
   gfsBucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'profileImages' });
   resumeBucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'resumes' });
+}
+
+export async function readResumePdf(fileId) {
+  const chunks = [];
+  let size = 0;
+  const download = resumeBucket.openDownloadStream(new mongoose.Types.ObjectId(fileId));
+  for await (const chunk of download) {
+    size += chunk.length;
+    if (size > MAX_RESUME_SIZE) {
+      download.destroy();
+      throw new Error('Resume exceeds the size limit.');
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 
 export async function sendResume(res, user) {
