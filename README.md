@@ -84,11 +84,18 @@ If you are connecting remotely to the hosted database, update your `.env` file t
 PORT=3000
 MONGODB_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
 ```
-**Make sure the .env file is located in src/server**
+Use `src/server/.env` for local setup. The backend resolves this path from its entry point so it works from any launch directory. Existing environment variables take precedence, followed by `src/server/.env` and then the repository-root `.env` for older local setups.
 
-### AI resume feedback
+### Resume Improver
 
-Sign in as a job seeker and open **Profile**. Upload and save a PDF (up to 5 MB) to see it in **Resume Improver**. **Check with AI** sends the saved document, including anything personal it contains, to Anthropic. The review offers up to five useful edits. **Add detail** optionally asks for a short answer to strengthen a rewrite. Follow-up answers also go to Anthropic. Approve the edits you want, preview the revised PDF, and choose **Save updated resume**. Recruiters reviewing past applications see the active resume. **Restore original** switches back to the PDF that was first uploaded. Export supports edits that fit on simple text-based PDF layouts. Check [Anthropic's API data retention terms](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) for the workspace and model used.
+- **Purpose.** Help job seekers make specific, factual improvements to resume bullets before applying.
+- **Inputs.** A saved resume PDF up to 5 MB and, if requested, a short answer to a follow-up question.
+- **Model and prompt.** Claude Haiku 5.5 by default. The prompt prioritizes the candidate's contribution and measurable results, preserves existing facts, and discourages invented numbers. It draws on [MIT's Project, Action, Result method](https://capd.mit.edu/resources/resumes-writing-about-your-skills/) and [Penn Engineering's advice on showing technical work](https://careerservices.upenn.edu/a-few-resume-application-tips-from-jamie-grant-senior-associate-director-for-seas/). `ANTHROPIC_MODEL` can select another model that supports PDFs and structured output.
+- **Expected output.** Up to five inline edits, with ready-to-approve rewrites first. Go to **Profile → Improve resume with AI**, approve the edits you want, preview the PDF, then save it as your active resume. **Restore original** is available after saving.
+- **Validation.** The server validates the structured response and rejects new numeric claims that are missing from the supplied text or answer. The browser highlights edits only when the source text matches uniquely. Jest tests mock Anthropic and storage. Vitest covers reviewing, previewing, and saving. Use a fictional PDF to check the live flow.
+- **Limitations.** AI suggestions can be inaccurate. Scans without selectable text cannot be highlighted, and an edit cannot be saved if the revised text does not fit safely in the PDF. Requests are limited to five per user and 30 per server process per minute.
+- **Privacy.** Checking sends the full saved PDF to Anthropic. Follow-up answers are also sent. Recruiters reviewing past applications see the active resume. See [Anthropic's data retention terms](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention).
+- **Failure handling.** A missing key disables AI review and shows local setup instructions. Provider errors, timeouts, rate limits, and PDF export problems show a message by the action that failed. A failed preview or save leaves the active resume unchanged.
 
 To enable live feedback, add this line to the existing local `src/server/.env` file and restart the backend:
 
@@ -96,9 +103,7 @@ To enable live feedback, add this line to the existing local `src/server/.env` f
 ANTHROPIC_API_KEY=your_key_here
 ```
 
-The default model is Claude Haiku 5.5. Set `ANTHROPIC_MODEL` in the same file if your workspace uses another model that supports PDFs and structured outputs. Check [Anthropic's pricing](https://platform.claude.com/docs/en/about-claude/pricing) and workspace spending limits before enabling live use. Reviews allow up to 1,400 output tokens and follow-up rewrites allow 250, with limits of 5 requests per user and 30 total per minute per server process.
-
-The review criteria use [MIT's Project, Action, Result method](https://capd.mit.edu/resources/resumes-writing-about-your-skills/) and [Penn Engineering's advice on showing technical skills in context](https://careerservices.upenn.edu/a-few-resume-application-tips-from-jamie-grant-senior-associate-director-for-seas/).
+For deployment, set the key as a backend runtime secret. Git ignores local `.env` files. The automated tests do not need a key. See [Anthropic's pricing](https://platform.claude.com/docs/en/about-claude/pricing) for API costs.
 
 ## Run Application for **Production**
 Make sure you are in the project **root directory**

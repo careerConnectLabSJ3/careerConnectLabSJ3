@@ -61,18 +61,43 @@ function EditCard({ edit, decision, busy, onDecide, onRewrite }) {
   );
 }
 
-export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
+function ActionError({ error, action }) {
+  if (error?.action !== action) return null;
+  return <p className="resume-review-error resume-action-error" role="alert">{error.message}</p>;
+}
+
+export default function ResumeFeedback({ resume, onResumeSaved }) {
   const [edits, setEdits] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [pages, setPages] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [decisions, setDecisions] = useState({});
   const [busy, setBusy] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const [aiStatus, setAiStatus] = useState('loading');
   const [preview, setPreview] = useState(null);
   const [previewPageCount, setPreviewPageCount] = useState(0);
   const panel = useRef(null);
   const exportSource = useRef({ pdf: null, layouts: new Map() });
+
+  useEffect(() => {
+    if (!resume) return;
+    const controller = new AbortController();
+    async function loadAiStatus() {
+      try {
+        const response = await fetch('/api/profile/resume-feedback/status', {
+          credentials: 'include', signal: controller.signal
+        });
+        if (!response.ok) throw new Error();
+        const result = await response.json();
+        if (!controller.signal.aborted) setAiStatus(result.available ? 'available' : 'unconfigured');
+      } catch {
+        if (!controller.signal.aborted) setAiStatus('error');
+      }
+    }
+    loadAiStatus();
+    return () => controller.abort();
+  }, [resume]);
 
   useEffect(() => {
     if (preview) return () => URL.revokeObjectURL(preview.url);
@@ -98,7 +123,7 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
 
   function selectEdit(id, scrollToPdf) {
     setActiveId(id);
-    setError('');
+    setError(null);
     if (scrollToPdf) {
       document.getElementById(`resume-mark-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     } else if (window.matchMedia('(max-width: 780px)').matches) {
@@ -108,12 +133,13 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
 
   function decide(id, decision) {
     setDecisions(previous => ({ ...previous, [id]: decision }));
+    setError(null);
   }
 
   async function improve() {
-    if (!hasText || uploading || busy) return;
+    if (!hasText || aiStatus !== 'available' || busy) return;
     setBusy('review');
-    setError('');
+    setError(null);
     try {
       const data = await requestReview({ action: 'review-with-claude', version: resume.version });
       setPages(previous => Object.fromEntries(Object.entries(previous).map(([number, page]) =>
@@ -122,16 +148,16 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
       setDecisions({});
       setActiveId(null);
     } catch (err) {
-      setError(err.message);
+      setError({ action: 'review', message: err.message });
     } finally {
       setBusy('');
     }
   }
 
   async function rewrite(edit, answer) {
-    if (!answer || busy || uploading) return;
+    if (!answer || busy) return;
     setBusy('rewrite');
-    setError('');
+    setError(null);
     try {
       const data = await requestReview({
         action: 'rewrite-with-claude', version: resume.version, original: edit.original, question: edit.question, answer
@@ -139,32 +165,32 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
       setEdits(previous => previous.map(item => item.id === edit.id
         ? { ...item, replacement: data.replacement, question: '' } : item));
     } catch (err) {
-      setError(err.message);
+      setError({ action: 'rewrite', message: err.message });
     } finally {
       setBusy('');
     }
   }
 
   async function previewApproved() {
-    if (!approved.length || busy || uploading) return;
+    if (!approved.length || busy) return;
     setBusy('preview');
-    setError('');
+    setError(null);
     try {
       const { writeResumePdf } = await import('../utils/writeResumePdf');
       const pdf = await writeResumePdf(exportSource.current, approved);
       setPreviewPageCount(0);
       setPreview({ pdf, url: URL.createObjectURL(pdf) });
     } catch (err) {
-      setError(err.message || 'Unable to create the PDF preview.');
+      setError({ action: 'preview', message: err.message || 'Unable to create the PDF preview.' });
     } finally {
       setBusy('');
     }
   }
 
   async function updateSavedResume(restore = false) {
-    if (busy || uploading || (!restore && (!preview || !previewPageCount))) return;
+    if (busy || (!restore && (!preview || !previewPageCount))) return;
     setBusy(restore ? 'restore' : 'save');
-    setError('');
+    setError(null);
     try {
       const body = new FormData();
       body.append('version', resume.version);
@@ -181,7 +207,7 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
       setPreview(null);
       onResumeSaved(data.resume, data.message);
     } catch (err) {
-      setError(err.message || 'Unable to update your resume.');
+      setError({ action: restore ? 'restore' : 'save', message: err.message || 'Unable to update your resume.' });
     } finally {
       setBusy('');
     }
@@ -197,7 +223,7 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
         {resume && <a className="resume-original" href="/api/profile/resume" target="_blank" rel="noreferrer">Open PDF</a>}
       </header>
 
-      {!resume ? <p className="resume-improver-empty">Upload and save a PDF above to start.</p> : (
+      {!resume ? <p className="resume-improver-empty">Upload and save a PDF on your profile to start.</p> : (
         <div className="resume-improver-grid">
           <Suspense fallback={<p role="status">Loading the PDF viewer…</p>}>
             {preview ? <ResumePdf key="revision" source={preview.url} label="Updated resume PDF preview"
@@ -208,19 +234,22 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
 
           <aside className="resume-review-panel" ref={panel} aria-label="Review suggestions">
             <h3>{preview ? 'Review updated PDF' : 'Review'}</h3>
-            {error && <p className="resume-review-error" role="alert">{error}</p>}
             {preview ? (
               <>
                 <p>Saving replaces the resume recruiters can view, including on past applications. You can restore your original.</p>
                 <button className="resume-run" type="button" onClick={() => updateSavedResume()}
-                  disabled={Boolean(busy) || uploading || !previewPageCount}>{busy === 'save' ? 'Saving…' : 'Save updated resume'}</button>
-                <button type="button" disabled={Boolean(busy)} onClick={() => { setPreview(null); setError(''); }}>Back to edits</button>
+                  disabled={Boolean(busy) || !previewPageCount}>{busy === 'save' ? 'Saving…' : 'Save updated resume'}</button>
+                <ActionError error={error} action="save" />
+                <button type="button" disabled={Boolean(busy)} onClick={() => { setPreview(null); setError(null); }}>Back to edits</button>
               </>
             ) : <>
             {(!edits || (!placed.length && allPagesReady)) && <button type="button" className="resume-run" onClick={improve}
-              disabled={!hasText || uploading || Boolean(busy)} title="Sends your saved PDF to Anthropic for AI review">
+              disabled={!hasText || aiStatus !== 'available' || Boolean(busy)} title="Sends your saved PDF to Anthropic for AI review">
               {busy === 'review' ? 'Reviewing…' : edits ? 'Check again with AI' : 'Check with AI'}
             </button>}
+            {aiStatus === 'unconfigured' && <p>AI review is unavailable. For a local setup, add the API key to <code>src/server/.env</code> and restart the backend.</p>}
+            {aiStatus === 'error' && <p role="alert">Could not check whether AI review is available. Refresh to try again.</p>}
+            <ActionError error={error} action="review" />
             {!hasText && allPagesReady && <p>This PDF has no selectable text. Upload a text-based PDF to see inline edits.</p>}
             {busy === 'review' && <p role="status">Looking for the most useful edits…</p>}
             {busy === 'rewrite' && <p role="status">Rewriting bullet…</p>}
@@ -239,12 +268,14 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
                   ))}
                 </nav>
                 {active && <EditCard key={active.id} edit={active} decision={decisions[active.id]}
-                  busy={Boolean(busy) || uploading} onDecide={decide} onRewrite={rewrite} />}
+                  busy={Boolean(busy)} onDecide={decide} onRewrite={rewrite} />}
+                <ActionError error={error} action="rewrite" />
               </>
             )}
             {approved.length > 0 && (
               <div className="resume-approved resume-save-options">
-                <button type="button" className="resume-run" disabled={Boolean(busy) || uploading} onClick={previewApproved}>
+                <ActionError error={error} action="preview" />
+                <button type="button" className="resume-run" disabled={Boolean(busy)} onClick={previewApproved}>
                   {busy === 'preview' ? 'Preparing PDF…' : 'Preview updated PDF'}
                 </button>
                 <details>
@@ -253,10 +284,11 @@ export default function ResumeFeedback({ resume, uploading, onResumeSaved }) {
                 </details>
               </div>
             )}
-            {resume.hasOriginal && <button type="button" disabled={Boolean(busy) || uploading}
+            {resume.hasOriginal && <button type="button" disabled={Boolean(busy)}
               onClick={() => {
                 if (window.confirm('Restore your original resume? This replaces the current PDF.')) updateSavedResume(true);
               }}>{busy === 'restore' ? 'Restoring…' : 'Restore original'}</button>}
+            <ActionError error={error} action="restore" />
             </>}
           </aside>
         </div>

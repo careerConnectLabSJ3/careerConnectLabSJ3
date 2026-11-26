@@ -3,8 +3,9 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { findResumeAnchor } from '../utils/resumeAnchors';
 import ResumeFeedback from '../components/ResumeFeedback';
 
+const mocks = vi.hoisted(() => ({ writeResumePdf: vi.fn() }));
 vi.mock('../utils/writeResumePdf', () => ({
-  writeResumePdf: async () => new Blob(['%PDF-1.7'], { type: 'application/pdf' })
+  writeResumePdf: mocks.writeResumePdf
 }));
 
 vi.mock('../components/ResumePdf', async () => {
@@ -32,6 +33,8 @@ it('matches text across wrapped runs and refuses ambiguous matches', () => {
 
 it('reviews and saves an updated PDF after the user previews it', async () => {
   const fetch = vi.fn().mockResolvedValueOnce({
+    ok: true, json: async () => ({ available: true })
+  }).mockResolvedValueOnce({
     ok: true, json: async () => ({ edits: [{
       page: 1, original: 'Used React to build a dashboard.', reason: 'Lead with the contribution',
       question: 'Who used it?', replacement: 'Built a dashboard using React.'
@@ -45,15 +48,18 @@ it('reviews and saves an updated PDF after the user previews it', async () => {
     ok: true, json: async () => ({ resume: { version: 'revision' }, message: 'Updated resume saved.' })
   });
   vi.stubGlobal('fetch', fetch);
+  mocks.writeResumePdf.mockRejectedValueOnce(new Error('This edit does not fit the PDF layout.'))
+    .mockResolvedValueOnce(new Blob(['%PDF-1.7'], { type: 'application/pdf' }));
   const onResumeSaved = vi.fn();
   const createURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock');
   const revokeURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
   try {
     const { rerender } = render(<ResumeFeedback />);
-    expect(screen.getByText('Upload and save a PDF above to start.')).toBeInTheDocument();
+    expect(screen.getByText('Upload and save a PDF on your profile to start.')).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
     rerender(<ResumeFeedback resume={{ fileName: 'John Smith.pdf', version: 'original' }} onResumeSaved={onResumeSaved} />);
     expect(screen.getByText('John Smith.pdf')).toBeInTheDocument();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledWith('/api/profile/resume-feedback/status', expect.any(Object));
     const improve = screen.getByRole('button', { name: 'Check with AI' });
     await waitFor(() => expect(improve).toBeEnabled());
     fireEvent.click(improve);
@@ -75,13 +81,17 @@ it('reviews and saves an updated PDF after the user previews it', async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     fireEvent.click(screen.getByRole('button', { name: 'Preview updated PDF' }));
+    const previewError = await screen.findByRole('alert');
+    expect(previewError).toHaveTextContent('This edit does not fit the PDF layout.');
+    expect(previewError.nextElementSibling).toHaveTextContent('Preview updated PDF');
+    fireEvent.click(screen.getByRole('button', { name: 'Preview updated PDF' }));
     expect(await screen.findByRole('region', { name: 'Updated resume PDF preview' })).toBeInTheDocument();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
     const save = screen.getByRole('button', { name: 'Save updated resume' });
     await waitFor(() => expect(save).toBeEnabled());
     fireEvent.click(save);
     await waitFor(() => expect(onResumeSaved).toHaveBeenCalledWith({ version: 'revision' }, 'Updated resume saved.'));
-    const [url, options] = fetch.mock.calls[2];
+    const [url, options] = fetch.mock.calls[3];
     expect(url).toBe('/api/profile/resume/revision');
     expect(options.body.get('version')).toBe('original');
     expect(options.body.get('resumeUpload').type).toBe('application/pdf');
@@ -90,4 +100,13 @@ it('reviews and saves an updated PDF after the user previews it', async () => {
     createURL.mockRestore();
     revokeURL.mockRestore();
   }
+});
+
+it('explains missing AI configuration without starting a review', async () => {
+  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ available: false }) });
+  vi.stubGlobal('fetch', fetch);
+  render(<ResumeFeedback resume={{ fileName: 'John Smith.pdf', version: 'original' }} />);
+  expect(await screen.findByText(/AI review is unavailable/i)).toHaveTextContent('src/server/.env');
+  expect(screen.getByRole('button', { name: 'Check with AI' })).toBeDisabled();
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/profile/resume-feedback/status']);
 });

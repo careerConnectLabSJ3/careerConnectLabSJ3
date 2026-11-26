@@ -92,6 +92,12 @@ function canRequestFeedback(userId) {
     return true;
 }
 
+export function resumeFeedbackStatus(req, res) {
+    res.set('Cache-Control', 'no-store');
+    if (!checkCorrectUser(req, res, 'job_seeker')) return;
+    return res.json({ available: Boolean(process.env.ANTHROPIC_API_KEY?.trim()) });
+}
+
 export async function reviewResume(req, res) {
     res.set('Cache-Control', 'no-store');
     if (!checkCorrectUser(req, res, 'job_seeker')) return;
@@ -108,7 +114,7 @@ export async function reviewResume(req, res) {
 
     const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
     if (!apiKey) {
-        return res.status(503).json({ error: 'Resume review is not configured yet.' });
+        return res.status(503).json({ error: 'AI review is unavailable. Local setup requires a key in src/server/.env and a backend restart.' });
     }
     if (!canRequestFeedback(req.session.user.id)) {
         return res.status(429).json({ error: 'Too many feedback requests. Please try again in a minute.' });

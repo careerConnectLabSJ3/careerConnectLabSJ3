@@ -7,6 +7,7 @@ import Register from "./components/Register";
 import { useEffect, useState } from "react";
 import JobSeekerDashboard from "./components/JobSeekerDashboard";
 import Profile from "./components/Profile";
+import ResumeImproverPage from './components/ResumeImproverPage';
 import RecruiterDashboard from "./components/RecruiterDashboard";
 import { RecruiterApplicantsPage } from "./components/RecruiterApplications";
 import JobApplications from "./components/JobApplications";
@@ -92,6 +93,10 @@ function App() {
           } />
           <Route path="/favorite-jobs" element={!session.loggedIn ? <Navigate to="/login" /> : session.user.role === 'job_seeker' ? <FavoriteJobs /> : <Navigate to="/dashboard" />} />
           <Route path="/profile" element={session.loggedIn ? <Profile/> : <Navigate to="/login"/>}/>
+          <Route path="/profile/resume-improver" element={
+            !session.loggedIn ? <Navigate to="/login" /> :
+              session.user.role === 'job_seeker' ? <ResumeImproverPage /> : <Navigate to="/profile" />
+          } />
         </Routes>
       </main>
       <footer>

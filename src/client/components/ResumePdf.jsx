@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { getDocument, GlobalWorkerOptions, TextLayer } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import 'pdfjs-dist/web/pdf_viewer.css';
 import { findResumeAnchor } from '../utils/resumeAnchors';
 
 GlobalWorkerOptions.workerSrc = workerUrl;

@@ -4,7 +4,7 @@ import User from '../models/user.js';
 const pdf = Buffer.from('%PDF-test');
 const readResumePdf = jest.fn(async () => pdf);
 jest.unstable_mockModule('../serverUtils/fileStorage.js', () => ({ readResumePdf }));
-const { reviewResume } = await import('../controllers/resumeFeedbackController.js');
+const { resumeFeedbackStatus, reviewResume } = await import('../controllers/resumeFeedbackController.js');
 
 function response() {
     const res = { set: jest.fn(), json: jest.fn(), status: jest.fn() };
@@ -26,6 +26,10 @@ test('requires a job seeker, explicit review action, and configured key', async 
     const fetch = jest.spyOn(globalThis, 'fetch');
     try {
         const res = response();
+        resumeFeedbackStatus({}, res);
+        expect(res.status).toHaveBeenLastCalledWith(401);
+        resumeFeedbackStatus({ session }, res);
+        expect(res.json).toHaveBeenLastCalledWith({ available: false });
         await reviewResume({}, res);
         expect(res.status).toHaveBeenLastCalledWith(401);
         await reviewResume({ session: { user: { role: 'recruiter' } } }, res);
@@ -42,6 +46,9 @@ test('requires a job seeker, explicit review action, and configured key', async 
 
 test('sends the signed-in seeker’s saved PDF and handles missing resumes and provider failures', async () => {
     const env = jest.replaceProperty(process, 'env', { ANTHROPIC_API_KEY: 'test-key' });
+    const availability = response();
+    resumeFeedbackStatus({ session }, availability);
+    expect(availability.json).toHaveBeenCalledWith({ available: true });
     const fetch = jest.spyOn(globalThis, 'fetch');
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({
         content: [{ type: 'text', text: JSON.stringify({ edits: [edit, fabricated, anotherQuestion, ready] }) }]

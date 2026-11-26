@@ -45,7 +45,7 @@ function response() {
     return res;
 }
 
-test('saves the revised bytes, preserves the first original across edits, and restores it', async () => {
+test('saves revised bytes and restores the first original across edits', async () => {
     const originalDate = new Date('2026-11-23');
     let user = {
         _id: userId, resumeFileId: original, resumeUploadedAt: originalDate,

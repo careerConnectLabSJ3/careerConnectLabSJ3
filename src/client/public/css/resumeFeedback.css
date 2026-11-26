@@ -1,3 +1,10 @@
+.resume-improver-nav {
+    width: min(1180px, calc(100% - 2rem));
+    margin: 1.25rem auto 0;
+}
+
+.resume-save-message { color: #176a4e; }
+
 .resume-improver {
     --review-ink: #17273a;
     --review-border: #dce4ec;
@@ -70,6 +77,30 @@
     width: 100%;
     height: auto;
 }
+
+/* PDF.js positions selectable text through these page-local variables. */
+.resume-pdf-page .textLayer {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    line-height: 1;
+    text-align: start;
+    text-size-adjust: none;
+    --scale-round-x: 1px;
+    --scale-round-y: 1px;
+    --min-font-size: 1;
+}
+
+.resume-pdf-page .textLayer :is(span, br) {
+    position: absolute;
+    color: transparent;
+    white-space: pre;
+    transform-origin: 0 0;
+    font-size: calc(var(--total-scale-factor) * var(--min-font-size) * var(--font-height, 0px));
+    transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1)) scale(calc(1 / var(--min-font-size)));
+}
+
+.resume-pdf-page .textLayer .markedContent { display: contents; }
 
 .resume-pdf-page-error,
 .resume-pdf > p,
@@ -248,6 +279,12 @@
 }
 
 .resume-review-error { color: #a22630; }
+.resume-action-error {
+    padding: 0.5rem 0.65rem;
+    background: #fff2f2;
+    border-radius: 5px;
+    overflow-wrap: anywhere;
+}
 .resume-decision { font-weight: 600; }
 .resume-decision.approved { color: var(--review-green); }
 

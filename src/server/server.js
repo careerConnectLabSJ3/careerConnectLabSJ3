@@ -13,7 +13,7 @@ const port = 3000;
 // Import Modules from validation.js to handle input validation
 import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile, saveResumeRevision, restoreOriginalResume } from './controllers/profileController.js';
-import { reviewResume } from './controllers/resumeFeedbackController.js';
+import { resumeFeedbackStatus, reviewResume } from './controllers/resumeFeedbackController.js';
 import { MAX_RESUME_SIZE } from './serverUtils/fileStorage.js';
 import User from './models/user.js';
 import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob, duplicateJob } from './controllers/jobController.js';
@@ -99,6 +99,7 @@ app.post('/api/profile/resume/revision', resumeUpload.single('resumeUpload'), sa
 app.post('/api/profile/resume/restore', restoreOriginalResume);
 app.delete('/api/profile/resume', deleteResume);
 app.post('/api/profile/resume-feedback', reviewResume);
+app.get('/api/profile/resume-feedback/status', resumeFeedbackStatus);
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
 app.post('/api/register', validateRegistration, registerUser);
