@@ -587,7 +587,7 @@ html:has(.opportunities) {
 }
 
 /* Personalized recommendations */
-.fresh-matches { border-top: 4px solid #6674d9; }
+.fresh-matches { border-top: 4px solid #6674d9; margin-bottom: 34px; }
 .matches-heading, .matches-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .matches-heading { justify-content: space-between; margin-bottom: 20px; }
 .matches-heading h2 { margin: 0 0 8px; color: #172f50; }
