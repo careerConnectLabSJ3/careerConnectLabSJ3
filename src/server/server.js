@@ -12,7 +12,10 @@ const port = 3000;
 
 // Import Modules from validation.js to handle input validation
 import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
-import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile } from './controllers/profileController.js';
+import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile, saveResumeRevision, restoreOriginalResume } from './controllers/profileController.js';
+import { resumeFeedbackStatus, reviewResume } from './controllers/resumeFeedbackController.js';
+import { getJobMatches } from './controllers/jobMatchingController.js';
+import { MAX_RESUME_SIZE } from './serverUtils/fileStorage.js';
 import User from './models/user.js';
 import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob, duplicateJob } from './controllers/jobController.js';
 
@@ -28,7 +31,9 @@ import {
 } from './controllers/applicationController.js';
 import { addFavoriteJob, removeFavoriteJob, getFavoriteJob, getMyFavoriteJobs } from './controllers/favoriteJobsController.js';
 import { checkEmail, checkSession, fetchCurrentUser, loginUser, logoutUser, registerUser } from './controllers/authController.js';
-import { checkUpcomingDeadlines, searchJob } from './controllers/jobSeekerController.js';
+
+// Merged imports (Your notifications + Teammate's recommendations)
+import { checkUpcomingDeadlines, searchJob, getRecommendations } from './controllers/jobSeekerController.js';
 import { getMyNotifications, dismissNotification } from './controllers/notificationController.js';
 
 // 2. MIDDLEWARE SETUP
@@ -57,7 +62,7 @@ const upload = multer({
 
 const resumeUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: MAX_RESUME_SIZE },
     fileFilter: (req, file, callback) => {
         const isPdf = file.mimetype === 'application/pdf' &&
             file.originalname.toLowerCase().endsWith('.pdf');
@@ -94,7 +99,11 @@ app.post('/api/profile', upload.single('pfpUpload'), updateProfile);
 // Resume management
 app.get('/api/profile/resume', getResume);
 app.post('/api/profile/resume', resumeUpload.single('resumeUpload'), uploadResume);
+app.post('/api/profile/resume/revision', resumeUpload.single('resumeUpload'), saveResumeRevision);
+app.post('/api/profile/resume/restore', restoreOriginalResume);
 app.delete('/api/profile/resume', deleteResume);
+app.post('/api/profile/resume-feedback', reviewResume);
+app.get('/api/profile/resume-feedback/status', resumeFeedbackStatus);
 
 // 8. AUTHENTICATION LOGIC (POST REQUESTS)
 app.post('/api/register', validateRegistration, registerUser);
@@ -106,6 +115,10 @@ app.get('/api/jobs/upcoming-deadlines', checkUpcomingDeadlines);
 
 // API route for Job Seekers to search and filter jobs
 app.get('/api/jobs/search', searchJob);
+app.post('/api/jobs/search', searchJob);
+app.get('/api/jobs/recommendations', getRecommendations);
+app.get('/api/jobs/matches', getJobMatches);
+app.post('/api/jobs/matches', getJobMatches);
 
 // Real job posting replaces the temporary dummy-job insertion route.
 app.get('/api/applications', getMyApplications);
@@ -137,15 +150,11 @@ app.delete('/api/jobs/:jobId/favorite', removeFavoriteJob);
 // Favorite Jobs Page
 app.get('/api/favorite-jobs', getMyFavoriteJobs);
 
-
-
-
-
 // Error handling using middleware
 app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            if (req.path === '/api/profile/resume') {
+            if (req.path.startsWith('/api/profile/resume')) {
                 return res.status(413).json({error: 'Resume must be 5MB or smaller.'});
             }
             return res.status(400).send({error: 'File size is too large. Maximum allowed size is 2MB.'});

@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import JobDetailsModal from './JobDetailsModal';
-import '../public/css/jobSeekerDashboard.css'; // Make sure this path is correct for your project structure
+import '../public/css/jobSeekerDashboard.css';
+import FreshMatches from './FreshMatches';
 
 export default function JobSeekerDashboard() {
-  const [jobs, setJobs] = useState([]);
-  const [searchTitle, setSearchTitle] = useState('');
-  const [searchDept, setSearchDept] = useState('');
-  const [searchLocation, setSearchLocation] = useState('');
+  // --- Teammate's FreshMatches state ---
+  const [result, setResult] = useState(null);
+  const tableRef = useRef(null);
+  const [minResultsHeight, setMinResultsHeight] = useState(0);
+  const [layouts, setLayouts] = useState({});
+  const [listing, setListing] = useState({ keywords: '', view: 'active', typing: false });
+  const [jobsError, setJobsError] = useState('');
+
+  // --- Your Notification & Dashboard state ---
   const [loading, setLoading] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [applications, setApplications] = useState([]);
@@ -19,6 +25,8 @@ export default function JobSeekerDashboard() {
   
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [searchRevision, setSearchRevision] = useState(0);
+  const lastSavedSearch = useRef('');
 
   async function loadApplications() {
     setApplicationsError('');
@@ -60,7 +68,8 @@ export default function JobSeekerDashboard() {
   };
 
   function handleApplied(jobId, applicationsCount) {
-    setJobs(currentJobs => currentJobs.map(job => job._id === jobId ? { ...job, applicationsCount } : job));
+    setResult(current => current && ({ ...current, jobs: current.jobs.map(job =>
+      job._id === jobId ? { ...job, applicationsCount } : job) }));
     loadApplications();
   }
 
@@ -98,23 +107,50 @@ export default function JobSeekerDashboard() {
     }
   }
 
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/jobs/search?title=${searchTitle}&department=${searchDept}&location=${searchLocation}`);
-      const data = await response.json();
-      setJobs(data);
+  useEffect(() => {
+    const controller = new AbortController();
+    const keywords = listing.keywords.trim();
+    const debounce = listing.typing && Boolean(keywords);
+    setLoading(true);
+    setJobsError('');
+    async function loadJobs() {
+      const params = new URLSearchParams({ keywords, view: listing.view });
+      try {
+        const response = await fetch('/api/jobs/search?' + params, {
+          method: 'GET', signal: controller.signal
+        });
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        if (!controller.signal.aborted) {
+          setResult({ jobs: data, view: listing.view, keywords });
+        }
+      } catch {
+        if (!controller.signal.aborted) setJobsError('Unable to load job listings. Please try again.');
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
     }
-    catch (error) {
-      console.error("Error connecting to search API:", error);
-    }
-    finally {
-      setLoading(false);
-    }
-  };
+    const timer = window.setTimeout(loadJobs, debounce ? 150 : 0);
+    const historyTimer = debounce && listing.view === 'active' ? window.setTimeout(async () => {
+      if (keywords.toLowerCase() === lastSavedSearch.current) return;
+      try {
+        const response = await fetch('/api/jobs/search?' + new URLSearchParams({ keywords, view: 'active' }), {
+          method: 'POST', signal: controller.signal
+        });
+        if (response.ok && !controller.signal.aborted) {
+          lastSavedSearch.current = keywords.toLowerCase();
+          setSearchRevision(value => value + 1);
+        }
+      } catch { /* A failed history save must not hide search results. */ }
+    }, 1200) : null;
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(historyTimer);
+      controller.abort();
+    };
+  }, [listing]);
 
   useEffect(() => {
-    fetchJobs();
     loadApplications();
     loadNotifications(); 
     
@@ -129,7 +165,22 @@ export default function JobSeekerDashboard() {
     };
     fetchDeadlines();
   }, []);
-    
+
+  const visibleResult = result?.view === listing.view ? result : null;
+  const layout = layouts[listing.view];
+  const measureColumns = visibleResult?.jobs.length > 0 &&
+    (!layout || (!layout.fullList && !visibleResult.keywords));
+  useLayoutEffect(() => {
+    if (!measureColumns || !tableRef.current) return;
+    const widths = Array.from(tableRef.current.tHead.rows[0].cells, cell => cell.getBoundingClientRect().width);
+    const total = widths.reduce((sum, width) => sum + width, 0);
+    if (!total) return;
+    setLayouts(current => ({ ...current, [visibleResult.view]: {
+      fullList: !visibleResult.keywords, widths: widths.map(width => 100 * width / total)
+    } }));
+  }, [measureColumns, visibleResult]);
+  const columnWidths = !measureColumns && layout?.widths;
+
   const applicationsByJob = new Map(
     applications.map(application => [String(application.job?._id || application.job), application])
   );
@@ -138,10 +189,20 @@ export default function JobSeekerDashboard() {
     return applicationsByJob.get(String(job._id))?.status || job.status;
   }
 
+  function switchView(view) {
+    const results = tableRef.current.parentElement;
+    const distanceBelowViewport = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+    setMinResultsHeight(window.scrollY > 0
+      ? Math.max(0, Math.ceil(results.offsetHeight - distanceBelowViewport))
+      : 0);
+    setListing({ ...listing, view, typing: false });
+  }
+
   return (
     <section className="dashboard-main">
       <h1 className="dashboard-title">Job Seeker Dashboard</h1>
 
+      {/* --- DEADLINE NOTIFICATION BANNER --- */}
       {upcomingDeadlines.length > 0 && (
         <div className="dashboard-notification-banner">
           <strong> Heads up!</strong> The following job postings are closing soon:
@@ -155,6 +216,7 @@ export default function JobSeekerDashboard() {
         </div>
       )}
 
+      {/* --- IN-APP NOTIFICATIONS --- */}
       <section className="in-app-notifications-panel">
         <h2>In-App Notifications</h2>
         {notifications.length === 0 ? (
@@ -179,6 +241,8 @@ export default function JobSeekerDashboard() {
           </ul>
         )}
       </section>
+
+      <FreshMatches onView={setSelectedJobId} applicationsByJob={applicationsByJob} searchRevision={searchRevision} />
 
       <section className="stats-section" aria-label="Application summary">
         <div className="stat-card stat-applied"><h3>Total Applied</h3><p className="stat-number">{applications.length}</p></div>
@@ -229,47 +293,36 @@ export default function JobSeekerDashboard() {
         </div>
       )}
 
-      <section className="dashboard-search-section">
-        <input 
-          type="text" 
-          placeholder="Search by job title..." 
-          value={searchTitle}
-          onChange={(e) => setSearchTitle(e.target.value)}
-          className="search-input-title"
-        />
-        <input 
-          type="text" 
-          placeholder="Filter by department..." 
-          value={searchDept}
-          onChange={(e) => setSearchDept(e.target.value)}
-          className="search-input-filter"
-        />
-        <input 
-          type="text" 
-          placeholder="Filter by location..." 
-          value={searchLocation}
-          onChange={(e) => setSearchLocation(e.target.value)}
-          className="search-input-filter"
-        />
-        <button onClick={fetchJobs} className="search-btn">
-          Search Jobs
-        </button>
-      </section>
-
       {selectedJobId && (
         <JobDetailsModal key={selectedJobId} jobId={selectedJobId}
           onClose={() => setSelectedJobId(null)} onApplied={handleApplied} />
       )}
 
-      <section className="applications-section">
-        <h2>Job Opportunities</h2>
+      <section className="applications-section opportunities" aria-labelledby="opportunities-title">
+        <div className="opportunities-heading">
+          <h2 id="opportunities-title">Job Opportunities</h2>
+          <div role="radiogroup" aria-label="Posting status" className="opportunities-views">
+            {['active', 'past'].map(view => (
+              <label key={view}>
+                <input type="radio" name="posting-status" value={view} checked={listing.view === view}
+                  onChange={() => switchView(view)} />
+                <span>{view === 'active' ? 'Active jobs' : 'Past jobs'}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <label className="opportunities-search">
+          Search jobs
+          <input type="search" placeholder="Search by title, skill, or company" maxLength={200}
+            value={listing.keywords} onChange={event =>
+              setListing({ ...listing, keywords: event.target.value, typing: true })} />
+        </label>
         
-        {loading ? (
-          <p>Loading active job listings...</p>
-        ) : jobs.length === 0 ? (
-          <p>No jobs found matching those search criteria.</p>
-        ) : (
-          <table className="applications-table">
+        <div className="opportunities-results" role="region" aria-label="Job listings" tabIndex={0} aria-busy={loading}
+          style={{ minHeight: minResultsHeight }}>
+          <table ref={tableRef} className="applications-table" style={{ tableLayout: columnWidths ? 'fixed' : 'auto' }}>
+            {columnWidths && <colgroup>{columnWidths.map((width, index) =>
+              <col key={index} style={{ width: width + '%' }} />)}</colgroup>}
             <thead>
               <tr>
                 <th>Job Title</th>
@@ -280,9 +333,16 @@ export default function JobSeekerDashboard() {
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
+              {jobsError || !visibleResult?.jobs.length ? (
+                <tr><td colSpan={5}>
+                  {jobsError ? <p role="alert">{jobsError} <button type="button"
+                    onClick={() => setListing({ ...listing, typing: false })}>Try again</button></p>
+                    : !visibleResult ? <p role="status">Loading listings…</p>
+                    : <p role="status">No {listing.view} jobs {visibleResult.keywords ? 'match your search.' : 'to show.'}</p>}
+                </td></tr>
+              ) : visibleResult.jobs.map((job) => (
                 <tr key={job._id}>
-                  <td className="company-name"><strong>{job.title}</strong></td>
+                  <td className="company-name"><strong>{job.title}</strong><div>{job.company} · {job.location} · {job.jobType || 'Not specified'}</div></td>
                   <td>{job.department}</td>
                   <td>{job.applicationsCount} candidates</td>
                   <td>
@@ -291,7 +351,7 @@ export default function JobSeekerDashboard() {
                     </span>
                   </td>
                   <td>
-                    <button type="button" onClick={() => setSelectedJobId(job._id)} aria-label={`View details for ${job.title}`}>
+                    <button type="button" className="application-details-button" onClick={() => setSelectedJobId(job._id)} aria-label={`View details for ${job.title}`}>
                       View details
                     </button>
                   </td>
@@ -299,7 +359,7 @@ export default function JobSeekerDashboard() {
               ))}
             </tbody>
           </table>
-        )}
+        </div>
       </section>
     </section>
   );

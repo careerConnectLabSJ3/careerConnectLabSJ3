@@ -1,20 +1,3 @@
-
-
-// Job status returns Open or Closed depending on if deadline date has passed
-export function checkJobStatus(deadlineString) {
-  if (!deadlineString) return 'Open'; // Default fallback if no deadline is specified
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to midnight for an accurate day-only comparison
-  
-  const deadlineDate = new Date(deadlineString);
-  deadlineDate.setHours(0, 0, 0, 0);
-
-  // If the deadline is today or in the future, it's Open; otherwise Closed
-  return deadlineDate >= today ? 'Open' : 'Closed';
-};
-
-
 // Returns formatted date
 export function formatDate(value) {
   if (!value) return 'Not available';

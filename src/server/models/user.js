@@ -15,6 +15,16 @@ const userSchema = new Schema({
     resumeFileSize: { type: Number, default: null },
     resumeMimeType: { type: String, default: null },
     resumeUploadedAt: { type: Date, default: null },
+    originalResume: {
+        type: new Schema({
+            fileId: Schema.Types.ObjectId,
+            fileName: String,
+            fileSize: Number,
+            uploadedAt: Date
+        }, { _id: false }),
+        default: null
+    },
+    recentSearches: [{ _id: false, keywords: String, searchedAt: Date }],
     favoriteJobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
 
 });

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { Link } from 'react-router-dom';
 import editSvgIcon from "/img/edit-pen.svg";
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
@@ -325,6 +326,9 @@ export default function Profile(){
               <button type="button" className="resume-delete-btn" onClick={handleResumeDelete} disabled={resumeUploading}>
                 Delete Resume
               </button>
+            )}
+            {resume && !resumeFile && !resumeUploading && (
+              <Link className="resume-improve-link" to="/profile/resume-improver">Improve resume with AI</Link>
             )}
           </div>
           {resumeUploading && (

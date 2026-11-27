@@ -90,6 +90,14 @@ export default function JobPostingForm({ onCancel, onPosted, editingJob = null }
         </div>
 
         <div className="job-posting-field">
+          <label htmlFor="job-type">Job type</label>
+          <select id="job-type" name="jobType" defaultValue={editingJob?.jobType || 'Not specified'}>
+            {['Not specified', 'Full-time', 'Part-time', 'Contract', 'Temporary', 'Internship'].map(type =>
+              <option key={type}>{type}</option>)}
+          </select>
+        </div>
+
+        <div className="job-posting-field">
           <label htmlFor="job-location">Location</label>
           <input id="job-location" name="location" type="text" defaultValue={editingJob?.location || ''} required />
         </div>

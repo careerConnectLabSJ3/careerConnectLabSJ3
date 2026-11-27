@@ -84,7 +84,26 @@ If you are connecting remotely to the hosted database, update your `.env` file t
 PORT=3000
 MONGODB_URI=mongodb+srv://SOEN341:<password>@cluster0.g11n5au.mongodb.net/careerConnect_db?appName=Cluster0
 ```
-**Make sure the .env file is located in src/server**
+Use `src/server/.env` for local setup. The backend resolves this path from its entry point so it works from any launch directory. Existing environment variables take precedence, followed by `src/server/.env` and then the repository-root `.env` for older local setups.
+
+### Resume Improver
+
+- **Purpose.** Help job seekers make specific, factual improvements to resume bullets before applying.
+- **Inputs.** A saved resume PDF up to 5 MB and, if requested, a short answer to a follow-up question.
+- **Model and prompt.** Claude Haiku 5.5 by default. The prompt prioritizes the candidate's contribution and measurable results, preserves existing facts, and discourages invented numbers. It draws on [MIT's Project, Action, Result method](https://capd.mit.edu/resources/resumes-writing-about-your-skills/) and [Penn Engineering's advice on showing technical work](https://careerservices.upenn.edu/a-few-resume-application-tips-from-jamie-grant-senior-associate-director-for-seas/). `ANTHROPIC_MODEL` can select another model that supports PDFs and structured output.
+- **Expected output.** Up to five inline edits, with ready-to-approve rewrites first. Go to **Profile → Improve resume with AI**, approve the edits you want, preview the PDF, then save it as your active resume. **Restore original** is available after saving.
+- **Validation.** The server validates the structured response and rejects new numeric claims that are missing from the supplied text or answer. The browser highlights edits only when the source text matches uniquely. Jest tests mock Anthropic and storage. Vitest covers reviewing, previewing, and saving. Use a fictional PDF to check the live flow.
+- **Limitations.** AI suggestions can be inaccurate. Scans without selectable text cannot be highlighted, and an edit cannot be saved if the revised text does not fit safely in the PDF. Requests are limited to five per user and 30 per server process per minute.
+- **Privacy.** Checking sends the full saved PDF to Anthropic. Follow-up answers are also sent. Recruiters reviewing past applications see the active resume. See [Anthropic's data retention terms](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention).
+- **Failure handling.** A missing key disables AI review and shows local setup instructions. Provider errors, timeouts, rate limits, and PDF export problems show a message by the action that failed. A failed preview or save leaves the active resume unchanged.
+
+To enable live feedback, add this line to the existing local `src/server/.env` file and restart the backend:
+
+```env
+ANTHROPIC_API_KEY=your_key_here
+```
+
+For deployment, set the key as a backend runtime secret. Git ignores local `.env` files. The automated tests do not need a key. See [Anthropic's pricing](https://platform.claude.com/docs/en/about-claude/pricing) for API costs.
 
 ## Run Application for **Production**
 Make sure you are in the project **root directory**
@@ -110,7 +129,7 @@ npm run lint
 
 ## Run tests
 
-Use Node.js 22.12 or newer in the Node 22 release line for this test setup. CI uses Node 22. Install the locked dependencies from the repository root:
+Use Node.js 22.13 or newer in the Node 22 release line for this test setup. CI uses Node 22. Install the locked dependencies from the repository root:
 
 ```bash
 npm ci
@@ -176,3 +195,14 @@ Before starting, ensure your machine has the proper tools installed depending on
 
 
 ---
+
+## AI job matching (#68)
+
+- **Purpose.** Help job seekers find active postings that fit their professional background, resume and recent search interests.
+- **Inputs.** Professional profile fields (skills, education and experience), a saved resume PDF up to 5 MB when available, up to 100 recent unique searches, and eligible active job postings.
+- **Model and prompt.** Claude Haiku 5.5 by default. The prompt asks for grounded matches, allows reasonable partial matches, recognizes related fields, compares requirements with supplied evidence, and returns a consistent 0–100 relevance score. `ANTHROPIC_MODEL` can select another supported model.
+- **Expected output.** Up to four ranked recommendations with a short explanation, matching skills, and qualifications not evidenced by the supplied information. Open the recommendation to view its details, save it, or apply. In case of a fallback, a non-AI recommended option is available.
+- **Validation.** The server checks the structured response, validates job IDs and scores, limits returned fields, rechecks job availability and existing applications, and ranks results after every batch. Jest tests mock Anthropic and storage. Vitest covers loading, confirmation, failures, and recommendation interactions.
+- **Limitations.** AI suggestions can be inaccurate and scores are model estimates, not verified qualification assessments. Large job catalogs require multiple provider calls, which can take time and use credits. Each batch is limited to 45 seconds, and matching runs are limited to five per user and 30 per server process per minute.
+- **Privacy.** Confirming sends professional profile fields, recent searches, eligible job content, and the saved resume PDF, including any contact details in that PDF, to Anthropic. Profile name, email, password, and account ID are excluded. No request or provider response bodies are logged or persisted. See [Anthropic's data retention terms](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention).
+- **Failure handling.** A missing key, unreadable resume, insufficient profile information, provider error, timeout, or rate limit shows an action-level error. Previous recommendations remain visible when a refresh fails, and a non-AI recommended option is available as the fallback.

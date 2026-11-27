@@ -1,10 +1,17 @@
-import 'dotenv/config';
-import dns from 'dns';         
+import dotenv from 'dotenv'; 
+import dns from 'dns';
 import mongoose from 'mongoose';
+import { fileURLToPath } from 'node:url';
 import app from '../server.js';
 import { initializeFileStorage } from '../serverUtils/fileStorage.js';
 
-// Force Node to use Google's DNS to fix the querySrv ENOTFOUND error
+// Resolve paths from this file so npm start and direct Node launches use the same settings.
+// The backend file takes priority; the repo-root file supports older local setups.
+dotenv.config({ path: [
+  fileURLToPath(new URL('../.env', import.meta.url)),
+  fileURLToPath(new URL('../../.env', import.meta.url))
+] });
+
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const port = process.env.PORT || 3000;

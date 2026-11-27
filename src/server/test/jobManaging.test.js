@@ -306,13 +306,13 @@ describe('job seeker visibility', () => {
 
     try {
       const job = Job.hydrate({ _id: jobId, status: 'Active', deadline: '2026-11-25' });
-      const find = jest.spyOn(Job, 'find').mockReturnValue({ sort: async () => [job] });
+      const find = jest.spyOn(Job, 'find').mockReturnValue({ sort: () => ({ lean: async () => [job.toObject()] }) });
       jest.spyOn(Job, 'findById').mockResolvedValue(job);
       jest.spyOn(JobApplication, 'exists').mockResolvedValue(null);
 
       const searchRes = response();
-      await searchJob({ query: {} }, searchRes);
-      expect(find.mock.calls[0][0].$or).toContainEqual({ publishDate: { $exists: false } });
+      await searchJob({ session: { user: { role: 'job_seeker' } }, query: {} }, searchRes);
+      expect(find.mock.calls[0][0].$or).toContainEqual({ publishDate: null });
       expect(job.publishDate).toBe('2026-11-17');
       expect(searchRes.body[0]._id.toString()).toBe(jobId);
 
@@ -353,19 +353,20 @@ describe('job seeker visibility', () => {
         captured.deadline = query;
       } else {
         captured.search = query;
+        return { sort: () => ({ lean: async () => [] }) };
       }
       return { sort: jest.fn(async () => []) };
     });
 
     const searchRes = response();
-    await searchJob({ query: {} }, searchRes);
+    await searchJob({ session: { user: { role: 'job_seeker' } }, query: {} }, searchRes);
     expect(searchRes.statusCode).toBe(200);
-    expect(captured.search.status).toStrictEqual({ $ne: 'Draft' });
+    expect(captured.search.status).toBe('Active');
     expect(Array.isArray(captured.search.$or)).toBe(true);
 
     const deadlineRes = response();
     await checkUpcomingDeadlines({}, deadlineRes);
     expect(deadlineRes.statusCode).toBe(200);
-    expect(captured.deadline.status).toStrictEqual({ $ne: 'Draft' });
+    expect(captured.deadline.status).toBe('Active');
   });
 });
