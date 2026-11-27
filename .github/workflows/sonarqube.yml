@@ -1,13 +1,11 @@
 name: SonarQube
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
-  
+
+jobs:  
   sonarqube:
     name: SonarQube Cloud Scan
     runs-on: ubuntu-latest
