@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import JobDetailsModal from './JobDetailsModal';
 import FreshMatches from './FreshMatches';
 
@@ -106,12 +106,12 @@ export default function JobSeekerDashboard() {
   const publishedTime = job => Math.max(Date.parse(job.publishedAt) || 0,
     Date.parse(job.publishDate) || 0,
     /^[a-f0-9]{24}$/i.test(job._id) ? parseInt(job._id.slice(0, 8), 16) * 1000 : 0);
-  const sortedJobs = [...(visibleResult?.jobs || [])].sort((a, b) => {
+  const sortedJobs = useMemo(() => [...(visibleResult?.jobs || [])].sort((a, b) => {
     const newest = publishedTime(b) - publishedTime(a) || String(b._id).localeCompare(String(a._id));
     if (sort === 'oldest') return -newest;
     if (sort === 'title') return a.title.localeCompare(b.title) || newest;
     return newest;
-  });
+  }), [visibleResult, sort]);
   const pageCount = Math.max(1, Math.ceil(sortedJobs.length / 25));
   const currentPage = Math.min(page, pageCount);
   const pageJobs = sortedJobs.slice((currentPage - 1) * 25, currentPage * 25);

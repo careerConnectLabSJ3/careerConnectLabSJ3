@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { startForRange, weeklyCounts } from '../utils/analyticsDates';
 
 const RANGES = [
   { value: '30', label: '30 days' },
@@ -9,26 +10,6 @@ const RANGES = [
 const STATUSES = ['Applied', 'Interview', 'Offer', 'Rejected'];
 const STATUS_COLORS = { Applied: '#2563eb', Interview: '#d97706', Offer: '#16a34a', Rejected: '#dc2626' };
 const getStatusColor = status => STATUS_COLORS[status];
-
-function startForRange(range, now = new Date()) {
-  if (range === 'all') return null;
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - Number(range) + 1);
-  return start;
-}
-
-function weekKey(date) {
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-  const mondayOffset = (day.getDay() + 6) % 7;
-  day.setDate(day.getDate() - mondayOffset);
-  return day.toISOString().slice(0, 10);
-}
-
-function shortDate(value) {
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`));
-}
 
 export default function ProfileAnalytics() {
   const [range, setRange] = useState('30');
@@ -62,28 +43,7 @@ export default function ProfileAnalytics() {
     status, count: filtered.filter(application => application.status === status).length
   })), [filtered]);
 
-  const weeks = useMemo(() => {
-    if (range === 'all') {
-      const keys = [...new Set(filtered.map(application => weekKey(application.appliedAt)))].sort();
-      return keys.slice(-8);
-    }
-    const count = range === '30' ? 5 : 13;
-    const now = new Date();
-    const current = weekKey(now);
-    const keys = [];
-    for (let index = count - 1; index >= 0; index -= 1) {
-      const date = new Date(`${current}T00:00:00`);
-      date.setDate(date.getDate() - index * 7);
-      keys.push(date.toISOString().slice(0, 10));
-    }
-    return keys;
-  }, [filtered, range]);
-
-  const weekly = weeks.map(key => ({
-    key,
-    label: shortDate(key),
-    count: filtered.filter(application => weekKey(application.appliedAt) === key).length
-  }));
+  const weekly = useMemo(() => weeklyCounts(filtered, range), [filtered, range]);
   const maxWeekly = Math.max(1, ...weekly.map(item => item.count));
   const maxStatus = Math.max(1, ...statusCounts.map(item => item.count));
 
@@ -118,35 +78,29 @@ export function RecruiterAnalytics() {
   const [range, setRange] = useState('30');
   const [jobs, setJobs] = useState(null);
   const [error, setError] = useState('');
+  const request = useRef(null);
   const load = useCallback(async () => {
+    request.current?.abort();
+    const controller = new AbortController();
+    request.current = controller;
     setError('');
+    setJobs(null);
     try {
-      const response = await fetch('/api/jobs/mine', { credentials: 'include' });
-      const ownedJobs = await response.json();
-      if (!response.ok) throw new Error(ownedJobs.error || 'Unable to load posting analytics.');
-      const withApplications = await Promise.all(ownedJobs.map(async job => {
-        const applicationsResponse = await fetch(`/api/jobs/${job._id}/applications`, { credentials: 'include' });
-        const applications = await applicationsResponse.json();
-        if (!applicationsResponse.ok) throw new Error(applications.error || 'Unable to load candidate analytics.');
-        return { ...job, applications: Array.isArray(applications) ? applications : [] };
-      }));
-      setJobs(withApplications);
+      const start = startForRange(range);
+      const query = start ? '?' + new URLSearchParams({ since: start.toISOString() }) : '';
+      const response = await fetch('/api/jobs/analytics' + query, { credentials: 'include', signal: controller.signal });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Unable to load posting analytics.');
+      if (!controller.signal.aborted) setJobs(data);
+
     } catch (requestError) {
-      setError(requestError.message || 'Unable to load posting analytics.');
+      if (!controller.signal.aborted) setError(requestError.message || 'Unable to load posting analytics.');
     }
-  }, []);
-  useEffect(() => { load(); }, [load]);
-  const start = startForRange(range);
-  const filteredJobs = (jobs || []).map(job => ({
-    ...job,
-    applications: job.applications.filter(application => {
-      const appliedAt = new Date(application.appliedAt);
-      return !Number.isNaN(appliedAt.valueOf()) && (!start || appliedAt >= start);
-    })
-  })).filter(job => job.applications.length > 0);
-  const maxApplicants = Math.max(1, ...filteredJobs.map(job => job.applications.length));
-  const maxStatus = Math.max(1, ...filteredJobs.map(job => job.applications.length));
-  const statusCount = (job, status) => job.applications.filter(application => application.status === status).length;
+  }, [range]);
+  useEffect(() => { load(); return () => request.current?.abort(); }, [load]);
+  const filteredJobs = (jobs || []).filter(job => job.total > 0);
+  const maxApplicants = Math.max(1, ...filteredJobs.map(job => job.total));
+  const statusCount = (job, status) => job.counts[status] || 0;
   return <section className="profile-analytics" aria-labelledby="recruiter-analytics-title">
     <div className="profile-analytics-heading">
       <div><p className="profile-eyebrow">HIRING PULSE</p><h2 id="recruiter-analytics-title">Your hiring overview</h2><p>Applicant volume and current candidate status for your postings. Statuses reflect the selected submission period.</p></div>
@@ -156,8 +110,8 @@ export function RecruiterAnalytics() {
     {error && <div className="profile-analytics-state profile-analytics-error" role="alert"><p>{error}</p><button type="button" onClick={load}>Try again</button></div>}
     {jobs !== null && !error && filteredJobs.length === 0 && <div className="profile-analytics-state"><p>No applicants in this period yet.</p><Link to="/dashboard">View your postings</Link></div>}
     {jobs !== null && !error && filteredJobs.length > 0 && <div className="profile-chart-grid">
-      <article className="profile-chart-card" aria-labelledby="posting-volume-title"><div className="profile-chart-card-heading"><div><h3 id="posting-volume-title">Applicants per posting</h3><p>Open a bar to review candidates</p></div><span aria-hidden="true">↗</span></div><div className="profile-vertical-bars" role="list" aria-label="Applicants per posting">{filteredJobs.map(job => <Link className="profile-vertical-bar-item" role="listitem" key={job._id} to={`/dashboard/jobs/${job._id}/applications`} aria-label={`${job.applications.length} applicants for ${job.title}`} title={`${job.applications.length} applicants · ${job.title}`}><span className="profile-vertical-bar-value">{job.applications.length}</span><span className="profile-vertical-bar-track"><span style={{ height: `${(job.applications.length / maxApplicants) * 100}%` }} /></span><span className="profile-vertical-bar-label">{job.title}</span></Link>)}</div></article>
-      <article className="profile-chart-card" aria-labelledby="candidate-status-title"><div className="profile-chart-card-heading"><div><h3 id="candidate-status-title">Candidate statuses</h3><p>Current status by posting</p></div><span aria-hidden="true">◔</span></div><div className="profile-legend" aria-label="Status legend">{STATUSES.map(status => <span key={status}><i className={`legend-${status.toLowerCase()}`} />{status}</span>)}</div><div className="profile-pie-grid" role="list" aria-label="Candidate status pies by posting">{filteredJobs.map(job => { const total = job.applications.length; let offset = 0; const segments = STATUSES.map(status => { const count = statusCount(job, status); const start = offset; offset += (count / total) * 100; return `${getStatusColor(status)} ${start}% ${offset}%`; }); return <Link className="profile-pie-card" role="listitem" key={job._id} to={`/dashboard/jobs/${job._id}/applications`} aria-label={`${job.title}: ${STATUSES.map(status => `${status} ${statusCount(job, status)}`).join(', ')}`} title={`${job.title}: ${STATUSES.map(status => `${status} ${statusCount(job, status)}`).join(' · ')}`}><span className="profile-pie" style={{ background: `conic-gradient(${segments.join(', ')})` }} aria-hidden="true" /><strong>{job.title}</strong><small>{total} {total === 1 ? 'applicant' : 'applicants'}</small><span className="profile-pie-counts">{STATUSES.map(status => <span key={status}><i className={`legend-${status.toLowerCase()}`} />{statusCount(job, status)}</span>)}</span></Link>; })}</div></article>
+      <article className="profile-chart-card" aria-labelledby="posting-volume-title"><div className="profile-chart-card-heading"><div><h3 id="posting-volume-title">Applicants per posting</h3><p>Open a bar to review candidates</p></div><span aria-hidden="true">↗</span></div><div className="profile-vertical-bars" role="list" aria-label="Applicants per posting">{filteredJobs.map(job => <Link className="profile-vertical-bar-item" role="listitem" key={job._id} to={`/dashboard/jobs/${job._id}/applications`} aria-label={`${job.total} applicants for ${job.title}`} title={`${job.total} applicants · ${job.title}`}><span className="profile-vertical-bar-value">{job.total}</span><span className="profile-vertical-bar-track"><span style={{ height: `${(job.total / maxApplicants) * 100}%` }} /></span><span className="profile-vertical-bar-label">{job.title}</span></Link>)}</div></article>
+      <article className="profile-chart-card" aria-labelledby="candidate-status-title"><div className="profile-chart-card-heading"><div><h3 id="candidate-status-title">Candidate statuses</h3><p>Current status by posting</p></div><span aria-hidden="true">◔</span></div><div className="profile-legend" aria-label="Status legend">{STATUSES.map(status => <span key={status}><i className={`legend-${status.toLowerCase()}`} />{status}</span>)}</div><div className="profile-pie-grid" role="list" aria-label="Candidate status pies by posting">{filteredJobs.map(job => { const total = job.total; let offset = 0; const segments = STATUSES.map(status => { const count = statusCount(job, status); const start = offset; offset += (count / total) * 100; return `${getStatusColor(status)} ${start}% ${offset}%`; }); return <Link className="profile-pie-card" role="listitem" key={job._id} to={`/dashboard/jobs/${job._id}/applications`} aria-label={`${job.title}: ${STATUSES.map(status => `${status} ${statusCount(job, status)}`).join(', ')}`} title={`${job.title}: ${STATUSES.map(status => `${status} ${statusCount(job, status)}`).join(' · ')}`}><span className="profile-pie" style={{ background: `conic-gradient(${segments.join(', ')})` }} aria-hidden="true" /><strong>{job.title}</strong><small>{total} {total === 1 ? 'applicant' : 'applicants'}</small><span className="profile-pie-counts">{STATUSES.map(status => <span key={status}><i className={`legend-${status.toLowerCase()}`} />{statusCount(job, status)}</span>)}</span></Link>; })}</div></article>
     </div>}
   </section>;
 }

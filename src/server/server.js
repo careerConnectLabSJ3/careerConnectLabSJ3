@@ -14,6 +14,7 @@ const port = 3000;
 import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile, saveResumeRevision, restoreOriginalResume } from './controllers/profileController.js';
 import { resumeFeedbackStatus, reviewResume } from './controllers/resumeFeedbackController.js';
+import { getRecruiterAnalytics } from './controllers/recruiterAnalyticsController.js';
 import { getJobMatches } from './controllers/jobMatchingController.js';
 import { MAX_RESUME_SIZE } from './serverUtils/fileStorage.js';
 import User from './models/user.js';
@@ -122,6 +123,7 @@ app.get('/api/applications', getMyApplications);
 app.patch('/api/applications/:applicationId/status', updateMyApplicationStatus);
 app.post('/api/jobs', createJob);
 app.get('/api/jobs/mine', getRecruiterJobs);
+app.get('/api/jobs/analytics', getRecruiterAnalytics);
 
 // action routes 
 app.post('/api/jobs/:jobId/duplicate', duplicateJob); 
