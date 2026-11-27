@@ -15,6 +15,8 @@ export default function JobSeekerDashboard() {
   const [applications, setApplications] = useState([]);
   const [applicationsError, setApplicationsError] = useState('');
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+  const [searchRevision, setSearchRevision] = useState(0);
+  const lastSavedSearch = useRef('');
 
   async function loadApplications() {
     setApplicationsError('');
@@ -47,11 +49,13 @@ export default function JobSeekerDashboard() {
       const params = new URLSearchParams({ keywords, view: listing.view });
       try {
         const response = await fetch('/api/jobs/search?' + params, {
-          method: debounce && listing.view === 'active' ? 'POST' : 'GET', signal: controller.signal
+          method: 'GET', signal: controller.signal
         });
         if (!response.ok) throw new Error();
         const data = await response.json();
-        if (!controller.signal.aborted) setResult({ jobs: data, view: listing.view, keywords });
+        if (!controller.signal.aborted) {
+          setResult({ jobs: data, view: listing.view, keywords });
+        }
       } catch {
         if (!controller.signal.aborted) setJobsError('Unable to load job listings. Please try again.');
       } finally {
@@ -59,8 +63,22 @@ export default function JobSeekerDashboard() {
       }
     }
     const timer = window.setTimeout(loadJobs, debounce ? 150 : 0);
+    // Listing refreshes are read-only. Save only after typing has settled.
+    const historyTimer = debounce && listing.view === 'active' ? window.setTimeout(async () => {
+      if (keywords.toLowerCase() === lastSavedSearch.current) return;
+      try {
+        const response = await fetch('/api/jobs/search?' + new URLSearchParams({ keywords, view: 'active' }), {
+          method: 'POST', signal: controller.signal
+        });
+        if (response.ok && !controller.signal.aborted) {
+          lastSavedSearch.current = keywords.toLowerCase();
+          setSearchRevision(value => value + 1);
+        }
+      } catch { /* A failed history save must not hide search results. */ }
+    }, 1200) : null;
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(historyTimer);
       controller.abort();
     };
   }, [listing]);
@@ -119,10 +137,6 @@ export default function JobSeekerDashboard() {
 
   return (
     <section className="dashboard-main">
-      <h1 className="dashboard-title">Job Seeker Dashboard</h1>
-
-      <FreshMatches onView={setSelectedJobId} applicationsByJob={applicationsByJob} />
-
       {/* --- DEADLINE NOTIFICATION BANNER --- */}
       {upcomingDeadlines.length > 0 && (
         <div style={{ 
@@ -143,6 +157,10 @@ export default function JobSeekerDashboard() {
           </ul>
         </div>
       )}
+
+      <h1 className="dashboard-title">Job Seeker Dashboard</h1>
+
+      <FreshMatches onView={setSelectedJobId} applicationsByJob={applicationsByJob} searchRevision={searchRevision} />
 
       <section className="stats-section" aria-label="Application summary">
         <div className="stat-card stat-applied"><h3>Total Applied</h3><p className="stat-number">{applications.length}</p></div>

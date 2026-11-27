@@ -195,3 +195,14 @@ Before starting, ensure your machine has the proper tools installed depending on
 
 
 ---
+
+## AI job matching (#68)
+
+- **Purpose.** Help job seekers find active postings that fit their professional background, resume and recent search interests.
+- **Inputs.** Professional profile fields (skills, education and experience), a saved resume PDF up to 5 MB when available, up to 100 recent unique searches, and eligible active job postings.
+- **Model and prompt.** Claude Haiku 5.5 by default. The prompt asks for grounded matches, allows reasonable partial matches, recognizes related fields, compares requirements with supplied evidence, and returns a consistent 0–100 relevance score. `ANTHROPIC_MODEL` can select another supported model.
+- **Expected output.** Up to four ranked recommendations with a short explanation, matching skills, and qualifications not evidenced by the supplied information. Open the recommendation to view its details, save it, or apply. In case of a fallback, a non-AI recommended option is available.
+- **Validation.** The server checks the structured response, validates job IDs and scores, limits returned fields, rechecks job availability and existing applications, and ranks results after every batch. Jest tests mock Anthropic and storage. Vitest covers loading, confirmation, failures, and recommendation interactions.
+- **Limitations.** AI suggestions can be inaccurate and scores are model estimates, not verified qualification assessments. Large job catalogs require multiple provider calls, which can take time and use credits. Each batch is limited to 45 seconds, and matching runs are limited to five per user and 30 per server process per minute.
+- **Privacy.** Confirming sends professional profile fields, recent searches, eligible job content, and the saved resume PDF, including any contact details in that PDF, to Anthropic. Profile name, email, password, and account ID are excluded. No request or provider response bodies are logged or persisted. See [Anthropic's data retention terms](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention).
+- **Failure handling.** A missing key, unreadable resume, insufficient profile information, provider error, timeout, or rate limit shows an action-level error. Previous recommendations remain visible when a refresh fails, and a non-AI recommended option is available as the fallback.
