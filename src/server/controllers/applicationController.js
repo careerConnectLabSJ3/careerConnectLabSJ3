@@ -3,6 +3,7 @@ import Job from '../models/job.js';
 import JobApplication from '../models/jobApplication.js';
 import { sendResume } from '../serverUtils/fileStorage.js';
 import { checkCorrectUser } from '../serverUtils/utils.js';
+import Notification from '../models/notification.js'; 
 
 export const APPLICATION_STATUSES = ['Applied', 'Interview', 'Rejected', 'Offer'];
 const APPLICANT_PROFILE_FIELDS = 'name email education experience skills';
@@ -233,9 +234,17 @@ export async function updateMyApplicationStatus(req, res) {
     }
 
     application.status = status;
-    application.interviewDate = status === 'Interview' ? (interviewDate ? new Date(interviewDate) : null) : null;
+    application.interviewDate = status === 'Interview' ? interviewDate ? new Date(interviewDate) : null : null;
 
     await application.save();
+
+    
+    await Notification.create({
+      user: application.applicant, 
+      type: 'StatusUpdate',
+      message: `Your application status for ${application.job.title} has been updated to: ${status}`,
+      job: application.job._id
+    });
 
     return res.json({ message: 'Application status updated.', application });
   } catch (error) {

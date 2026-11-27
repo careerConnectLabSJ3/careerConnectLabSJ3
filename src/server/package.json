@@ -2,15 +2,14 @@
   "name": "server",
   "private": "true",
   "version": "1.0.0",
-
-  "scripts": {
-  "start": "nodemon bin/www",
-  "production": "node bin/www",
-  "test": "node --test",
-  "test:unit": "node --test"
-},
   "license": "ISC",
   "type": "module",
+  "scripts": {
+    "start": "nodemon bin/www",
+    "production": "node bin/www",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
+    "test:unit": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "CareerConnect": "file:../..",

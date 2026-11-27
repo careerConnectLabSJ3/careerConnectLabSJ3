@@ -1,13 +1,15 @@
-import dotenv from 'dotenv';
-import dns from 'dns';
+import 'dotenv/config';
+import dns from 'dns';         
 import mongoose from 'mongoose';
 import app from '../server.js';
 import { initializeFileStorage } from '../serverUtils/fileStorage.js';
 
-dotenv.config();
+// Force Node to use Google's DNS to fix the querySrv ENOTFOUND error
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const port = process.env.PORT || 3000;
+
+
 
 (async () => {
   try {

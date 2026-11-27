@@ -16,6 +16,9 @@ export default function JobSeekerDashboard() {
   const [debugStatus, setDebugStatus] = useState('Applied');
   const [debugStatusError, setDebugStatusError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   async function loadApplications() {
     setApplicationsError('');
@@ -31,6 +34,32 @@ export default function JobSeekerDashboard() {
       setApplicationsError('Unable to load application statuses.');
     }
   }
+
+  // NEW: Fetch Notifications Function
+  const loadNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) setNotifications(data);
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    }
+  };
+
+  // NEW: Dismiss Notification Function
+  const handleDismissNotification = async (id) => {
+    try {
+      const res = await fetch(`/api/notifications/${id}/dismiss`, { 
+        method: 'PATCH',
+        credentials: 'include' 
+      });
+      if (res.ok) {
+        setNotifications(notifications.filter(n => n._id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to dismiss notification", err);
+    }
+  };
 
   function handleApplied(jobId, applicationsCount) {
     setJobs(currentJobs => currentJobs.map(job => job._id === jobId ? { ...job, applicationsCount } : job));
@@ -63,17 +92,15 @@ export default function JobSeekerDashboard() {
       }
       await loadApplications();
       setShowStatusDebugger(false);
+      loadNotifications(); // Reload notifications in case the status change generated a new one
     } catch (error) {
       setDebugStatusError('Unable to update the application status.');
     } finally {
       setUpdatingStatus(false);
     }
   }
-  
-  // NEW STATE FOR DEADLINES
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
 
-  // 2. FETCH DATA FUNCTION
+  // 2. FETCH DATA FUNCTIONS
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -93,6 +120,7 @@ export default function JobSeekerDashboard() {
   useEffect(() => {
     fetchJobs();
     loadApplications();
+    loadNotifications(); 
     
     // FETCH DEADLINES
     const fetchDeadlines = async () => {
@@ -106,7 +134,7 @@ export default function JobSeekerDashboard() {
     };
     fetchDeadlines();
   }, []);
-
+    
   const applicationsByJob = new Map(
     applications.map(application => [String(application.job?._id || application.job), application])
   );
@@ -139,6 +167,47 @@ export default function JobSeekerDashboard() {
           </ul>
         </div>
       )}
+
+      {/* --- IN-APP NOTIFICATION CENTER --- */}
+      <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
+        <h2>In-App Notifications</h2>
+        {notifications.length === 0 ? (
+          <p style={{ color: '#666' }}>No new notifications.</p>
+        ) : (
+          <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+            {notifications.map(notif => (
+              <li key={notif._id} style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                padding: '10px', 
+                borderBottom: '1px solid #eee' 
+              }}>
+                <div>
+                  <span style={{ 
+                    backgroundColor: '#e3f2fd', 
+                    color: '#0d47a1', 
+                    padding: '2px 6px', 
+                    borderRadius: '4px',
+                    fontSize: '0.85em',
+                    marginRight: '10px'
+                  }}>
+                    {notif.type}
+                  </span>
+                  {notif.message}
+                </div>
+                <button 
+                  onClick={() => handleDismissNotification(notif._id)}
+                  style={{ cursor: 'pointer', background: 'none', border: 'none', color: 'red', fontWeight: 'bold' }}
+                  title="Dismiss notification"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="stats-section" aria-label="Application summary">
         <div className="stat-card stat-applied"><h3>Total Applied</h3><p className="stat-number">{applications.length}</p></div>

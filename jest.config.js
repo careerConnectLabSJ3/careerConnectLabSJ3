@@ -5,5 +5,8 @@ export default {
   testMatch: [
     '<rootDir>/src/server/test/**/*.test.js',
     '<rootDir>/src/client/tests/**/*.unit.test.js'
-  ]
+  ],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
 };
