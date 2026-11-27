@@ -36,7 +36,7 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   await waitFor(() => expect(api.mock.calls.filter(([, options]) => options?.method === 'POST').map(([url]) => url))
     .toEqual(['/api/jobs/search?keywords=C%2B%2B+SQL&view=active']), { timeout: 2500 });
   expect(await section.findByText(job.title)).toBeInTheDocument();
-  expect(section.getByText('Atlas · Remote · Contract')).toBeInTheDocument();
+  expect(section.queryByText('Atlas · Remote · Contract')).not.toBeInTheDocument();
   fireEvent.click(section.getByRole('button', { name: job.title }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   const dialog = within(await screen.findByRole('dialog'));

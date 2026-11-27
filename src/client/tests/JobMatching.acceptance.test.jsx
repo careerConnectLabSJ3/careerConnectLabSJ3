@@ -12,25 +12,25 @@ it('requires confirmation for every AI run, permits cancel, and switches back to
   render(<FreshMatches {...props} />);
   await screen.findByText(job.title);
   expect(api.mock.calls.every(([, options]) => options.method === 'GET')).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Improve matches with AI' }));
+  fireEvent.click(screen.getByRole('button', { name: 'AI match' }));
   expect(screen.getByRole('dialog')).toHaveTextContent(/Anthropic/);
   expect(api).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Improve matches with AI' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm and generate AI matches' }));
+  fireEvent.click(screen.getByRole('button', { name: 'AI match' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Generate matches' }));
   await screen.findByText(/AI matches from your profile/);
   expect(api).toHaveBeenLastCalledWith('/api/jobs/matches', expect.objectContaining({ method: 'POST', body: JSON.stringify({ action: 'confirm-ai-matching' }) }));
-  fireEvent.click(screen.getByRole('button', { name: 'Refresh recommendations' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
   expect(screen.getByRole('dialog')).toBeInTheDocument();
   expect(api).toHaveBeenCalledTimes(2);
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Use search-only matches' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Search only' }));
   await screen.findByText(/AI is off/);
   expect(api).toHaveBeenLastCalledWith('/api/jobs/matches', expect.objectContaining({ method: 'GET' }));
 });
 
-it('filters recommendations and shows explanations, skills and missing evidence', async () => {
+it('shows recommendations without filters, with explanations, skills and missing evidence', async () => {
   vi.stubGlobal('fetch', vi.fn(async () => Response.json({ mode: 'search', jobs: [
     { ...job, matchingSkills: ['React'], missingQualifications: ['SQL'] },
     { ...job, _id: 'j2', title: 'Backend developer', location: 'Montreal', jobType: 'Full-time' }
@@ -39,10 +39,10 @@ it('filters recommendations and shows explanations, skills and missing evidence'
   await screen.findByText(job.title);
   expect(screen.getByText(/Matching skills/).parentElement).toHaveTextContent('React');
   expect(screen.getByText(/Not evidenced/).parentElement).toHaveTextContent('SQL');
-  fireEvent.change(screen.getByLabelText('Recommendation location'), { target: { value: 'Remote' } });
-  expect(screen.queryByText('Backend developer')).not.toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText('Recommendation job type'), { target: { value: 'Full-time' } });
-  expect(screen.getByRole('status')).toHaveTextContent('No matching jobs');
+  expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  expect(screen.getByText('Backend developer')).toBeInTheDocument();
+  expect(screen.getAllByText('Matches React.')[0]).toBeInTheDocument();
+
 });
 
 it('shows loading and provider errors, retains old results, and refreshes search-only when searches change', async () => {
@@ -55,9 +55,9 @@ it('shows loading and provider errors, retains old results, and refreshes search
   await screen.findByText(job.title);
   view.rerender(<FreshMatches {...props} searchRevision={1} />);
   await waitFor(() => expect(api).toHaveBeenCalledTimes(2));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Improve matches with AI' })).toBeEnabled());
-  fireEvent.click(screen.getByRole('button', { name: 'Improve matches with AI' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm and generate AI matches' }));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'AI match' })).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', { name: 'AI match' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Generate matches' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('AI matching failed.');
   expect(screen.getByText(job.title)).toBeVisible();
   fireEvent.click(within(screen.getByRole('alert')).getByRole('button'));
@@ -74,18 +74,15 @@ it('shows no more than four recommendation cards', async () => {
   expect(screen.queryByText('Match 4')).not.toBeInTheDocument();
 });
 
-it('refills four cards from reserves after filtering or applying', async () => {
+it('refills four cards from reserves after applying', async () => {
   const jobs = Array.from({ length: 8 }, (_, index) => ({ ...job, _id: `j${index}`, title: `Role ${index}`,
     location: index < 3 ? 'Montreal' : 'Remote', recommendationType: index > 3 ? 'discovery' : undefined }));
   vi.stubGlobal('fetch', vi.fn(async () => Response.json({ mode: 'search', jobs: jobs.slice(0, 4), alternatives: jobs.slice(4) })));
   const view = render(<FreshMatches {...props} />);
   await screen.findByText('Role 0');
-  fireEvent.change(screen.getByLabelText('Recommendation location'), { target: { value: 'Remote' } });
-  expect(screen.getAllByRole('listitem')).toHaveLength(4);
-  expect(screen.getByText('Role 6')).toBeInTheDocument();
   view.rerender(<FreshMatches {...props} applicationsByJob={new Map([['j3', {}]])} />);
   expect(screen.getAllByRole('listitem')).toHaveLength(4);
   expect(screen.queryByText('Role 3')).not.toBeInTheDocument();
-  expect(screen.getByText('Role 7')).toBeInTheDocument();
-  expect(screen.getAllByText('Broader suggestion')).toHaveLength(4);
+  expect(screen.getByText('Role 4')).toBeInTheDocument();
+  expect(screen.getAllByText('Broader suggestion')).toHaveLength(1);
 });
