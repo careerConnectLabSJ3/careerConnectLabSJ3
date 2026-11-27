@@ -64,6 +64,8 @@ it('paginates all jobs and resets the page when sorting or filtering', async () 
     if (url === '/api/jobs/matches') return Response.json({ mode: 'search', jobs: [] });
     if (url.startsWith('/api/jobs/search?')) {
       const view = new URL(url, 'http://localhost').searchParams.get('view');
+      // Exercise the loading transition instead of relying on immediate responses.
+      if (view === 'past') await new Promise(resolve => setTimeout(resolve, 50));
       return Response.json(jobs.filter(job => view === 'all' || job.status === (view === 'past' ? 'Closed' : 'Active')));
     }
     return Response.json([]);
@@ -83,7 +85,9 @@ it('paginates all jobs and resets the page when sorting or filtering', async () 
   expect(screen.getByText('Role 00')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
   fireEvent.click(screen.getByRole('radio', { name: 'Closed jobs' }));
-  await waitFor(() => expect(screen.queryByText('Role 00')).not.toBeInTheDocument());
+  // The old rows disappear before the filtered request completes.
+  await screen.findByText('Role 01');
+  expect(screen.queryByText('Role 00')).not.toBeInTheDocument();
   expect(screen.getAllByRole('row')).toHaveLength(26);
   expect(screen.queryByRole('navigation', { name: 'Job listing pages' })).not.toBeInTheDocument();
 });
