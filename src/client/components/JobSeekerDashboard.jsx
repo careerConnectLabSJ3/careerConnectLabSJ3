@@ -137,10 +137,6 @@ export default function JobSeekerDashboard() {
 
   return (
     <section className="dashboard-main">
-      <h1 className="dashboard-title">Job Seeker Dashboard</h1>
-
-      <FreshMatches onView={setSelectedJobId} applicationsByJob={applicationsByJob} searchRevision={searchRevision} />
-
       {/* --- DEADLINE NOTIFICATION BANNER --- */}
       {upcomingDeadlines.length > 0 && (
         <div style={{ 
@@ -161,6 +157,10 @@ export default function JobSeekerDashboard() {
           </ul>
         </div>
       )}
+
+      <h1 className="dashboard-title">Job Seeker Dashboard</h1>
+
+      <FreshMatches onView={setSelectedJobId} applicationsByJob={applicationsByJob} searchRevision={searchRevision} />
 
       <section className="stats-section" aria-label="Application summary">
         <div className="stat-card stat-applied"><h3>Total Applied</h3><p className="stat-number">{applications.length}</p></div>
