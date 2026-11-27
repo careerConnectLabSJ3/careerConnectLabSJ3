@@ -195,7 +195,9 @@ test('AI reviews all open jobs beyond the old cutoff with saved interests in eve
     expect(data.jobs).toHaveLength(4);
     expect(data.jobs[0]._id).toBe('job-84');
     expect(data.message).toContain('all 85');
-  } finally { env.restore(); }
+  } finally {
+    env.restore();
+  }
 });
 
 test('a later AI batch failure is reported rather than presenting incomplete coverage', async () => {
@@ -208,7 +210,9 @@ test('a later AI batch failure is reported rather than presenting incomplete cov
     expect(fetch).toHaveBeenCalledTimes(2);
     expect(res.status).toHaveBeenCalledWith(502);
     expect(res.json.mock.calls[0][0].jobs).toBeUndefined();
-  } finally { env.restore(); }
+  } finally {
+    env.restore();
+  }
 });
 
 test.each(['Frontend', 'Janitor'])('the API includes the latest %s title match in its four cards', keyword => {

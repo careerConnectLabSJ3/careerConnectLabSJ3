@@ -126,7 +126,7 @@ export function scoreSearchMatches(jobs, searches) {
                     reasons.add(term.literal === evidence ? term.literal : `${term.literal} → ${evidence}`);
                 }
             }
-            const relevance = (strength / query.length) * (covered / query.length);
+            const relevance = strength / query.length * (covered / query.length);
             if (index === 0) {
                 // Direct latest-title matches outrank accumulated old interests.
                 score = relevance + 2 * titleStrength / query.length;

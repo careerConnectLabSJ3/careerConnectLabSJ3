@@ -231,7 +231,7 @@ export async function updateMyApplicationStatus(req, res) {
     }
 
     application.status = status;
-    application.interviewDate = status === 'Interview' ? (interviewDate ? new Date(interviewDate) : null) : null;
+    application.interviewDate = status === 'Interview' ? interviewDate ? new Date(interviewDate) : null : null;
 
     await application.save();
 
