@@ -209,8 +209,6 @@ export async function getMyApplications(req, res) {
   }
 }
 
-// Temporary job-seeker debug route for exercising the application tracker
-// before recruiter-managed status updates are implemented.
 export async function updateMyApplicationStatus(req, res) {
   if (!checkCorrectUser(req, res, 'recruiter')) return;
   if (!mongoose.isObjectIdOrHexString(req.params.applicationId)) {
@@ -233,7 +231,7 @@ export async function updateMyApplicationStatus(req, res) {
     }
 
     application.status = status;
-    application.interviewDate = status === 'Interview' ? (interviewDate ? new Date(interviewDate) : null) : null;
+    application.interviewDate = status === 'Interview' ? interviewDate ? new Date(interviewDate) : null : null;
 
     await application.save();
 
