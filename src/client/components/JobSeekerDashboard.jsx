@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import JobDetailsModal from './JobDetailsModal';
+import '../public/css/jobSeekerDashboard.css'; // Make sure this path is correct for your project structure
 
 export default function JobSeekerDashboard() {
-  // 1. STATE MANAGERS
   const [jobs, setJobs] = useState([]);
   const [searchTitle, setSearchTitle] = useState('');
   const [searchDept, setSearchDept] = useState('');
@@ -35,7 +35,6 @@ export default function JobSeekerDashboard() {
     }
   }
 
-  // NEW: Fetch Notifications Function
   const loadNotifications = async () => {
     try {
       const res = await fetch('/api/notifications', { credentials: 'include' });
@@ -46,7 +45,6 @@ export default function JobSeekerDashboard() {
     }
   };
 
-  // NEW: Dismiss Notification Function
   const handleDismissNotification = async (id) => {
     try {
       const res = await fetch(`/api/notifications/${id}/dismiss`, { 
@@ -92,7 +90,7 @@ export default function JobSeekerDashboard() {
       }
       await loadApplications();
       setShowStatusDebugger(false);
-      loadNotifications(); // Reload notifications in case the status change generated a new one
+      loadNotifications(); 
     } catch (error) {
       setDebugStatusError('Unable to update the application status.');
     } finally {
@@ -100,7 +98,6 @@ export default function JobSeekerDashboard() {
     }
   }
 
-  // 2. FETCH DATA FUNCTIONS
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -116,13 +113,11 @@ export default function JobSeekerDashboard() {
     }
   };
 
-  // 3. HOOK: Run automatically when the dashboard mounts
   useEffect(() => {
     fetchJobs();
     loadApplications();
     loadNotifications(); 
     
-    // FETCH DEADLINES
     const fetchDeadlines = async () => {
         try {
             const res = await fetch('/api/jobs/upcoming-deadlines');
@@ -147,18 +142,10 @@ export default function JobSeekerDashboard() {
     <section className="dashboard-main">
       <h1 className="dashboard-title">Job Seeker Dashboard</h1>
 
-      {/* --- DEADLINE NOTIFICATION BANNER --- */}
       {upcomingDeadlines.length > 0 && (
-        <div style={{ 
-            backgroundColor: '#fff3cd', 
-            color: '#856404', 
-            padding: '15px', 
-            borderRadius: '15px', 
-            marginBottom: '20px',
-            border: '1px solid #ffeeba'
-        }}>
+        <div className="dashboard-notification-banner">
           <strong> Heads up!</strong> The following job postings are closing soon:
-          <ul style={{ marginTop: '10px', marginBottom: '0',listStyleType: 'none' }}>
+          <ul className="dashboard-notification-list">
             {upcomingDeadlines.map(job => (
               <li key={job._id}>
                 <strong>{job.title}</strong> at {job.company} - Deadline: {job.deadline}
@@ -168,37 +155,21 @@ export default function JobSeekerDashboard() {
         </div>
       )}
 
-      {/* --- IN-APP NOTIFICATION CENTER --- */}
-      <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
+      <section className="in-app-notifications-panel">
         <h2>In-App Notifications</h2>
         {notifications.length === 0 ? (
-          <p style={{ color: '#666' }}>No new notifications.</p>
+          <p className="no-notifications-text">No new notifications.</p>
         ) : (
-          <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+          <ul className="notifications-ul">
             {notifications.map(notif => (
-              <li key={notif._id} style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                padding: '10px', 
-                borderBottom: '1px solid #eee' 
-              }}>
+              <li key={notif._id} className="notification-item">
                 <div>
-                  <span style={{ 
-                    backgroundColor: '#e3f2fd', 
-                    color: '#0d47a1', 
-                    padding: '2px 6px', 
-                    borderRadius: '4px',
-                    fontSize: '0.85em',
-                    marginRight: '10px'
-                  }}>
-                    {notif.type}
-                  </span>
+                  <span className="notification-type-badge">{notif.type}</span>
                   {notif.message}
                 </div>
                 <button 
                   onClick={() => handleDismissNotification(notif._id)}
-                  style={{ cursor: 'pointer', background: 'none', border: 'none', color: 'red', fontWeight: 'bold' }}
+                  className="notification-dismiss-btn"
                   title="Dismiss notification"
                 >
                   ✕
@@ -258,30 +229,29 @@ export default function JobSeekerDashboard() {
         </div>
       )}
 
-      {/* --- SEARCH & FILTER INTERFACE SECTION --- */}
-      <section className="search-section" style={{ margin: '20px 0', display: 'flex', gap: '10px' }}>
+      <section className="dashboard-search-section">
         <input 
           type="text" 
           placeholder="Search by job title..." 
           value={searchTitle}
           onChange={(e) => setSearchTitle(e.target.value)}
-          style={{ padding: '8px', width: '250px' }}
+          className="search-input-title"
         />
         <input 
           type="text" 
           placeholder="Filter by department..." 
           value={searchDept}
           onChange={(e) => setSearchDept(e.target.value)}
-          style={{ padding: '8px', width: '200px' }}
+          className="search-input-filter"
         />
         <input 
           type="text" 
           placeholder="Filter by location..." 
           value={searchLocation}
           onChange={(e) => setSearchLocation(e.target.value)}
-          style={{ padding: '8px', width: '200px' }}
+          className="search-input-filter"
         />
-        <button onClick={fetchJobs} style={{ padding: '8px 16px', cursor: 'pointer' }}>
+        <button onClick={fetchJobs} className="search-btn">
           Search Jobs
         </button>
       </section>
