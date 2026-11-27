@@ -56,6 +56,8 @@ test('records an active search and later recommends a newer posting for that see
   expect(find.mock.calls[0][0].$and[0].$or).toContainEqual({ title: { $regex: 'c\\+\\+|sql', $options: 'i' } });
   const past = await fetch(origin + search + params + '&view=past', { headers });
   expect((await past.json()).map(job => job._id)).toEqual(['expired', 'closed']);
+  const all = await fetch(origin + search + params + '&view=all', { headers });
+  expect((await all.json()).map(job => job.status)).toEqual(['Active', 'Active', 'Closed', 'Closed']);
   expect(save).toHaveBeenCalledTimes(1);
   const applied = jest.spyOn(JobApplication, 'distinct').mockResolvedValue(['applied']);
   const searched = recentSearches[0].searchedAt.getTime();

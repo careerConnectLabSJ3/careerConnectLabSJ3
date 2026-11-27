@@ -69,3 +69,5 @@
   .profile-details { padding: 0 20px 8px; }
   .profile-edit-actions { padding: 16px 20px; }
 }
+
+.profile-preview-label { display: block; margin-top: 6px; text-align: center; color: #596a7e; font-size: .75rem; }

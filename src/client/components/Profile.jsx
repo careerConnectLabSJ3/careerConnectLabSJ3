@@ -127,6 +127,18 @@ export default function Profile(){
     setError("");
   }
 
+  function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setError('Choose a PNG or JPEG image up to 2MB.');
+      event.target.value = '';
+      return;
+    }
+    setError('');
+    setFormData(current => ({ ...current, pfpUpload: file }));
+  }
+
   function handleCancel(){
     if (originalFormData) {
       setFormData({...originalFormData, pfpUpload: null});
@@ -253,7 +265,11 @@ export default function Profile(){
   }, []);
 
   useEffect(() => {
-    if (!formData.pfpUpload) { setAvatarPreview(''); return; }
+    if (!formData.pfpUpload) {
+      setAvatarPreview('');
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+      return;
+    }
     const url = URL.createObjectURL(formData.pfpUpload);
     setAvatarPreview(url);
     return () => URL.revokeObjectURL(url);
@@ -277,9 +293,10 @@ export default function Profile(){
           <section className="profile-card" aria-label="Personal profile">
             <div className="profile-identity">
               <div className="profile-avatar-wrap">
-                <img className="profile-avatar" src={avatarPreview || `/api/profile/avatar?v=${avatarVersion}`} alt="Your profile" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/img/default-pfp.png'; }}/>
+                <img className="profile-avatar" src={avatarPreview || `/api/profile/avatar?v=${avatarVersion}`} alt={avatarPreview ? "Profile photo preview" : "Your profile"} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/img/default-pfp.png'; }}/>
                 {!isDisabled && <IconButton icon="camera" label="Change profile photo" className="profile-camera" disabled={saving} onClick={() => avatarInputRef.current?.click()}/>}
-                <input ref={avatarInputRef} type="file" id="pfp-upload" name="pfpUpload" accept="image/png,image/jpeg" hidden disabled={isDisabled || saving} onChange={(event) => setFormData(prev => ({ ...prev, pfpUpload: event.target.files[0] || null }))}/>
+                {avatarPreview && <span className="profile-preview-label" role="status">Preview</span>}
+                <input ref={avatarInputRef} type="file" id="pfp-upload" name="pfpUpload" accept="image/png,image/jpeg" hidden disabled={isDisabled || saving} aria-label="Choose profile photo" onChange={handleAvatarChange}/>
               </div>
               <div className="profile-identity-text">
                 <p className="profile-eyebrow">{role === 'job_seeker' ? 'JOB SEEKER' : role === 'recruiter' ? 'RECRUITER' : 'PERSONAL PROFILE'}</p>

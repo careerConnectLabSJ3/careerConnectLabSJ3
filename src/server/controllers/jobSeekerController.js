@@ -31,17 +31,17 @@ function keywordsOf(query) {
 export async function searchJob(req, res) {
     if (!checkCorrectUser(req, res, 'job_seeker')) return;
     const { keywords = '', view = 'active' } = req.query;
-    if (typeof keywords !== 'string' || keywords.length > 200 || !['active', 'past'].includes(view)) {
+    if (typeof keywords !== 'string' || keywords.length > 200 || !['all', 'active', 'past'].includes(view)) {
         return res.status(400).json({ error: 'Invalid search. Use up to 200 characters.' });
     }
     const terms = keywordsOf(keywords);
     const searchedAt = new Date();
-    const filter = { ...publishedJobs(), status: view === 'past' ? { $in: ['Active', 'Closed'] } : 'Active' };
+    const filter = { ...publishedJobs(), status: view !== 'active' ? { $in: ['Active', 'Closed'] } : 'Active' };
     if (terms.length) filter.$and = [keywordFilter(terms)];
     const jobs = await Job.find(filter).sort({ deadline: 1, _id: 1 }).lean();
     const status = view === 'past' ? 'Closed' : 'Active';
-    const matches = jobs.filter(job => getJobLifecycleStatus(job) === status).
-        map(job => ({ job: { ...job, status }, score: matchCount(job, terms) })).
+    const matches = jobs.filter(job => view === 'all' ? ['Active', 'Closed'].includes(getJobLifecycleStatus(job)) : getJobLifecycleStatus(job) === status).
+        map(job => ({ job: { ...job, status: getJobLifecycleStatus(job) }, score: matchCount(job, terms) })).
         sort((a, b) => b.score - a.score);
     if (req.method === 'POST' && terms.length && view === 'active') {
         await User.updateOne({ _id: req.session.user.id }, {

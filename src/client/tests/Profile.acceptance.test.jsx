@@ -37,6 +37,24 @@ describe('Profile interactions', () => {
     expect(screen.getByRole('button', { name: 'Edit profile' })).toBeInTheDocument();
   });
 
+  it('previews a selected avatar locally and restores the saved photo on cancel', async () => {
+    const create = vi.fn(() => 'blob:avatar-preview');
+    const revoke = vi.fn();
+    vi.stubGlobal('URL', class extends URL {
+      static createObjectURL = create;
+      static revokeObjectURL = revoke;
+    });
+    render(<MemoryRouter><Profile/></MemoryRouter>);
+    await screen.findByText('Alex Morgan');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit profile' }));
+    fireEvent.change(screen.getByLabelText('Choose profile photo'), { target: { files: [new File(['photo'], 'photo.png', { type: 'image/png' })] } });
+    expect(screen.getByAltText('Profile photo preview')).toHaveAttribute('src', 'blob:avatar-preview');
+    expect(fetch.mock.calls.some(([url]) => url === '/api/profile')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByAltText('Your profile').getAttribute('src')).toMatch(/^\/api\/profile\/avatar/);
+    expect(revoke).toHaveBeenCalledWith('blob:avatar-preview');
+  });
+
   it('deletes a resume and offers upload again', async () => {
     render(<MemoryRouter><Profile/></MemoryRouter>);
     await screen.findByText('alex.pdf');

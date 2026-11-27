@@ -49,10 +49,41 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   expect(api).toHaveBeenCalledWith('/api/jobs/j1/applications', expect.objectContaining({ method: 'POST' }));
   fireEvent.click(dialog.getByRole('button', { name: 'Close' }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('radio', { name: 'Past jobs' }));
+  fireEvent.click(screen.getByRole('radio', { name: 'Closed jobs' }));
   expect(await screen.findByText('Past engineer')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'View details for Systems engineer' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('radio', { name: 'Active jobs' }));
   fireEvent.change(input, { target: { value: 'nursing' } });
   expect(await screen.findByText(/no active jobs match/i)).toBeInTheDocument();
+});
+
+it('paginates all jobs and resets the page when sorting or filtering', async () => {
+  const jobs = Array.from({ length: 51 }, (_, i) => ({ _id: `job${i}`, title: `Role ${String(i).padStart(2, '0')}`,
+    status: i % 2 ? 'Closed' : 'Active', publishedAt: new Date(2026, 0, i + 1).toISOString() }));
+  vi.stubGlobal('fetch', vi.fn(async url => {
+    if (url === '/api/jobs/matches') return Response.json({ mode: 'search', jobs: [] });
+    if (url.startsWith('/api/jobs/search?')) {
+      const view = new URL(url, 'http://localhost').searchParams.get('view');
+      return Response.json(jobs.filter(job => view === 'all' || job.status === (view === 'past' ? 'Closed' : 'Active')));
+    }
+    return Response.json([]);
+  }));
+  render(<JobSeekerDashboard />);
+  await screen.findByText('Role 50');
+  expect(screen.getByRole('radio', { name: 'All jobs' })).toBeChecked();
+  expect(screen.getAllByRole('row')).toHaveLength(26);
+  expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+  expect(screen.getByText('Role 25')).toBeInTheDocument();
+  expect(screen.queryByText('Role 50')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+  expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled();
+  fireEvent.change(screen.getByRole('combobox', { name: 'Sort jobs' }), { target: { value: 'oldest' } });
+  expect(screen.getByText('Role 00')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('radio', { name: 'Closed jobs' }));
+  await waitFor(() => expect(screen.queryByText('Role 00')).not.toBeInTheDocument());
+  expect(screen.getAllByRole('row')).toHaveLength(26);
+  expect(screen.queryByRole('navigation', { name: 'Job listing pages' })).not.toBeInTheDocument();
 });
