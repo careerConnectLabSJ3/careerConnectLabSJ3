@@ -4,10 +4,9 @@ import {Readable} from 'stream';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { gfsBucket, resumeBucket, sendResume } from '../serverUtils/fileStorage.js';
+import { gfsBucket, resumeBucket, sendResume, MAX_RESUME_SIZE } from '../serverUtils/fileStorage.js';
 import { convertToSafeFilename, isPdf, checkCorrectUser } from '../serverUtils/utils.js';
 
-const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
 
 function uploadToGridFS(file) {
@@ -41,6 +40,23 @@ async function deleteFromGridFS(fileId) {
     }
 }
 
+function resumeMetadata(user) {
+    if (!user.resumeFileId) return null;
+    return {
+        fileName: user.resumeFileName,
+        fileSize: user.resumeFileSize,
+        uploadedAt: user.resumeUploadedAt,
+        version: String(user.resumeFileId),
+        hasOriginal: Boolean(user.originalResume?.fileId)
+    };
+}
+
+function resumeFileError(file) {
+    if (!file) return 'Please select a PDF resume to upload.';
+    if (file.size > MAX_RESUME_SIZE) return 'Resume must be 5MB or smaller.';
+    if (!isPdf(file)) return 'Only valid PDF files can be uploaded as resumes.';
+    return '';
+}
 
 export async function fetchUserProfile(req, res){
     const currUser = req.session.user;
@@ -59,11 +75,7 @@ export async function fetchUserProfile(req, res){
         education: user.education,
         experience: user.experience,
         skills: user.skills,
-        resume: user.resumeFileId ? {
-            fileName: user.resumeFileName,
-            fileSize: user.resumeFileSize,
-            uploadedAt: user.resumeUploadedAt
-        } : null
+        resume: resumeMetadata(user)
     });
 }
 
@@ -213,7 +225,7 @@ export async function getResume(req, res) {
     }
 }
 
-export async function uploadResume(req, res) {
+async function saveResume(req, res, isRevision) {
     let newResumeId;
 
     try {
@@ -224,42 +236,48 @@ export async function uploadResume(req, res) {
             return res.status(403).json({ error: 'Only job seekers can manage resumes.' });
         }
 
-        if (!req.file) {
-            return res.status(400).json({ error: 'Please select a PDF resume to upload.' });
-        }
-
-        if (req.file.size > MAX_RESUME_SIZE) {
-            return res.status(413).json({ error: 'Resume must be 5MB or smaller.' });
-        }
-
-        if (!isPdf(req.file)) {
-            return res.status(400).json({ error: 'Only valid PDF files can be uploaded as resumes.' });
-        }
+        const error = resumeFileError(req.file);
+        if (error) return res.status(req.file?.size > MAX_RESUME_SIZE ? 413 : 400).json({ error });
 
         const user = await User.findOne({ email: req.session.user.email });
         if (!user) {
             return res.status(404).json({ error: 'User not found.' });
         }
 
-        newResumeId = await uploadToGridFS(req.file);
         const previousResumeId = user.resumeFileId;
+        if (isRevision && (!previousResumeId || req.body?.version !== String(previousResumeId))) {
+            return res.status(409).json({ error: 'Your resume changed. Reload before saving edits.' });
+        }
+        const previousOriginal = user.originalResume;
+        const originalResume = isRevision ? previousOriginal || {
+            fileId: previousResumeId, fileName: user.resumeFileName,
+            fileSize: user.resumeFileSize, uploadedAt: user.resumeUploadedAt
+        } : null;
 
-        user.resumeFileId = newResumeId;
-        user.resumeFileName = convertToSafeFilename(req.file.originalname);
-        user.resumeFileSize = req.file.size;
-        user.resumeMimeType = 'application/pdf';
-        user.resumeUploadedAt = new Date();
-        await user.save();
-
-        await deleteFromGridFS(previousResumeId);
+        newResumeId = await uploadToGridFS(req.file);
+        const updated = await User.findOneAndUpdate({ _id: user._id, resumeFileId: previousResumeId || null }, {
+            $set: {
+                resumeFileId: newResumeId,
+                resumeFileName: convertToSafeFilename(req.file.originalname),
+                resumeFileSize: req.file.size,
+                resumeMimeType: 'application/pdf',
+                resumeUploadedAt: new Date(),
+                originalResume
+            }
+        }, { new: true });
+        if (!updated) {
+            await deleteFromGridFS(newResumeId);
+            return res.status(409).json({ error: 'Your resume changed. Reload and try again.' });
+        }
+        newResumeId = null;
+        if (!isRevision || String(previousResumeId) !== String(originalResume.fileId)) {
+            await deleteFromGridFS(previousResumeId);
+        }
+        if (!isRevision) await deleteFromGridFS(previousOriginal?.fileId);
 
         return res.status(200).json({
-            message: 'Resume uploaded successfully.',
-            resume: {
-                fileName: user.resumeFileName,
-                fileSize: user.resumeFileSize,
-                uploadedAt: user.resumeUploadedAt
-            }
+            message: isRevision ? 'Updated resume saved.' : 'Resume uploaded successfully.',
+            resume: resumeMetadata(updated)
         });
     } catch (error) {
         if (newResumeId) {
@@ -267,6 +285,40 @@ export async function uploadResume(req, res) {
         }
         console.error('Resume upload failed:', error);
         return res.status(500).json({ error: 'Unable to save the resume.' });
+    }
+}
+
+export function uploadResume(req, res) {
+    return saveResume(req, res, false);
+}
+
+export function saveResumeRevision(req, res) {
+    return saveResume(req, res, true);
+}
+
+export async function restoreOriginalResume(req, res) {
+    if (!checkCorrectUser(req, res, 'job_seeker')) return;
+    try {
+        const user = await User.findOne({ email: req.session.user.email });
+        if (!user?.originalResume?.fileId) {
+            return res.status(404).json({ error: 'No original resume is available to restore.' });
+        }
+        if (req.body?.version !== String(user.resumeFileId)) {
+            return res.status(409).json({ error: 'Your resume changed. Reload and try again.' });
+        }
+        const original = user.originalResume;
+        const updated = await User.findOneAndUpdate({ _id: user._id, resumeFileId: user.resumeFileId }, {
+            $set: {
+                resumeFileId: original.fileId, resumeFileName: original.fileName,
+                resumeFileSize: original.fileSize, resumeMimeType: 'application/pdf',
+                resumeUploadedAt: original.uploadedAt, originalResume: null
+            }
+        }, { new: true });
+        if (!updated) return res.status(409).json({ error: 'Your resume changed. Reload and try again.' });
+        await deleteFromGridFS(user.resumeFileId);
+        return res.json({ message: 'Original resume restored.', resume: resumeMetadata(updated) });
+    } catch {
+        return res.status(500).json({ error: 'Unable to restore the original resume.' });
     }
 }
 
@@ -284,13 +336,15 @@ export async function deleteResume(req, res) {
             return res.status(404).json({ error: 'User not found.' });
         }
 
+        const updated = await User.findOneAndUpdate({ _id: user._id, resumeFileId: user.resumeFileId || null }, {
+            $set: {
+                resumeFileId: null, resumeFileName: null, resumeFileSize: null,
+                resumeMimeType: null, resumeUploadedAt: null, originalResume: null
+            }
+        });
+        if (!updated) return res.status(409).json({ error: 'Your resume changed. Reload and try again.' });
         await deleteFromGridFS(user.resumeFileId);
-        user.resumeFileId = null;
-        user.resumeFileName = null;
-        user.resumeFileSize = null;
-        user.resumeMimeType = null;
-        user.resumeUploadedAt = null;
-        await user.save();
+        await deleteFromGridFS(user.originalResume?.fileId);
 
         return res.status(200).json({ message: 'Resume deleted successfully.' });
     } catch (error) {
