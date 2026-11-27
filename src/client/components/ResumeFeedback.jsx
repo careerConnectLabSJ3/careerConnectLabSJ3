@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '../public/css/resumeFeedback.css';
+import ProfileIcon from './ProfileIcon';
 
 const ResumePdf = lazy(() => import('./ResumePdf'));
 
@@ -28,27 +29,28 @@ function EditCard({ edit, decision, busy, onDecide, onRewrite }) {
   return (
     <section className="resume-edit-card" aria-label={`Edit ${edit.id}`}>
       <h3>{edit.reason}</h3>
+      <p className="resume-comparison-label">Original</p>
       <blockquote className={decision === 'skipped' ? 'skipped' : ''}><del>{edit.original}</del></blockquote>
-      {edit.replacement && <p className="resume-rewrite">{edit.replacement}</p>}
+      {edit.replacement && <><p className="resume-comparison-label">Suggested</p><p className="resume-rewrite">{edit.replacement}</p></>}
       {questionVisible && (
         <form onSubmit={event => { event.preventDefault(); onRewrite(edit, answer.trim()); }}>
           <label htmlFor="resume-edit-answer">{edit.question}</label>
           <input id="resume-edit-answer" type="text" maxLength={160} value={answer} disabled={busy}
             placeholder="Short answer" onChange={event => setAnswer(event.target.value)} />
-          <button type="submit" disabled={busy || !answer.trim()}>Rewrite bullet</button>
+          <button type="submit" disabled={busy || !answer.trim()}><ProfileIcon name="sparkle"/>Rewrite bullet</button>
         </form>
       )}
       <div className="resume-review-actions">
         {decision ? (
           <>
             <span className={`resume-decision ${decision}`}>{decision === 'approved' ? 'Approved' : 'Skipped'}</span>
-            <button type="button" onClick={() => onDecide(edit.id, null)}>Undo</button>
+            <button type="button" aria-label="Undo" title="Undo decision" disabled={busy} onClick={() => onDecide(edit.id, null)}><ProfileIcon name="undo"/></button>
           </>
         ) : (
           <>
             {edit.replacement && <button className="resume-approve" type="button" disabled={busy}
-              onClick={() => onDecide(edit.id, 'approved')}>Approve</button>}
-            <button type="button" disabled={busy} onClick={() => onDecide(edit.id, 'skipped')}>Skip</button>
+              onClick={() => onDecide(edit.id, 'approved')}><ProfileIcon name="check"/>Approve</button>}
+            <button type="button" aria-label="Skip" title="Skip suggestion" disabled={busy} onClick={() => onDecide(edit.id, 'skipped')}><ProfileIcon name="close"/></button>
             {edit.replacement && edit.question && !addingDetail && (
               <button className="resume-add-detail" type="button" disabled={busy} onClick={() => setAddingDetail(true)}>
                 Add detail
@@ -217,10 +219,11 @@ export default function ResumeFeedback({ resume, onResumeSaved }) {
     <section className="resume-improver" aria-labelledby="resume-improver-title">
       <header className="resume-improver-heading">
         <div>
-          <h2 id="resume-improver-title">Resume Improver</h2>
-          {resume && <p>{resume.fileName}</p>}
+          <p className="resume-eyebrow">YOUR NEXT CHAPTER</p>
+          <h1 id="resume-improver-title">Résumé review <span className="resume-ai-badge"><ProfileIcon name="sparkle"/>AI</span></h1>
+          <p>Small edits. A stronger first impression.</p>
         </div>
-        {resume && <a className="resume-original" href="/api/profile/resume" target="_blank" rel="noreferrer">Open PDF</a>}
+        {resume && <a className="resume-original" href="/api/profile/resume" target="_blank" rel="noreferrer" aria-label={`Open PDF: ${resume.fileName}`} title="Open PDF in a new tab"><ProfileIcon name="file"/><span>{resume.fileName}</span><ProfileIcon name="arrow"/></a>}
       </header>
 
       {!resume ? <p className="resume-improver-empty">Upload and save a PDF on your profile to start.</p> : (
@@ -233,21 +236,24 @@ export default function ResumeFeedback({ resume, onResumeSaved }) {
           </Suspense>
 
           <aside className="resume-review-panel" ref={panel} aria-label="Review suggestions">
-            <h3>{preview ? 'Review updated PDF' : 'Review'}</h3>
+            <div className="resume-panel-heading"><span className="resume-panel-icon"><ProfileIcon name={preview ? 'eye' : 'sparkle'}/></span><div><p className="resume-eyebrow">{preview ? 'FINAL LOOK' : 'AI ASSISTANT'}</p><h3>{preview ? 'Review updated PDF' : 'Make every word count'}</h3></div></div>
+            {!preview && !edits && <p className="resume-panel-intro">Find clearer, stronger ways to tell your story. You choose which edits to keep.</p>}
             {preview ? (
               <>
                 <p>Saving replaces the resume recruiters can view, including on past applications. You can restore your original.</p>
                 <button className="resume-run" type="button" onClick={() => updateSavedResume()}
-                  disabled={Boolean(busy) || !previewPageCount}>{busy === 'save' ? 'Saving…' : 'Save updated resume'}</button>
+                  disabled={Boolean(busy) || !previewPageCount}><ProfileIcon name="check"/>{busy === 'save' ? 'Saving…' : 'Save updated resume'}</button>
                 <ActionError error={error} action="save" />
-                <button type="button" disabled={Boolean(busy)} onClick={() => { setPreview(null); setError(null); }}>Back to edits</button>
+                <button type="button" disabled={Boolean(busy)} onClick={() => { setPreview(null); setError(null); }}><ProfileIcon name="back"/>Back to edits</button>
               </>
             ) : <>
             {(!edits || (!placed.length && allPagesReady)) && <button type="button" className="resume-run" onClick={improve}
               disabled={!hasText || aiStatus !== 'available' || Boolean(busy)} title="Sends your saved PDF to Anthropic for AI review">
-              {busy === 'review' ? 'Reviewing…' : edits ? 'Check again with AI' : 'Check with AI'}
+              <ProfileIcon name="sparkle"/>{busy === 'review' ? 'Reviewing…' : edits ? 'Check again with AI' : 'Check with AI'}
             </button>}
-            {aiStatus === 'unconfigured' && <p>AI review is unavailable. For a local setup, add the API key to <code>src/server/.env</code> and restart the backend.</p>}
+            {!edits && aiStatus === 'available' && <p className="resume-privacy-note">Your saved PDF is sent to Anthropic for this review.</p>}
+            {aiStatus === 'loading' && <p role="status">Checking AI availability…</p>}
+            {aiStatus === 'unconfigured' && <p>AI review is unavailable right now. Please try again later.</p>}
             {aiStatus === 'error' && <p role="alert">Could not check whether AI review is available. Refresh to try again.</p>}
             <ActionError error={error} action="review" />
             {!hasText && allPagesReady && <p>This PDF has no selectable text. Upload a text-based PDF to see inline edits.</p>}
@@ -258,12 +264,12 @@ export default function ResumeFeedback({ resume, onResumeSaved }) {
             )}
             {placed.length > 0 && (
               <>
-                <p className="resume-review-count">{pending} to review · {approved.length} approved</p>
+                <div className="resume-review-progress"><p className="resume-review-count" role="status">{pending} to review · {approved.length} approved</p><progress aria-label="Suggestions reviewed" max={placed.length} value={placed.length - pending}/></div>
                 <nav className="resume-edit-tabs" aria-label="Resume edits">
                   {placed.map(edit => (
-                    <button key={edit.id} type="button" aria-pressed={active?.id === edit.id}
+                    <button key={edit.id} type="button" aria-label={`Edit ${edit.id}`} title={`Edit ${edit.id}: ${decisions[edit.id] || 'To review'}`} aria-pressed={active?.id === edit.id}
                       className={decisions[edit.id] || 'pending'} onClick={() => selectEdit(edit.id, true)}>
-                      Edit {edit.id}
+                      {edit.id}{decisions[edit.id] && <ProfileIcon name={decisions[edit.id] === 'approved' ? 'check' : 'close'}/>}
                     </button>
                   ))}
                 </nav>
@@ -276,7 +282,7 @@ export default function ResumeFeedback({ resume, onResumeSaved }) {
               <div className="resume-approved resume-save-options">
                 <ActionError error={error} action="preview" />
                 <button type="button" className="resume-run" disabled={Boolean(busy)} onClick={previewApproved}>
-                  {busy === 'preview' ? 'Preparing PDF…' : 'Preview updated PDF'}
+                  <ProfileIcon name="eye"/>{busy === 'preview' ? 'Preparing PDF…' : 'Preview updated PDF'}
                 </button>
                 <details>
                   <summary>Approved changes ({approved.length})</summary>

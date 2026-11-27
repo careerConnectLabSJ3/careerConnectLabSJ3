@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import JobDetailsModal from './JobDetailsModal';
 import { formatDate, statusClass } from '../utils/jobUtils';
 
@@ -12,7 +13,9 @@ const FILTERS = [
 
 export default function JobApplications() {
   const [applications, setApplications] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedStatus = searchParams.get('status');
+  const [filter, setFilter] = useState(FILTERS.some(option => option.value === requestedStatus) ? requestedStatus : 'all');
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,6 +42,16 @@ export default function JobApplications() {
     loadApplications();
   }, []);
 
+  useEffect(() => {
+    if (FILTERS.some(option => option.value === requestedStatus)) setFilter(requestedStatus);
+  }, [requestedStatus]);
+
+  function changeFilter(value) {
+    setFilter(value);
+    if (value === 'all') setSearchParams({});
+    else setSearchParams({ status: value });
+  }
+
   const filteredApplications = useMemo(() => {
     if (filter === 'all') return applications;
     return applications.filter(application => application.status === filter);
@@ -63,7 +76,7 @@ export default function JobApplications() {
             type="button"
             className={filter === option.value ? 'application-filter is-selected' : 'application-filter'}
             aria-pressed={filter === option.value}
-            onClick={() => setFilter(option.value)}
+            onClick={() => changeFilter(option.value)}
           >
             {option.label}
           </button>

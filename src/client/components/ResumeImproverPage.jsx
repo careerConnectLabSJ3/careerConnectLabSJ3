@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ResumeFeedback from './ResumeFeedback';
+import ProfileIcon from './ProfileIcon';
 
 export default function ResumeImproverPage() {
   const [resume, setResume] = useState(null);
@@ -31,7 +32,7 @@ export default function ResumeImproverPage() {
   return (
     <>
       <div className="resume-improver-nav">
-        <Link to="/profile">← Back to profile</Link>
+        <Link to="/profile"><ProfileIcon name="back"/> Profile</Link>
         {loading && <p role="status">Loading your resume…</p>}
         {error && <p className="resume-review-error" role="alert">{error}</p>}
         {message && <p className="resume-save-message" role="status">{message}</p>}

@@ -106,7 +106,7 @@ it('explains missing AI configuration without starting a review', async () => {
   const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ available: false }) });
   vi.stubGlobal('fetch', fetch);
   render(<ResumeFeedback resume={{ fileName: 'John Smith.pdf', version: 'original' }} />);
-  expect(await screen.findByText(/AI review is unavailable/i)).toHaveTextContent('src/server/.env');
+  expect(await screen.findByText(/AI review is unavailable/i)).toHaveTextContent('Please try again later.');
   expect(screen.getByRole('button', { name: 'Check with AI' })).toBeDisabled();
   expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/api/profile/resume-feedback/status']);
 });
