@@ -28,6 +28,10 @@ afterAll(() => new Promise(resolve => server.close(resolve)));
 const search = '/api/jobs/search?';
 test('requires a session and validates the search view', async () => {
   expect((await fetch(origin + '/api/jobs/recommendations')).status).toBe(401);
+  expect((await fetch(origin + '/api/jobs/matches')).status).toBe(401);
+  expect((await fetch(origin + '/api/jobs/matches', {
+    method: 'POST', headers: { cookie, 'Content-Type': 'application/json' }, body: '{}'
+  })).status).toBe(400);
   expect((await fetch(origin + search + 'view=unknown', { headers: { cookie } })).status).toBe(400);
 });
 
@@ -36,6 +40,7 @@ test('records an active search and later recommends a newer posting for that see
   const recentSearches = [];
   const save = jest.spyOn(User, 'updateOne').mockImplementation(async (filter, update) => {
     expect(filter._id).toBe('user');
+    expect(update.$push.recentSearches.$slice).toBe(-100);
     recentSearches.push(...update.$push.recentSearches.$each);
   });
   jest.spyOn(User, 'findById').mockReturnValue({ select: () => ({ lean: async () => ({ recentSearches }) }) });

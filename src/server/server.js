@@ -14,6 +14,7 @@ const port = 3000;
 import { validateRegistration, sendRegistrationError, sendLoginError } from './serverUtils/validation.js';
 import { getProfilePic, updateProfile, getResume, uploadResume, deleteResume, fetchUserProfile, saveResumeRevision, restoreOriginalResume } from './controllers/profileController.js';
 import { resumeFeedbackStatus, reviewResume } from './controllers/resumeFeedbackController.js';
+import { getJobMatches } from './controllers/jobMatchingController.js';
 import { MAX_RESUME_SIZE } from './serverUtils/fileStorage.js';
 import User from './models/user.js';
 import { createJob, getRecruiterJobs, updateJob, updateJobStatus, deleteJob, duplicateJob } from './controllers/jobController.js';
@@ -113,6 +114,8 @@ app.get('/api/jobs/upcoming-deadlines', checkUpcomingDeadlines);
 app.get('/api/jobs/search', searchJob);
 app.post('/api/jobs/search', searchJob);
 app.get('/api/jobs/recommendations', getRecommendations);
+app.get('/api/jobs/matches', getJobMatches);
+app.post('/api/jobs/matches', getJobMatches);
 
 // Real job posting replaces the temporary dummy-job insertion route.
 app.get('/api/applications', getMyApplications);

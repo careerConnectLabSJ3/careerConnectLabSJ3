@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import JobSeekerDashboard from '../components/JobSeekerDashboard';
 
@@ -8,7 +8,7 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   const job = { _id: 'j1', title: 'Systems engineer', company: 'Atlas', location: 'Remote',
     jobType: 'Contract', matchedKeywords: ['c++', 'sql'], description: 'Build scheduling tools.' };
   const api = vi.fn(async (url, options) => {
-    if (url === '/api/jobs/recommendations') return Response.json([{ ...job, sourceSearch: 'C++ SQL' }]);
+    if (url === '/api/jobs/matches') return Response.json({ mode: 'search', jobs: [{ ...job, explanation: 'Matches C++ SQL' }] });
     if (url.startsWith('/api/jobs/search?')) {
       if (url.includes('view=past')) return Response.json([{ ...job, _id: 'past', title: 'Past engineer', status: 'Closed' }]);
       const terms = new URL(url, 'http://localhost').searchParams.get('keywords');
@@ -22,7 +22,7 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   });
   vi.stubGlobal('fetch', api);
   render(<JobSeekerDashboard />);
-  const section = within(await screen.findByRole('region', { name: /new jobs matching/i }));
+  const section = within(await screen.findByRole('region', { name: /recommended jobs/i }));
   const input = within(screen.getByRole('region', { name: 'Job Opportunities' })).getByRole('searchbox');
   const previousRow = await screen.findByRole('row', { name: /principal infrastructure engineer/i });
   const table = screen.getByRole('table');
@@ -32,10 +32,11 @@ it('finds a recommendation, opens its details, saves it and confirms an applicat
   expect(await screen.findByRole('button', { name: 'View details for Systems engineer' })).toBeInTheDocument();
   expect(screen.getByRole('table')).toBe(table);
   expect(previousRow).not.toBeInTheDocument();
-  expect(api.mock.calls.filter(([, options]) => options?.method === 'POST').map(([url]) => url))
-    .toEqual(['/api/jobs/search?keywords=C%2B%2B+SQL&view=active']);
+  expect(api.mock.calls.filter(([, options]) => options?.method === 'POST')).toHaveLength(0);
+  await waitFor(() => expect(api.mock.calls.filter(([, options]) => options?.method === 'POST').map(([url]) => url))
+    .toEqual(['/api/jobs/search?keywords=C%2B%2B+SQL&view=active']), { timeout: 2500 });
   expect(await section.findByText(job.title)).toBeInTheDocument();
-  expect(section.getByText('Atlas · Remote · Contract')).toBeInTheDocument();
+  expect(section.queryByText('Atlas · Remote · Contract')).not.toBeInTheDocument();
   fireEvent.click(section.getByRole('button', { name: job.title }));
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   const dialog = within(await screen.findByRole('dialog'));

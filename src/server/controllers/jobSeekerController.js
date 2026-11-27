@@ -45,7 +45,7 @@ export async function searchJob(req, res) {
         sort((a, b) => b.score - a.score);
     if (req.method === 'POST' && terms.length && view === 'active') {
         await User.updateOne({ _id: req.session.user.id }, {
-            $push: { recentSearches: { $each: [{ keywords: keywords.trim(), searchedAt }], $slice: -20 } }
+            $push: { recentSearches: { $each: [{ keywords: keywords.trim(), searchedAt }], $slice: -100 } }
         });
     }
     return res.json(matches.map(match => match.job));
