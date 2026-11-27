@@ -31,7 +31,10 @@ import {
 } from './controllers/applicationController.js';
 import { addFavoriteJob, removeFavoriteJob, getFavoriteJob, getMyFavoriteJobs } from './controllers/favoriteJobsController.js';
 import { checkEmail, checkSession, fetchCurrentUser, loginUser, logoutUser, registerUser } from './controllers/authController.js';
+
+// Merged imports (Your notifications + Teammate's recommendations)
 import { checkUpcomingDeadlines, searchJob, getRecommendations } from './controllers/jobSeekerController.js';
+import { getMyNotifications, dismissNotification } from './controllers/notificationController.js';
 
 // 2. MIDDLEWARE SETUP
 const __filename = fileURLToPath(import.meta.url);
@@ -133,6 +136,8 @@ app.get('/api/jobs/:jobId/applications/:applicationId/resume', getJobApplication
 app.put('/api/jobs/:jobId', updateJob);
 app.patch('/api/jobs/:jobId/status', updateJobStatus);
 app.delete('/api/jobs/:jobId', deleteJob);
+app.get('/api/notifications', getMyNotifications);
+app.patch('/api/notifications/:id/dismiss', dismissNotification);
 
 // generic variable job ID route 
 app.get('/api/jobs/:jobId', getJobDetails);

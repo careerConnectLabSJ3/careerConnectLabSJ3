@@ -1,0 +1,79 @@
+/* --- Dashboard Layout --- */
+.dashboard-notification-banner {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ffeeba;
+}
+
+.dashboard-notification-list {
+  margin-top: 10px;
+  margin-bottom: 0;
+  list-style-type: none;
+}
+
+.in-app-notifications-panel {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.no-notifications-text {
+  color: #666;
+}
+
+.notifications-ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notification-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-type-badge {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  margin-right: 10px;
+}
+
+.notification-dismiss-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: red;
+  font-weight: bold;
+}
+
+/* --- Search Section --- */
+.dashboard-search-section {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+}
+
+.search-input-title {
+  padding: 8px;
+  width: 250px;
+}
+
+.search-input-filter {
+  padding: 8px;
+  width: 200px;
+}
+
+.search-btn {
+  padding: 8px 16px;
+  cursor: pointer;
+}

@@ -1,20 +1,30 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import JobDetailsModal from './JobDetailsModal';
+import '../public/css/jobSeekerDashboard.css';
 import FreshMatches from './FreshMatches';
 
 export default function JobSeekerDashboard() {
-  // 1. STATE MANAGERS
+  // --- Teammate's FreshMatches state ---
   const [result, setResult] = useState(null);
   const tableRef = useRef(null);
   const [minResultsHeight, setMinResultsHeight] = useState(0);
   const [layouts, setLayouts] = useState({});
   const [listing, setListing] = useState({ keywords: '', view: 'active', typing: false });
   const [jobsError, setJobsError] = useState('');
+
+  // --- Your Notification & Dashboard state ---
   const [loading, setLoading] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState(null);
   const [applications, setApplications] = useState([]);
   const [applicationsError, setApplicationsError] = useState('');
+  const [showStatusDebugger, setShowStatusDebugger] = useState(false);
+  const [debugApplicationId, setDebugApplicationId] = useState('');
+  const [debugStatus, setDebugStatus] = useState('Applied');
+  const [debugStatusError, setDebugStatusError] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  
   const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [searchRevision, setSearchRevision] = useState(0);
   const lastSavedSearch = useRef('');
 
@@ -33,10 +43,68 @@ export default function JobSeekerDashboard() {
     }
   }
 
+  const loadNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) setNotifications(data);
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    }
+  };
+
+  const handleDismissNotification = async (id) => {
+    try {
+      const res = await fetch(`/api/notifications/${id}/dismiss`, { 
+        method: 'PATCH',
+        credentials: 'include' 
+      });
+      if (res.ok) {
+        setNotifications(notifications.filter(n => n._id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to dismiss notification", err);
+    }
+  };
+
   function handleApplied(jobId, applicationsCount) {
     setResult(current => current && ({ ...current, jobs: current.jobs.map(job =>
       job._id === jobId ? { ...job, applicationsCount } : job) }));
     loadApplications();
+  }
+
+  function openStatusDebugger() {
+    setDebugStatusError('');
+    setDebugApplicationId(currentId => currentId || applications[0]?._id || '');
+    setShowStatusDebugger(true);
+  }
+
+  async function updateApplicationStatus(event) {
+    event.preventDefault();
+    if (!debugApplicationId || updatingStatus) return;
+
+    setUpdatingStatus(true);
+    setDebugStatusError('');
+    try {
+      const response = await fetch(`/api/applications/${debugApplicationId}/status`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: debugStatus })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setDebugStatusError(data.error || 'Unable to update the application status.');
+        return;
+      }
+      await loadApplications();
+      setShowStatusDebugger(false);
+      loadNotifications(); 
+    } catch (error) {
+      setDebugStatusError('Unable to update the application status.');
+    } finally {
+      setUpdatingStatus(false);
+    }
   }
 
   useEffect(() => {
@@ -63,7 +131,6 @@ export default function JobSeekerDashboard() {
       }
     }
     const timer = window.setTimeout(loadJobs, debounce ? 150 : 0);
-    // Listing refreshes are read-only. Save only after typing has settled.
     const historyTimer = debounce && listing.view === 'active' ? window.setTimeout(async () => {
       if (keywords.toLowerCase() === lastSavedSearch.current) return;
       try {
@@ -85,8 +152,8 @@ export default function JobSeekerDashboard() {
 
   useEffect(() => {
     loadApplications();
+    loadNotifications(); 
     
-    // FETCH DEADLINES
     const fetchDeadlines = async () => {
         try {
             const res = await fetch('/api/jobs/upcoming-deadlines');
@@ -101,8 +168,6 @@ export default function JobSeekerDashboard() {
 
   const visibleResult = result?.view === listing.view ? result : null;
   const layout = layouts[listing.view];
-  // Let the browser size columns from the full list once. If the first response
-  // was filtered, replace that provisional layout when the full list is loaded.
   const measureColumns = visibleResult?.jobs.length > 0 &&
     (!layout || (!layout.fullList && !visibleResult.keywords));
   useLayoutEffect(() => {
@@ -125,8 +190,6 @@ export default function JobSeekerDashboard() {
   }
 
   function switchView(view) {
-    // A shorter list can leave too little document below the viewport to retain
-    // scrollY. Reserve just that space, while allowing longer lists to grow.
     const results = tableRef.current.parentElement;
     const distanceBelowViewport = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
     setMinResultsHeight(window.scrollY > 0
@@ -137,18 +200,13 @@ export default function JobSeekerDashboard() {
 
   return (
     <section className="dashboard-main">
+      <h1 className="dashboard-title">Job Seeker Dashboard</h1>
+
       {/* --- DEADLINE NOTIFICATION BANNER --- */}
       {upcomingDeadlines.length > 0 && (
-        <div style={{ 
-            backgroundColor: '#fff3cd', 
-            color: '#856404', 
-            padding: '15px', 
-            borderRadius: '15px', 
-            marginBottom: '20px',
-            border: '1px solid #ffeeba'
-        }}>
+        <div className="dashboard-notification-banner">
           <strong> Heads up!</strong> The following job postings are closing soon:
-          <ul style={{ marginTop: '10px', marginBottom: '0',listStyleType: 'none' }}>
+          <ul className="dashboard-notification-list">
             {upcomingDeadlines.map(job => (
               <li key={job._id}>
                 <strong>{job.title}</strong> at {job.company} - Deadline: {job.deadline}
@@ -158,7 +216,31 @@ export default function JobSeekerDashboard() {
         </div>
       )}
 
-      <h1 className="dashboard-title">Job Seeker Dashboard</h1>
+      {/* --- IN-APP NOTIFICATIONS --- */}
+      <section className="in-app-notifications-panel">
+        <h2>In-App Notifications</h2>
+        {notifications.length === 0 ? (
+          <p className="no-notifications-text">No new notifications.</p>
+        ) : (
+          <ul className="notifications-ul">
+            {notifications.map(notif => (
+              <li key={notif._id} className="notification-item">
+                <div>
+                  <span className="notification-type-badge">{notif.type}</span>
+                  {notif.message}
+                </div>
+                <button 
+                  onClick={() => handleDismissNotification(notif._id)}
+                  className="notification-dismiss-btn"
+                  title="Dismiss notification"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <FreshMatches onView={setSelectedJobId} applicationsByJob={applicationsByJob} searchRevision={searchRevision} />
 
@@ -169,6 +251,47 @@ export default function JobSeekerDashboard() {
       </section>
 
       {applicationsError && <p className="dashboard-feedback-error" role="alert">{applicationsError}</p>}
+
+      <button type="button" className="debug-status-button" onClick={openStatusDebugger} disabled={applications.length === 0}>
+        Debug: update application status
+      </button>
+
+      {showStatusDebugger && (
+        <div className="debug-modal-backdrop" role="presentation">
+          <section className="debug-status-modal" role="dialog" aria-modal="true" aria-labelledby="debug-status-title">
+            <div className="debug-status-modal-heading">
+              <h2 id="debug-status-title">Update application status</h2>
+              <button type="button" onClick={() => setShowStatusDebugger(false)} disabled={updatingStatus}>Close</button>
+            </div>
+            <p>Temporary testing control. Choose one of your applications and set its status.</p>
+            <form onSubmit={updateApplicationStatus}>
+              <label htmlFor="debug-application">Application</label>
+              <select id="debug-application" value={debugApplicationId} onChange={event => setDebugApplicationId(event.target.value)} required>
+                <option value="" disabled>Select an application</option>
+                {applications.map(application => (
+                  <option key={application._id} value={application._id}>
+                    {application.job?.company || 'Unknown company'} — {application.job?.title || 'Unknown job'}
+                  </option>
+                ))}
+              </select>
+              <label htmlFor="debug-status">New status</label>
+              <select id="debug-status" value={debugStatus} onChange={event => setDebugStatus(event.target.value)}>
+                <option value="Applied">Applied</option>
+                <option value="Interview">Interview</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Offer">Offer</option>
+              </select>
+              {debugStatusError && <p className="debug-status-error" role="alert">{debugStatusError}</p>}
+              <div className="debug-status-actions">
+                <button type="button" onClick={() => setShowStatusDebugger(false)} disabled={updatingStatus}>Cancel</button>
+                <button type="submit" className="debug-status-save" disabled={updatingStatus || !debugApplicationId}>
+                  {updatingStatus ? 'Updating...' : 'Update status'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {selectedJobId && (
         <JobDetailsModal key={selectedJobId} jobId={selectedJobId}

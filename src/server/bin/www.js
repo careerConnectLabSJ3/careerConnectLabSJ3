@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'; 
 import dns from 'dns';
 import mongoose from 'mongoose';
 import { fileURLToPath } from 'node:url';
@@ -9,11 +9,14 @@ import { initializeFileStorage } from '../serverUtils/fileStorage.js';
 // The backend file takes priority; the repo-root file supports older local setups.
 dotenv.config({ path: [
   fileURLToPath(new URL('../.env', import.meta.url)),
-  fileURLToPath(new URL('../../../.env', import.meta.url))
+  fileURLToPath(new URL('../../.env', import.meta.url))
 ] });
+
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const port = process.env.PORT || 3000;
+
+
 
 (async () => {
   try {

@@ -7,6 +7,7 @@ import {
   getJobDetails, submitApplication, getJobApplications, getJobApplication, getJobApplicationResume,
   getMyApplications, updateMyApplicationStatus
 } from '../controllers/applicationController.js';
+import Notification from '../models/notification.js';
 
 const jobId = '507f1f77bcf86cd799439010';
 const applicantId = '507f1f77bcf86cd799439011';
@@ -140,16 +141,19 @@ test('a recruiter can update an application status for their job posting', async
 
   const mockSave = jest.fn().mockResolvedValue(true);
 
-  // Mock JobApplication.findById to return a mock document with .save()
   jest.spyOn(JobApplication, 'findById').mockReturnValue({
     populate: async () => ({
       _id: validJobId,
-      job: { _id: 'some-job-id', recruiter: recruiterId },
+      job: { _id: validJobId, title: 'Software Engineer', recruiter: recruiterId },
+      applicant: '5f4dcc3b5aa765d61d8327de',
       status: 'Applied',
       interviewDate: null,
       save: mockSave
     })
   });
+
+  // NEW: Mock the Notification creation so it doesn't try to connect to a real database
+  jest.spyOn(Notification, 'create').mockResolvedValue({ _id: 'fake-notif-id' });
 
   const res = response();
   await updateMyApplicationStatus({
