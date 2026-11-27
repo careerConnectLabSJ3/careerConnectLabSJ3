@@ -1,6 +1,6 @@
 .resume-improver-nav {
     width: min(1180px, calc(100% - 2rem));
-    margin: 1.25rem auto 0;
+    margin: 2rem auto 0;
 }
 
 .resume-save-message { color: #176a4e; }
@@ -10,7 +10,7 @@
     --review-border: #dce4ec;
     --review-green: #176a4e;
     width: min(1180px, calc(100% - 2rem));
-    margin: 1.5rem auto 3rem;
+    margin: 1.5rem auto 4rem;
     color: var(--review-ink);
 }
 
@@ -19,14 +19,15 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.8rem;
-    padding: 1rem 1.25rem;
-    background: #fff;
-    border: 1px solid var(--review-border);
-    border-radius: 14px 14px 0 0;
+    padding: 0 0 1.75rem;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
 }
 
-.resume-improver-heading h2 {
-    font-size: 1.4rem;
+.resume-improver-heading h1 {
+    font-size: clamp(26px, 3.5vw, 34px);
+    font-weight: 600;
     line-height: 1.2;
     letter-spacing: -0.025em;
 }
@@ -39,7 +40,14 @@
 }
 
 .resume-original {
-    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 35%;
+    padding: 12px 14px;
+    background: white;
+    border: 1px solid var(--review-border);
+    border-radius: 12px;
     font-size: 0.85rem;
     font-weight: 600;
     color: #1b527e;
@@ -47,12 +55,12 @@
 
 .resume-improver-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(270px, 310px);
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 350px);
     align-items: start;
-    gap: 1rem;
-    padding: 1rem;
-    background: #eaf0f5;
-    border: 1px solid var(--review-border);
+    gap: 1.5rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
     border-top: 0;
     border-radius: 0 0 14px 14px;
 }
@@ -63,7 +71,10 @@
     justify-items: center;
     align-content: start;
     gap: 1rem;
-    background: #eaf0f5;
+    background: #f0f3f7;
+    padding: 20px;
+    border: 1px solid var(--review-border);
+    border-radius: 16px;
 }
 
 .resume-pdf-page {
@@ -147,7 +158,7 @@
     right: 12px;
     padding: 0.5rem 0.65rem;
     border: 1px solid #a9d4c0;
-    border-radius: 6px;
+    border-radius: 10px;
     color: #164d3b;
     background: #f1fbf6;
     box-shadow: 0 2px 10px rgb(23 39 58 / 14%);
@@ -162,9 +173,9 @@
     min-width: 0;
     max-height: calc(100vh - 2rem);
     overflow: auto;
-    padding: 1rem;
+    padding: 24px;
     border: 1px solid var(--review-border);
-    border-radius: 10px;
+    border-radius: 16px;
     background: #fff;
     display: grid;
     gap: 0.75rem;
@@ -187,12 +198,16 @@
 }
 
 .resume-review-panel button {
-    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
     padding: 0.4rem 0.65rem;
     color: inherit;
     background: #fff;
     border: 1px solid #cbd7e2;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
     font: inherit;
     font-weight: 600;
@@ -201,8 +216,8 @@
 .resume-review-panel .resume-run {
     min-height: 44px;
     color: #fff;
-    background: #19496f;
-    border-color: #19496f;
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 .resume-review-panel button:disabled { opacity: 0.48; cursor: default; }
@@ -230,16 +245,16 @@
 .resume-edit-card blockquote,
 .resume-rewrite {
     margin: 0;
-    padding: 0.55rem 0.65rem;
+    padding: 0.85rem;
     overflow-wrap: anywhere;
-    border-left: 3px solid;
+    border-left: 2px solid;
     border-radius: 3px;
 }
 
 .resume-edit-card blockquote {
-    border-color: #d56f72;
-    background: #fdf0f0;
-    color: #852a34;
+    border-color: #d5dce5;
+    background: #f7f8fa;
+    color: #5b6472;
 }
 
 .resume-edit-card blockquote.skipped {
@@ -263,7 +278,7 @@
     color: var(--review-ink);
     background: white;
     border: 1px solid #cbd7e2;
-    border-radius: 6px;
+    border-radius: 10px;
 }
 
 .resume-review-panel .resume-approve {
@@ -299,11 +314,40 @@
 .resume-approved ul { margin: 0.55rem 0; padding-left: 1.25rem; }
 
 @media (max-width: 780px) {
-    .resume-improver-grid { grid-template-columns: minmax(0, 1fr); padding: 0.55rem; }
+    .resume-improver-grid { grid-template-columns: minmax(0, 1fr); padding: 0; }
     .resume-review-panel { position: static; max-height: none; }
-    .resume-improver-heading { padding: 0.8rem; }
+    .resume-improver-heading { align-items: flex-start; flex-direction: column; gap: 18px; }
+    .resume-original { max-width: 100%; }
+    .resume-pdf { padding: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .resume-improver * { scroll-behavior: auto; }
 }
+
+.resume-improver-nav > a { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+.resume-improver .resume-eyebrow { margin: 0 0 8px; font-size: 10px; font-weight: 650; letter-spacing: .13em; color: var(--muted); }
+.resume-ai-badge { display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; padding: 4px 8px; border-radius: 7px; background: #eaf1ff; color: var(--primary); font-size: 11px; letter-spacing: .04em; }
+.resume-ai-badge svg { width: 14px; height: 14px; }
+.resume-original span { overflow-wrap: anywhere; min-width: 0; }
+.resume-original svg { flex-shrink: 0; }
+.resume-panel-heading { display: flex; align-items: center; gap: 12px; padding-bottom: 8px; }
+.resume-panel-icon { display: inline-flex; padding: 11px; border-radius: 12px; color: var(--primary); background: #eff6ff; }
+.resume-panel-heading .resume-eyebrow { margin-bottom: 4px; }
+.resume-panel-intro { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.resume-privacy-note { color: var(--muted); font-size: 11px; line-height: 1.6; }
+.resume-review-progress { display: grid; gap: 8px; padding: 8px 0; font-size: 12px; }
+.resume-review-progress progress { width: 100%; height: 5px; accent-color: var(--primary); }
+.resume-comparison-label { font-size: 10px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 5px; }
+.resume-edit-card h3 { line-height: 1.5; font-size: 14px; }
+.resume-edit-card del { text-decoration-color: #9ca3af; }
+.resume-edit-tabs button { min-width: 42px; font-size: 12px; }
+.resume-edit-tabs button svg { width: 12px; height: 12px; }
+.resume-edit-tabs button[aria-pressed='true'] { box-shadow: 0 0 0 1px var(--primary); }
+.resume-review-actions { margin-top: 8px; }
+.resume-review-panel button:hover:not(:disabled) { border-color: var(--primary); }
+.resume-review-panel .resume-run:hover:not(:disabled) { background: var(--primary-dark); }
+.resume-review-panel button svg { flex-shrink: 0; }
+.resume-save-options summary { font-size: 12px; color: var(--muted); padding: 8px 0; }
+.resume-improver-empty { border: 1px dashed var(--review-border); border-radius: 16px; padding: 48px 24px; text-align: center; color: var(--muted); }
+.resume-save-message { margin-top: 16px; font-size: 13px; }

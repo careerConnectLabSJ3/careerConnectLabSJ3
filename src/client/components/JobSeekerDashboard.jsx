@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react';
 import JobDetailsModal from './JobDetailsModal';
 import FreshMatches from './FreshMatches';
 
@@ -8,7 +8,9 @@ export default function JobSeekerDashboard() {
   const tableRef = useRef(null);
   const [minResultsHeight, setMinResultsHeight] = useState(0);
   const [layouts, setLayouts] = useState({});
-  const [listing, setListing] = useState({ keywords: '', view: 'active', typing: false });
+  const [listing, setListing] = useState({ keywords: '', view: 'all', typing: false });
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState('latest');
   const [jobsError, setJobsError] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState(null);
@@ -55,6 +57,7 @@ export default function JobSeekerDashboard() {
         const data = await response.json();
         if (!controller.signal.aborted) {
           setResult({ jobs: data, view: listing.view, keywords });
+          setPage(1);
         }
       } catch {
         if (!controller.signal.aborted) setJobsError('Unable to load job listings. Please try again.');
@@ -64,7 +67,7 @@ export default function JobSeekerDashboard() {
     }
     const timer = window.setTimeout(loadJobs, debounce ? 150 : 0);
     // Listing refreshes are read-only. Save only after typing has settled.
-    const historyTimer = debounce && listing.view === 'active' ? window.setTimeout(async () => {
+    const historyTimer = debounce && listing.view !== 'past' ? window.setTimeout(async () => {
       if (keywords.toLowerCase() === lastSavedSearch.current) return;
       try {
         const response = await fetch('/api/jobs/search?' + new URLSearchParams({ keywords, view: 'active' }), {
@@ -100,8 +103,20 @@ export default function JobSeekerDashboard() {
   }, []);
 
   const visibleResult = result?.view === listing.view ? result : null;
+  const publishedTime = job => Math.max(Date.parse(job.publishedAt) || 0,
+    Date.parse(job.publishDate) || 0,
+    /^[a-f0-9]{24}$/i.test(job._id) ? parseInt(job._id.slice(0, 8), 16) * 1000 : 0);
+  const sortedJobs = useMemo(() => [...(visibleResult?.jobs || [])].sort((a, b) => {
+    const newest = publishedTime(b) - publishedTime(a) || String(b._id).localeCompare(String(a._id));
+    if (sort === 'oldest') return -newest;
+    if (sort === 'title') return a.title.localeCompare(b.title) || newest;
+    return newest;
+  }), [visibleResult, sort]);
+  const pageCount = Math.max(1, Math.ceil(sortedJobs.length / 25));
+  const currentPage = Math.min(page, pageCount);
+  const pageJobs = sortedJobs.slice((currentPage - 1) * 25, currentPage * 25);
   const layout = layouts[listing.view];
-  // Let the browser size columns from the full list once. If the first response
+  // Let the browser size columns from the first page once. If the first response
   // was filtered, replace that provisional layout when the full list is loaded.
   const measureColumns = visibleResult?.jobs.length > 0 &&
     (!layout || (!layout.fullList && !visibleResult.keywords));
@@ -132,6 +147,7 @@ export default function JobSeekerDashboard() {
     setMinResultsHeight(window.scrollY > 0
       ? Math.max(0, Math.ceil(results.offsetHeight - distanceBelowViewport))
       : 0);
+    setPage(1);
     setListing({ ...listing, view, typing: false });
   }
 
@@ -179,14 +195,21 @@ export default function JobSeekerDashboard() {
         <div className="opportunities-heading">
           <h2 id="opportunities-title">Job Opportunities</h2>
           <div role="radiogroup" aria-label="Posting status" className="opportunities-views">
-            {['active', 'past'].map(view => (
+            {['all', 'active', 'past'].map(view => (
               <label key={view}>
                 <input type="radio" name="posting-status" value={view} checked={listing.view === view}
                   onChange={() => switchView(view)} />
-                <span>{view === 'active' ? 'Active jobs' : 'Past jobs'}</span>
+                <span>{view === 'all' ? 'All jobs' : view === 'active' ? 'Active jobs' : 'Closed jobs'}</span>
               </label>
             ))}
           </div>
+        </div>
+        <div className="opportunities-tools">
+          <label className="opportunities-sort"><span aria-hidden="true">&#8597;</span>
+            <select aria-label="Sort jobs" value={sort} onChange={event => { setSort(event.target.value); setPage(1); }}>
+              <option value="latest">Newest</option><option value="oldest">Oldest</option><option value="title">Title A–Z</option>
+            </select>
+          </label>
         </div>
         <label className="opportunities-search">
           Search jobs
@@ -215,9 +238,9 @@ export default function JobSeekerDashboard() {
                   {jobsError ? <p role="alert">{jobsError} <button type="button"
                     onClick={() => setListing({ ...listing, typing: false })}>Try again</button></p>
                     : !visibleResult ? <p role="status">Loading listings…</p>
-                    : <p role="status">No {listing.view} jobs {visibleResult.keywords ? 'match your search.' : 'to show.'}</p>}
+                    : <p role="status">No {listing.view === 'all' ? '' : listing.view === 'past' ? 'closed' : 'active'} jobs {visibleResult.keywords ? 'match your search.' : 'to show.'}</p>}
                 </td></tr>
-              ) : visibleResult.jobs.map((job) => (
+              ) : pageJobs.map((job) => (
                 <tr key={job._id}>
                   <td className="company-name"><strong>{job.title}</strong><div>{job.company} · {job.location} · {job.jobType || 'Not specified'}</div></td>
                   <td>{job.department}</td>
@@ -237,6 +260,11 @@ export default function JobSeekerDashboard() {
             </tbody>
           </table>
         </div>
+        {!jobsError && sortedJobs.length > 25 && <nav className="opportunities-pagination" aria-label="Job listing pages">
+          <button type="button" aria-label="Previous page" title="Previous page" disabled={loading || currentPage === 1} onClick={() => setPage(currentPage - 1)}>&lsaquo;</button>
+          <span role="status" aria-live="polite">{currentPage} / {pageCount}</span>
+          <button type="button" aria-label="Next page" title="Next page" disabled={loading || currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>&rsaquo;</button>
+        </nav>}
       </section>
     </section>
   );

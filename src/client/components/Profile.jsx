@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Link } from 'react-router-dom';
-import editSvgIcon from "/img/edit-pen.svg";
+import "./Profile.css";
+import ProfileIcon from "./ProfileIcon";
+import ProfileAnalytics, { RecruiterAnalytics } from "./ProfileAnalytics";
+import "./ProfileAnalytics.css";
+
+function IconButton({ icon, label, className = '', ...props }) {
+  return <button type="button" className={`profile-icon-button ${className}`} aria-label={label} title={label} {...props}><ProfileIcon name={icon}/></button>;
+}
 
 const MAX_RESUME_SIZE = 5 * 1024 * 1024;
 
@@ -9,7 +16,8 @@ export default function Profile(){
 
   const [error, setError] = useState('');
   const [isDisabled, setIsDisabled] = useState(true);
-  const [isHidden, setIsHidden] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarVersion, setAvatarVersion] = useState(Date.now());
   const [formData, setFormData] = useState({
     name: "",
@@ -27,6 +35,7 @@ export default function Profile(){
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeProgress, setResumeProgress] = useState(0);
   const resumeInputRef = useRef(null);
+  const avatarInputRef = useRef(null);
   const resumeRequestControllerRef = useRef(null);
 
   async function handleProfileInit(){
@@ -59,6 +68,7 @@ export default function Profile(){
 
   async function handleSave(e){
     e.preventDefault();
+    if (saving) return;
 
     const hasTextChanged =
       formData.name !== originalFormData?.name ||
@@ -73,6 +83,7 @@ export default function Profile(){
       return;
     }
 
+    setSaving(true);
     try{
       const maxSizeInBytes = 2 * 1024 * 1024;
       if(formData.pfpUpload && formData.pfpUpload.size > maxSizeInBytes){
@@ -108,12 +119,24 @@ export default function Profile(){
       console.error("Profile update error: ", e.message);
       setError(e.message);
     }
+    finally { setSaving(false); }
   }
 
   function handleProfileEdit(){
     setIsDisabled((current) => !current);
-    setIsHidden((current) => !current);
     setError("");
+  }
+
+  function handleAvatarChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 2 * 1024 * 1024) {
+      setError('Choose a PNG or JPEG image up to 2MB.');
+      event.target.value = '';
+      return;
+    }
+    setError('');
+    setFormData(current => ({ ...current, pfpUpload: file }));
   }
 
   function handleCancel(){
@@ -241,107 +264,84 @@ export default function Profile(){
     handleProfileInit();
   }, []);
 
-  return(
-    <form id="profile-form" encType="multipart/form-data" onSubmit={handleSave}>
-      <section className="profile-main">
-        <img src={`/api/profile/avatar?v=${avatarVersion}`} alt="Profile Picture" id="profile-img"/>
-        <input type="file" id="pfp-upload" name="pfpUpload" accept="image/png, image/jpeg"
-          style={{ visibility: !isHidden ? 'hidden' : 'visible' }}
-          onChange={(e) => {
-            setFormData(prev => ({ ...prev, pfpUpload: e.target.files[0] }));
-          }}
-        />
-        {error && <p className="auth-error">{error}</p>}
-        <section className="profile-main-info">
-          <span className="right-align" style={{ visibility: isHidden ? 'hidden' : 'visible' }}>
-            <button type="button" id="profile-edit-icon" onClick={handleProfileEdit}>
-              <img src={editSvgIcon} className="icon"/>
-            </button>
-          </span>
-          <section>
-            <label htmlFor="profile-name">Name</label>
-            <input type="text" id="profile-name" name="name" disabled={isDisabled}
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}/>
-          </section>
-          <section>
-            <label htmlFor="profile-education">Education</label>
-            <input type="text" id="profile-education" name="education" disabled={isDisabled}
-              value={formData.education}
-              onChange={(e) => setFormData({...formData, education: e.target.value})}/>
-          </section>
-          <section>
-            <label htmlFor="profile-work-exp">Work Experience</label>
-            <input type="text" id="profile-work-exp" name="experience" disabled={isDisabled}
-              value={formData.experience}
-              onChange={(e) => setFormData({...formData, experience: e.target.value})}/>
-          </section>
-          <section>
-            <label htmlFor="profile-skills">Skills</label>
-            <input type="text" id="profile-skills" name="skills" disabled={isDisabled}
-              value={formData.skills}
-              onChange={(e) => setFormData({...formData, skills: e.target.value})}/>
-          </section>
-        </section>
-        <section id="buttons-profile-edit" style={{ visibility: !isHidden ? 'hidden' : 'visible' }}>
-          <button type="submit" id="profile-save-btn">Save</button>
-          <button type="button" id="profile-cancel-btn" onClick={handleCancel}>Cancel</button>
-        </section>
+  useEffect(() => {
+    if (!formData.pfpUpload) {
+      setAvatarPreview('');
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+      return;
+    }
+    const url = URL.createObjectURL(formData.pfpUpload);
+    setAvatarPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [formData.pfpUpload]);
 
-        {role === 'job_seeker' && <section className="resume-section" aria-labelledby="resume-heading">
-          <h2 id="resume-heading">Resume</h2>
-          {resume ? (
-            <p className="resume-file">
-              Current file: <a href="/api/profile/resume" target="_blank" rel="noreferrer">{resume.fileName}</a>
-            </p>
-          ) : (
-            <p className="resume-file">No resume uploaded.</p>
-          )}
-          <input
-            ref={resumeInputRef}
-            type="file"
-            id="resume-upload"
-            name="resumeUpload"
-            accept="application/pdf,.pdf"
-            onChange={handleResumeFileChange}
-            hidden
-          />
-          {resumeFile && <p className="resume-selected">Selected: {resumeFile.name}</p>}
-          <div className="resume-actions">
-            <button
-              type="button"
-              className={`resume-upload-btn${resumeFile ? ' resume-save-btn' : ''}${resumeUploading ? ' is-uploading' : ''}`}
-              onClick={handleResumeButtonClick}
-              disabled={resumeUploading}
-              aria-busy={resumeUploading}
-            >
-              {resumeUploading ? 'Saving resume…' : resumeFile ? 'Save Resume' : resume ? 'Replace Resume' : 'Upload Resume'}
-            </button>
-            {resumeFile && (
-              <button type="button" className="resume-cancel-btn" onClick={cancelResumeUpload}>
-                Cancel
-              </button>
-            )}
-            {resume && !resumeFile && (
-              <button type="button" className="resume-delete-btn" onClick={handleResumeDelete} disabled={resumeUploading}>
-                Delete Resume
-              </button>
-            )}
-            {resume && !resumeFile && !resumeUploading && (
-              <Link className="resume-improve-link" to="/profile/resume-improver">Improve resume with AI</Link>
-            )}
-          </div>
-          {resumeUploading && (
-            <div className="resume-progress" role="progressbar" aria-valuenow={resumeProgress} aria-valuemin="0" aria-valuemax="100">
-              <span style={{ width: `${resumeProgress}%` }}/>
-              <small>{resumeProgress}%</small>
+  const fields = [
+    { key: 'education', label: 'Education', icon: 'education', placeholder: 'School, degree, or certification' },
+    { key: 'experience', label: 'Experience', icon: 'work', placeholder: 'Your roles and accomplishments' },
+    { key: 'skills', label: 'Skills', icon: 'skills', placeholder: 'Separate skills with commas' },
+  ];
+  const uploadLabel = resumeUploading ? 'Saving resume' : resumeFile ? 'Save resume' : resume ? 'Replace resume' : 'Upload resume';
+
+  return (
+    <div className="profile-page">
+      <div className="profile-page-heading">
+        <div><p className="profile-eyebrow">YOUR SPACE</p><h1>Profile</h1></div>
+        <p>A little about you. A step toward what’s next.</p>
+      </div>
+      <form id="profile-form" encType="multipart/form-data" onSubmit={handleSave}>
+        <div className="profile-layout">
+          <section className="profile-card" aria-label="Personal profile">
+            <div className="profile-identity">
+              <div className="profile-avatar-wrap">
+                <img className="profile-avatar" src={avatarPreview || `/api/profile/avatar?v=${avatarVersion}`} alt={avatarPreview ? "Profile photo preview" : "Your profile"} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = '/img/default-pfp.png'; }}/>
+                {!isDisabled && <IconButton icon="camera" label="Change profile photo" className="profile-camera" disabled={saving} onClick={() => avatarInputRef.current?.click()}/>}
+                {avatarPreview && <span className="profile-preview-label" role="status">Preview</span>}
+                <input ref={avatarInputRef} type="file" id="pfp-upload" name="pfpUpload" accept="image/png,image/jpeg" hidden disabled={isDisabled || saving} aria-label="Choose profile photo" onChange={handleAvatarChange}/>
+              </div>
+              <div className="profile-identity-text">
+                <p className="profile-eyebrow">{role === 'job_seeker' ? 'JOB SEEKER' : role === 'recruiter' ? 'RECRUITER' : 'PERSONAL PROFILE'}</p>
+                {isDisabled ? <h2>{formData.name || 'Your name'}</h2> : <><label className="profile-field-label" htmlFor="profile-name">Name</label><input autoFocus id="profile-name" name="name" value={formData.name} disabled={saving} placeholder="Your name" onChange={(event) => setFormData({ ...formData, name: event.target.value })}/></>}
+                {!isDisabled && <p className="profile-hint">Photo: JPG or PNG · up to 2 MB</p>}
+              </div>
+              {isDisabled && <IconButton icon="edit" label="Edit profile" disabled={!originalFormData} onClick={handleProfileEdit}/>}
             </div>
-          )}
-          {resumeError && <p className="auth-error">{resumeError}</p>}
-          {resumeMessage && <p className="profile-success">{resumeMessage}</p>}
-          <p className="resume-help">PDF files only, maximum 5MB.</p>
-        </section>}
-      </section>
-    </form>
+            {error && <p className="profile-notice profile-notice-error" role="alert">{error}</p>}
+            <div className="profile-details">
+              {fields.map(({ key, label, icon, placeholder }) => (
+                <section className="profile-detail" key={key} aria-labelledby={`heading-${key}`}>
+                  <span className="profile-detail-icon"><ProfileIcon name={icon}/></span>
+                  <div>
+                    <h3 id={`heading-${key}`}>{isDisabled ? label : <label htmlFor={`profile-${key}`}>{label}</label>}</h3>
+                    {!isDisabled ? <textarea id={`profile-${key}`} name={key} rows={key === 'experience' ? 3 : 2} value={formData[key]} disabled={saving} placeholder={placeholder} onChange={(event) => setFormData({ ...formData, [key]: event.target.value })}/> : key === 'skills' && formData.skills.trim() ? <ul className="profile-skills">{formData.skills.split(/[,;\n]/).map(skill => skill.trim()).filter(Boolean).map((skill, index) => <li key={`${skill}-${index}`}>{skill}</li>)}</ul> : <p className={formData[key] ? 'profile-detail-value' : 'profile-empty'}>{formData[key] || 'Not added yet'}</p>}
+                  </div>
+                </section>
+              ))}
+            </div>
+            {!isDisabled && <div className="profile-edit-actions"><button type="button" className="profile-text-button" disabled={saving} onClick={handleCancel}>Cancel</button><button type="submit" className="profile-primary-button" disabled={saving}><ProfileIcon name="check"/>{saving ? 'Saving…' : 'Save changes'}</button></div>}
+          </section>
+
+          {role === 'job_seeker' && <aside className="profile-resume" aria-labelledby="resume-heading">
+            <div className="profile-resume-heading"><span className="profile-document-icon"><ProfileIcon name="file"/></span><span className="profile-format">PDF</span></div>
+            <h2 id="resume-heading">Résumé</h2>
+            <p className="profile-resume-intro">Your experience, all in one place.</p>
+            {resume ? <a className="profile-resume-link" href="/api/profile/resume" target="_blank" rel="noreferrer"><span>{resume.fileName}</span><ProfileIcon name="arrow"/></a> : <div className="profile-resume-empty"><ProfileIcon name="file"/><p>Add your résumé</p><span>Ready for your next opportunity.</span></div>}
+            <input ref={resumeInputRef} type="file" id="resume-upload" name="resumeUpload" accept="application/pdf,.pdf" onChange={handleResumeFileChange} hidden/>
+            {resumeFile && <p className="profile-selected-file">{resumeFile.name}</p>}
+            <div className="profile-resume-actions">
+              <button type="button" className="profile-primary-button" title={uploadLabel} aria-label={uploadLabel} onClick={handleResumeButtonClick} disabled={resumeUploading} aria-busy={resumeUploading}><ProfileIcon name={resumeFile ? 'check' : 'upload'}/>{resumeUploading ? 'Saving…' : resumeFile ? 'Save' : resume ? 'Replace' : 'Upload'}</button>
+              {resumeFile && <IconButton icon="close" label="Cancel resume upload" onClick={cancelResumeUpload}/>}
+              {resume && !resumeFile && <IconButton icon="trash" label="Delete resume" className="profile-delete" onClick={handleResumeDelete} disabled={resumeUploading}/>}
+            </div>
+            {resume && !resumeFile && !resumeUploading && <Link className="profile-review-link" to="/profile/resume-improver"><ProfileIcon name="sparkle"/><span>Review with AI</span><ProfileIcon name="arrow"/></Link>}
+            {resumeUploading && <div className="profile-upload-status"><progress aria-label="Resume upload progress" value={resumeProgress} max="100"/><span>{resumeProgress}%</span></div>}
+            {resumeError && <p className="profile-notice profile-notice-error" role="alert">{resumeError}</p>}
+            {resumeMessage && <p className="profile-notice profile-notice-success" role="status">{resumeMessage}</p>}
+            <p className="profile-hint">PDF only · up to 5 MB</p>
+          </aside>}
+        </div>
+      </form>
+      {role === 'job_seeker' && <ProfileAnalytics />}
+      {role === 'recruiter' && <RecruiterAnalytics />}
+    </div>
   );
 }
